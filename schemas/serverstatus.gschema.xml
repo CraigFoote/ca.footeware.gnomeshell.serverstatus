@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+
+    <schema id="org.gnome.shell.extensions.serverstatus" path="/org/gnome/shell/extensions/serverstatus/">
+        <key type="s" name="url">
+            <default>"http://footeware.ca"</default>
+            <summary>URL to poll</summary>
+            <description>protocol://host[:port][/path]</description>
+        </key>
+    </schema>
+    
+</schemalist>

@@ -1,0 +1,8 @@
+{
+  "uuid": "serverstatus@footeware.ca",
+  "name": "Server Status Indicator",
+  "description": "A gnome extension with indicator in task bar displaying status of an entered web server url, green for up, red for down.",
+  "version": 1,
+  "shell-version": ["41"],
+  "url": "https://github.com/CraigFoote/ca.footeware.gnomeshell.serverstatus.git"
+}
