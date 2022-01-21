@@ -50,11 +50,11 @@ const ServerStatus = GObject.registerClass({
 		let settingsLabel = new St.Label();
 		this.menu.box.add(settingsLabel);
 		
-	    this.menu.connect('open-state-changed', Lang.bind(this, function(object, value){
-			if (this.menu.isOpen){
+	    this.menu.connect('open-state-changed', (open) => {
+			if (open){
 			    settingsLabel.set_text(' ' + getURL() + ' @ ' + getFrequency() + ' seconds ');
 			}
-		}));
+		});
 	}
 });
 
