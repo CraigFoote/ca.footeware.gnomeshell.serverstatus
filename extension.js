@@ -62,6 +62,7 @@ function enable() {
 	Main.panel.addToStatusArea('Server Status', serverStatus, 1);
 	session = new Soup.SessionAsync();
 	clearInterval = GLib.source_remove;
+	update(getURL(), getFrequency() * 1000);
 	intervalID = setInterval(() => update(getURL()), getFrequency() * 1000);
 }
 
@@ -85,7 +86,7 @@ function update(url) {
 }
 
 function get(url, callback) { 
-    let request = Soup.Message.new('HEAD', url);
+    let request = Soup.Message.new(getHttpMethod(), url);
     
     try{
         session.queue_message(request, (session, message) => {
@@ -107,6 +108,10 @@ function getURL(){
 
 function getFrequency(){
     return settings.get_int('frequency');
+}
+
+function getHttpMethod(){
+    return settings.get_boolean('is-get') ? 'GET' : 'HEAD';
 }
 
 

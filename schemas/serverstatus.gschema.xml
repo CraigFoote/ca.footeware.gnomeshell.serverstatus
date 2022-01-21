@@ -5,12 +5,17 @@
         <key type="s" name="url">
             <default>"http://footeware.ca"</default>
             <summary>URL to poll</summary>
-            <description>protocol://host[:port][/path]</description>
+            <description>[http|https]://host[:port][/path]</description>
         </key>
         <key type="i" name="frequency">
-            <default>10</default>
+            <default>60</default>
             <summary>Poll frequency</summary>
             <description>How often the URL is called.</description>
+        </key>
+        <key type="b" name="is-get">
+            <default>false</default>
+            <summary>Whether or not HTTP GET is used</summary>
+            <description>If not GET then assume HEAD is used.</description>
         </key>
     </schema>
     

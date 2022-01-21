@@ -30,7 +30,8 @@ function buildPrefsWidget() {
     
     // URL label
     let urlLabel = new Gtk.Label({
-        label: "Enter an URL to poll:",
+        label: 'Enter an URL to poll:',
+        halign: Gtk.Align.END,
     });
     grid.attach(urlLabel, 0, 0, 1, 1);
     
@@ -38,11 +39,12 @@ function buildPrefsWidget() {
     let urlEntry = new Gtk.Entry({
         width_chars: 50,
     });
-    grid.attach(urlEntry, 1, 0, 2, 1);
+    grid.attach(urlEntry, 1, 0, 3, 1);
     
     // frequency label
     let pollLabel = new Gtk.Label({
-        label: "Poll frequency (sec.):",
+        label: 'Poll frequency (sec.):',
+        halign: Gtk.Align.END,
     });    
     grid.attach(pollLabel, 0, 1, 1, 1);
     
@@ -61,6 +63,34 @@ function buildPrefsWidget() {
     });
     grid.attach(freqButton, 1, 1, 1, 1);
     
+    // HTTP method label
+    let methodLabel = new Gtk.Label({
+        label: 'HTTP method:',
+        halign: Gtk.Align.END,
+    });    
+    grid.attach(methodLabel, 0, 2, 1, 1);
+
+    // GET toggle
+    let getToggle = Gtk.ToggleButton.new_with_label('GET');
+    
+    // HEAD toggle
+    let headToggle = Gtk.ToggleButton.new_with_label('HEAD');
+    headToggle.set_active(true);
+    
+    // add them to the same group
+    getToggle.set_group(headToggle);
+    //headToggle.set_group(getToggle);
+    
+    grid.attach(getToggle, 1, 2, 1, 1);
+    grid.attach(headToggle, 2, 2, 1, 1);
+    
+    // help label
+    let helpLabel = new Gtk.Label({
+        label: 'HTTP HEAD is faster than GET but not always supported. If you get a red indicator, try switching to GET.\n\nIf you get a yellow indicator, there\'s something wrong with the URL. It should be of format [http|https]://host[:port][/path].',
+        halign: Gtk.Align.CENTER,
+    });    
+    grid.attach(helpLabel, 0, 3, 4, 1);
+    
     // bind to dconf gsettings
     settings.bind(
         'url',
@@ -74,7 +104,13 @@ function buildPrefsWidget() {
         'value',
         Gio.SettingsBindFlags.DEFAULT
     );
-
+    settings.bind(
+        'is-get',
+        getToggle,
+        'active',
+        Gio.SettingsBindFlags.DEFAULT
+    );
+    
     return grid;
 }
 
