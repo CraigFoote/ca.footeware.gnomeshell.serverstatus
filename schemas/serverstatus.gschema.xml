@@ -7,6 +7,11 @@
             <summary>URL to poll</summary>
             <description>protocol://host[:port][/path]</description>
         </key>
+        <key type="i" name="frequency">
+            <default>10</default>
+            <summary>Poll frequency</summary>
+            <description>How often the URL is called.</description>
+        </key>
     </schema>
     
 </schemalist>

@@ -10,6 +10,8 @@ const Soup = imports.gi.Soup;
 const Mainloop = imports.mainloop;
 const GLib = imports.gi.GLib;
 const PanelMenu = imports.ui.panelMenu;
+const PopupMenu = imports.ui.popupMenu;
+const Lang = imports.lang;
 
 let serverStatus;
 let session;
@@ -17,6 +19,7 @@ let icon;
 let serverIcon;
 let serverUpIcon;
 let serverDownIcon;
+let serverBadIcon;
 let intervalID;
 let clearInterval;
 let settings;
@@ -36,12 +39,22 @@ const ServerStatus = GObject.registerClass({
 		serverIcon = Gio.icon_new_for_string(path + '/server.svg');
 		serverUpIcon = Gio.icon_new_for_string(path + '/server-up.svg');
 		serverDownIcon = Gio.icon_new_for_string(path + '/server-down.svg');
+		serverBadIcon = Gio.icon_new_for_string(path + '/server-bad.svg');
 
 		icon = new St.Icon({
 			gicon: serverIcon,
 			style_class: 'system-status-icon',
 		});
-		this.add_child(icon);			
+		this.add_child(icon);
+		
+		let settingsLabel = new St.Label();
+		this.menu.box.add(settingsLabel);
+		
+	    this.menu.connect('open-state-changed', Lang.bind(this, function(object, value){
+			if (this.menu.isOpen){
+			    settingsLabel.set_text(' ' + getURL() + ' @ ' + getFrequency() + ' seconds ');
+			}
+		}));
 	}
 });
 
@@ -50,7 +63,7 @@ function enable() {
 	Main.panel.addToStatusArea('Server Status', serverStatus, 1);
 	session = new Soup.SessionAsync();
 	clearInterval = GLib.source_remove;
-	intervalID = setInterval(() => update(getURL()), 10000);
+	intervalID = setInterval(() => update(getURL()), getFrequency() * 1000);
 }
 
 function disable() {
@@ -61,22 +74,28 @@ function disable() {
 	serverIcon = null;
     serverUpIcon = null;
     serverDownIcon = null;
+    serverBadIcon = null;
 }
 
 function update(url) {
-    get(url, function(status_code, body) {
-        icon.gicon = (status_code == 200) ? serverUpIcon : serverDownIcon;
+    get(url, function(message) {
+        icon.gicon = (message.status_code == 200) ? serverUpIcon : serverDownIcon;
         return GLib.SOURCE_REMOVE; 
     });
     return GLib.SOURCE_CONTINUE;
 }
 
 function get(url, callback) { 
-    let request = Soup.Message.new('GET', url);
+    let request = Soup.Message.new('HEAD', url);
     
-    session.queue_message(request, (session, message) => {
-        callback(message.status_code, request.response_body.data);
-    });
+    try{
+        session.queue_message(request, (session, message) => {
+            callback(message);
+        });
+    } catch (e){
+        // occurs when message is null from bad url
+        icon.gicon = serverBadIcon;
+    }    
 }
 
 function setInterval(func, delay) {
@@ -86,3 +105,11 @@ function setInterval(func, delay) {
 function getURL(){
     return settings.get_string('url');
 }
+
+function getFrequency(){
+    return settings.get_int('frequency');
+}
+
+
+
+

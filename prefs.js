@@ -10,27 +10,71 @@ function init() {
 }
 
 // This function is called when the preferences window is first created to build
-// and return a Gtk widget. As an example we'll create and return a GtkLabel.
+// and return a Gtk widget.
 function buildPrefsWidget() {
 
-    this.settings = ExtensionUtils.getSettings('org.gnome.shell.extensions.serverstatus');
+    let settings = ExtensionUtils.getSettings('org.gnome.shell.extensions.serverstatus');
 
-    let grid = new Gtk.Grid();
-    
-    let label = new Gtk.Label({
-        label: "   Enter an URL to poll:  ",
+    let grid = new Gtk.Grid({
+        hexpand: true,
+        vexpand: true,
+        row_homogeneous: false,
+        column_homogeneous: false,
+        column_spacing: 20,
+        row_spacing: 20,
+        margin_start: 20,
+        margin_top: 20,
+        margin_end: 20,
+        margin_bottom: 20,
     });
-    grid.attach(label, 0, 0, 1, 1);
     
-    let textbox = new Gtk.Entry();
-    grid.attach(textbox, 1, 0, 2, 1);
+    // URL label
+    let urlLabel = new Gtk.Label({
+        label: "Enter an URL to poll:",
+    });
+    grid.attach(urlLabel, 0, 0, 1, 1);
     
-    this.settings.bind(
+    // URL entry
+    let urlEntry = new Gtk.Entry({
+        width_chars: 50,
+    });
+    grid.attach(urlEntry, 1, 0, 2, 1);
+    
+    // frequency label
+    let pollLabel = new Gtk.Label({
+        label: "Poll frequency (sec.):",
+    });    
+    grid.attach(pollLabel, 0, 1, 1, 1);
+    
+    // frequency spinButton
+    let adjustment = new Gtk.Adjustment ({
+      value: 10,
+      lower: 10,
+      upper: 300,
+      step_increment: 10,
+      page_increment: 60,
+      page_size: 0
+    });
+    let freqButton = new Gtk.SpinButton({
+        adjustment: adjustment,
+        value: 10,
+    });
+    grid.attach(freqButton, 1, 1, 1, 1);
+    
+    // bind to dconf gsettings
+    settings.bind(
         'url',
-        textbox,
+        urlEntry,
         'text',
+        Gio.SettingsBindFlags.DEFAULT
+    );
+    settings.bind(
+        'frequency',
+        freqButton,
+        'value',
         Gio.SettingsBindFlags.DEFAULT
     );
 
     return grid;
 }
+
