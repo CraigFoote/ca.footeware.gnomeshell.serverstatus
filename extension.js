@@ -11,7 +11,6 @@ const Mainloop = imports.mainloop;
 const GLib = imports.gi.GLib;
 const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
-const Lang = imports.lang;
 
 let serverStatus;
 let session;
