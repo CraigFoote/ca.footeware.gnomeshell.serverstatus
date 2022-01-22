@@ -62,7 +62,7 @@ function enable() {
 	Main.panel.addToStatusArea('Server Status', serverStatus, 1);
 	session = new Soup.SessionAsync();
 	clearInterval = GLib.source_remove;
-	update(getURL(), getFrequency() * 1000);
+	update(getURL());
 	intervalID = setInterval(() => update(getURL()), getFrequency() * 1000);
 }
 
