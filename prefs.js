@@ -86,7 +86,7 @@ function buildPrefsWidget() {
     
     // help label
     let helpLabel = new Gtk.Label({
-        label: 'HTTP HEAD is faster than GET but not always supported. If you get a red indicator, try switching to GET.\n\nIf you get a yellow indicator, there\'s something wrong with the URL. It should be of format [http|https]://host[:port][/path].',
+        label: 'HTTP HEAD is faster than GET but not always supported. If you get a red indicator, try switching to GET.\n\nIf you get a yellow indicator, there\'s something wrong with the URL. It should be of format http[s]://host[:port][/path].',
         halign: Gtk.Align.CENTER,
     });    
     grid.attach(helpLabel, 0, 3, 4, 1);

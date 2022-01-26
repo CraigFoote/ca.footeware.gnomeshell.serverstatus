@@ -5,7 +5,7 @@
         <key type="s" name="url">
             <default>"http://footeware.ca"</default>
             <summary>URL to poll</summary>
-            <description>[http|https]://host[:port][/path]</description>
+            <description>http[s]://host[:port][/path]</description>
         </key>
         <key type="i" name="frequency">
             <default>60</default>
