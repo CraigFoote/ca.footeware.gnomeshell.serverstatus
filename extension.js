@@ -51,7 +51,7 @@ const ServerStatus = GObject.registerClass({
 		
 	    this.menu.connect('open-state-changed', (open) => {
 			if (open){
-			    //settingsLabel.set_text(' ' + getURL() + ' @ ' + getFrequency() + ' seconds ');
+			    settingsLabel.set_text(' ' + getURL() + ' @ ' + getFrequency() + ' seconds ');
 			}
 		});
 	}
@@ -62,8 +62,8 @@ function enable() {
 	Main.panel.addToStatusArea('Server Status', serverStatus, 1);
 	session = new Soup.SessionAsync();
 	clearInterval = GLib.source_remove;
-	// update(getURL());
-	// intervalID = setInterval(() => update(getURL()), getFrequency() * 1000);
+	update(getURL());
+	intervalID = setInterval(() => update(getURL()), getFrequency() * 1000);
 }
 
 function disable() {
