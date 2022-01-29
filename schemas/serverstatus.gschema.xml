@@ -2,20 +2,10 @@
 <schemalist>
 
     <schema id="org.gnome.shell.extensions.serverstatus" path="/org/gnome/shell/extensions/serverstatus/">
-        <key type="s" name="url">
-            <default>"http://footeware.ca"</default>
-            <summary>URL to poll</summary>
-            <description>http[s]://host[:port][/path]</description>
-        </key>
-        <key type="i" name="frequency">
-            <default>60</default>
-            <summary>Poll frequency</summary>
-            <description>How often the URL is called.</description>
-        </key>
-        <key type="b" name="is-get">
-            <default>false</default>
-            <summary>Whether or not HTTP GET is used</summary>
-            <description>If not GET then assume HEAD is used.</description>
+        <key type="aa{ss}" name="server-settings">
+            <default>[{"url": "http://footeware.ca", "frequency": "30", "is_get": "false"}]</default>
+            <summary>A list of server setting maps</summary>
+            <description>A list of {url, frequency, is_get} keys mapped to string values, one list entry per server panel.</description>
         </key>
     </schema>
     

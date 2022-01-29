@@ -31,14 +31,14 @@ const ServerStatus = GObject.registerClass({
 }, class ServerStatus extends PanelMenu.Button {
 	_init() {
 		super._init(0);
-		
+
 		settings = ExtensionUtils.getSettings('org.gnome.shell.extensions.serverstatus');
 		
 		let path = Extension.dir.get_path();
-		serverIcon = Gio.icon_new_for_string(path + '/server.svg');
-		serverUpIcon = Gio.icon_new_for_string(path + '/server-up.svg');
-		serverDownIcon = Gio.icon_new_for_string(path + '/server-down.svg');
-		serverBadIcon = Gio.icon_new_for_string(path + '/server-bad.svg');
+		serverIcon = Gio.icon_new_for_string(path + '/assets/server.svg');
+		serverUpIcon = Gio.icon_new_for_string(path + '/assets/server-up.svg');
+		serverDownIcon = Gio.icon_new_for_string(path + '/assets/server-down.svg');
+		serverBadIcon = Gio.icon_new_for_string(path + '/assets/server-bad.svg');
 
 		icon = new St.Icon({
 			gicon: serverIcon,
@@ -51,7 +51,7 @@ const ServerStatus = GObject.registerClass({
 		
 	    this.menu.connect('open-state-changed', (open) => {
 			if (open){
-			    settingsLabel.set_text(' ' + getURL() + ' @ ' + getFrequency() + ' seconds ');
+			    //settingsLabel.set_text(' ' + getURL() + ' @ ' + getFrequency() + ' seconds ');
 			}
 		});
 	}
@@ -62,8 +62,8 @@ function enable() {
 	Main.panel.addToStatusArea('Server Status', serverStatus, 1);
 	session = new Soup.SessionAsync();
 	clearInterval = GLib.source_remove;
-	update(getURL());
-	intervalID = setInterval(() => update(getURL()), getFrequency() * 1000);
+	// update(getURL());
+	// intervalID = setInterval(() => update(getURL()), getFrequency() * 1000);
 }
 
 function disable() {
@@ -113,7 +113,4 @@ function getFrequency(){
 function getHttpMethod(){
     return settings.get_boolean('is-get') ? 'GET' : 'HEAD';
 }
-
-
-
 
