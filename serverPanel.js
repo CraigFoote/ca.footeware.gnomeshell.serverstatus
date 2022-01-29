@@ -5,13 +5,6 @@ const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 const serverSetting = Me.imports.serverSetting;
 
-let grid;
-let setting;
-let urlEntry;
-let freqButton;
-let getToggle;
-let id;
-
 /**
  * A `Gtk.Grid` displaying the controls to create a `ServerSetting`.
  * 
@@ -31,8 +24,7 @@ var ServerPanel = class ServerPanel {
     this.parent = parent;
     this.removeCallback = removeCallback;
     this.saveCallback = saveCallback;
-
-    id = this.guid();
+    this.id = this.guid();
   }
 
   /**
@@ -41,14 +33,14 @@ var ServerPanel = class ServerPanel {
    * @param {ServerSetting} savedSetting 
    */
   load(savedSetting) {
-    this.existingSetting = savedSetting;
+    this.savedSetting = savedSetting;
   }
 
   /**
    * Create the controls.
    */
   create() {
-    grid = new Gtk.Grid({
+    this.grid = new Gtk.Grid({
       hexpand: true,
       vexpand: false,
       row_homogeneous: false,
@@ -62,24 +54,24 @@ var ServerPanel = class ServerPanel {
       css_classes: ['bordered', 'padded', 'shadowed', 'lighter'],
     });
 
-    this.parent.append(grid);
+    this.parent.append(this.grid);
 
     // URL label
     const urlLabel = new Gtk.Label({
       label: 'Enter an URL to poll:',
       halign: Gtk.Align.CENTER,
     });
-    grid.attach(urlLabel, 0, 0, 1, 1);
+    this.grid.attach(urlLabel, 0, 0, 1, 1);
 
     // URL entry
-    urlEntry = new Gtk.Entry({
+    this.urlEntry = new Gtk.Entry({
       width_chars: 50,
     });
-    if (this.existingSetting && this.existingSetting.url) {
-      urlEntry.text = this.existingSetting.url;
+    if (this.savedSetting && this.savedSetting.url) {
+      this.urlEntry.text = this.savedSetting.url;
     }
-    grid.attach(urlEntry, 1, 0, 2, 1);
-    urlEntry.connect('changed', () => {
+    this.grid.attach(this.urlEntry, 1, 0, 2, 1);
+    this.urlEntry.connect('changed', () => {
       this.createSetting();
       this.saveCallback();
     });
@@ -89,10 +81,10 @@ var ServerPanel = class ServerPanel {
       label: 'Poll frequency (sec.):',
       halign: Gtk.Align.END,
     });
-    grid.attach(pollLabel, 0, 1, 1, 1);
+    this.grid.attach(pollLabel, 0, 1, 1, 1);
 
     // frequency spinButton
-    let adjustment = new Gtk.Adjustment({
+    const adjustment = new Gtk.Adjustment({
       value: 10,
       lower: 10,
       upper: 300,
@@ -101,12 +93,12 @@ var ServerPanel = class ServerPanel {
       page_size: 0
     });
 
-    freqButton = new Gtk.SpinButton({
+    this.freqButton = new Gtk.SpinButton({
       adjustment: adjustment,
-      value: this.existingSetting && this.existingSetting.frequency ? this.existingSetting.frequency : 60,
+      value: this.savedSetting && this.savedSetting.frequency ? this.savedSetting.frequency : 60,
     });
-    grid.attach(freqButton, 1, 1, 1, 1);
-    freqButton.connect('changed', () => {
+    this.grid.attach(this.freqButton, 1, 1, 1, 1);
+    this.freqButton.connect('changed', () => {
       this.createSetting();
       this.saveCallback();
     });
@@ -116,60 +108,61 @@ var ServerPanel = class ServerPanel {
       label: 'HTTP method:',
       halign: Gtk.Align.END,
     });
-    grid.attach(methodLabel, 0, 2, 1, 1);
+    this.grid.attach(methodLabel, 0, 2, 1, 1);
 
     // GET toggle
-    getToggle = Gtk.ToggleButton.new_with_label('GET');
-    getToggle.connect('toggled', () => {
+    this.getToggle = Gtk.ToggleButton.new_with_label('GET');
+    this.getToggle.set_active(this.savedSetting && this.savedSetting.is_get ? this.savedSetting.is_get === 'true' : false);
+    this.getToggle.connect('toggled', () => {
       this.createSetting();
       this.saveCallback();
     });
-    // getToggle.set_active(this.serverSetting ? this.serverSetting.is_get : false);
-    getToggle.set_active(this.existingSetting && this.existingSetting.is_get ? this.existingSetting.is_get === 'true' : false);
 
     // HEAD toggle
     const headToggle = Gtk.ToggleButton.new_with_label('HEAD');
+    headToggle.set_active(this.savedSetting && this.savedSetting.is_get ? this.savedSetting.is_get === 'false' : true);
     headToggle.connect('toggled', () => {
       this.createSetting();
       this.saveCallback();
     });
-    headToggle.set_active(this.existingSetting && this.existingSetting.is_get ? this.existingSetting.is_get === 'false' : true);
 
     // add them to the same group
-    getToggle.set_group(headToggle);
+    this.getToggle.set_group(headToggle);
 
-    grid.attach(getToggle, 1, 2, 1, 1);
-    grid.attach(headToggle, 2, 2, 1, 1);
+    this.grid.attach(this.getToggle, 1, 2, 1, 1);
+    this.grid.attach(headToggle, 2, 2, 1, 1);
 
     // remove server button
     const removeButton = Gtk.Button.new_with_label('Remove Server');
     removeButton.connect("clicked", () => { this.removeCallback(this); });
-    grid.attach(removeButton, 0, 3, 3, 1);
+    this.grid.attach(removeButton, 0, 3, 3, 1);
+
+    this.createSetting();
   }
 
   /**
    * Get the root widget.
    * 
-   * @returns 'Gtk.Grid`
+   * @returns Gtk.Grid
    */
   getGrid() {
-    return grid;
+    return this.grid;
   }
 
   /**
    * Get the settings specified in this panel's controls.
    * 
-   * @returns `ServerSetting`
+   * @returns ServerSetting
    */
   getSetting() {
-    return setting;
+    return this.setting;
   }
 
   createSetting() {
-    setting = new serverSetting.ServerSetting(
-      urlEntry.text,
-      freqButton.value,
-      getToggle.active
+    this.setting = new serverSetting.ServerSetting(
+      this.urlEntry.text,
+      this.freqButton.value,
+      this.getToggle.active
     );
   }
 
@@ -184,6 +177,6 @@ var ServerPanel = class ServerPanel {
   }
 
   getId() {
-    return id;
+    return this.id;
   }
 }

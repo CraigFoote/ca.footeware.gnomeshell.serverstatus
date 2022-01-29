@@ -8,7 +8,6 @@ const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 const serverSetting = Me.imports.serverSetting;
 const serverPanel = Me.imports.serverPanel;
-
 const prefSettings = ExtensionUtils.getSettings('org.gnome.shell.extensions.serverstatus');
 const serverPanels = [];
 let serversBox;
@@ -25,9 +24,9 @@ var init = function () {
 var buildPrefsWidget = function () {
 
   // get preferences from gsettings
-  let savedSettings = getPreferences();
+  const savedSettings = getPreferences();
 
-  // css
+  // css for all widgets
   readCss();
 
   // main container
@@ -41,16 +40,16 @@ var buildPrefsWidget = function () {
   // help label
   const helpLabel = new Gtk.Label({
     label: `HTTP HEAD is faster than GET but not always supported.\n
-    If you get a red indicator, try switching to GET.\n\n
-    If you get a yellow indicator, there's something wrong with the URL.\n
-    It should be of format http[s]://host[:port][/path].`,
+If you get a red indicator, try switching to GET.\n\n
+If you get a yellow indicator, there's something wrong with the URL.\n
+It should be of format http[s]://host[:port][/path].`,
     halign: Gtk.Align.CENTER,
   });
   mainBox.append(helpLabel);
 
   // scrolling container for all server panels
   const scroller = new Gtk.ScrolledWindow({
-    min_content_width: 1100,
+    min_content_width: 1000,
     min_content_height: 300,
     css_classes: ['bordered', 'lighter'],
   });
@@ -96,11 +95,11 @@ const getPreferences = function () {
   const saved = variant.deep_unpack();
   const serverSettings = [];
   for (let i = 0; i < saved.length; i++) {
-    let rawSetting = saved[i];
-    let url = rawSetting['url'];
-    let frequency = rawSetting['frequency'];
-    let is_get = rawSetting['is_get'];
-    let setting = new serverSetting.ServerSetting(url, frequency, is_get);
+    const rawSetting = saved[i];
+    const url = rawSetting['url'];
+    const frequency = rawSetting['frequency'];
+    const is_get = rawSetting['is_get'];
+    const setting = new serverSetting.ServerSetting(url, frequency, is_get);
     serverSettings.push(setting);
   }
   return serverSettings;
@@ -128,7 +127,6 @@ const removePanel = function (panel) {
   for (let i = 0; i < serverPanels.length; i++) {
     let serverPanel = serverPanels[i];
     if (serverPanel.getId() === panel.getId()) {
-      log('removing panel.getId()')
       // remove from js array
       serverPanels.splice(i, 1);
       // remove widget
@@ -151,8 +149,8 @@ var save = function () {
     settings.push(setting);
   }
   if (settings.length == 0) {
-    log('resetting prefs');
-    prefSettings.reset();
+    prefSettings.reset('server-settings');
+    Gio.Settings.sync();
   } else {
     prefSettings.set_value(
       'server-settings',
@@ -161,10 +159,15 @@ var save = function () {
         settings
       ),
     );
+    Gio.Settings.sync();
   }
-  log('saved ' + JSON.stringify(settings));
 }
 
+/**
+ * Convert non-string property values to strings.
+ * 
+ * @param {ServerSetting} setting 
+ */
 const stringify = function (setting) {
   setting.frequency = setting.frequency.toString();
   setting.is_get = setting.is_get ? 'true' : 'false';
