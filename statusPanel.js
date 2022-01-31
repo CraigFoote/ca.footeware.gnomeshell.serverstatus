@@ -22,12 +22,12 @@ let updateTaskbarCallback;
 var StatusPanel = GObject.registerClass({
   GTypeName: 'StatusPanel',
 }, class StatusPanel extends St.BoxLayout {
-  _init({ server_setting, update_icon_callback }) {
-    super._init({
-      style_class: 'main-box',
-    });
+  _init({ server_setting, update_icon_callback, ...otherProps } = {}) {
+    super._init(otherProps);
+
     this.setting = server_setting;
     this.updateTaskbarCallback = update_icon_callback;
+    this.style_class = 'main-box';
 
     this.session = new Soup.Session({
       timeout: 10, //seconds
