@@ -11,6 +11,7 @@ serverPanel.js \
 serverSetting.js \
 settingsEditor.js \
 status.js \
+statusPanel.js \
 prefs.css \
 stylesheet.css \
 assets \
