@@ -10,6 +10,8 @@ README.md \
 serverPanel.js \
 serverSetting.js \
 settingsEditor.js \
-styles.css \
+status.js \
+prefs.css \
+stylesheet.css \
 assets \
 schemas

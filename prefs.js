@@ -1,17 +1,12 @@
 'use strict';
 
-// const GLib = imports.gi.GLib;
 const Gtk = imports.gi.Gtk;
 const Gdk = imports.gi.Gdk;
-// const Gio = imports.gi.Gio;
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 const serverSetting = Me.imports.serverSetting;
-// const serverPanel = Me.imports.serverPanel;
 const settingsEditor = Me.imports.settingsEditor;
 const prefSettings = ExtensionUtils.getSettings('org.gnome.shell.extensions.serverstatus');
-// const serverPanels = [];
-// let serversBox;
 let savedSettings;
 
 /**
@@ -59,7 +54,7 @@ const getPreferences = function () {
  */
 const readCss = function () {
   const cssProvider = new Gtk.CssProvider();
-  cssProvider.load_from_path(Me.dir.get_path() + '/styles.css');
+  cssProvider.load_from_path(Me.dir.get_path() + '/prefs.css');
   Gtk.StyleContext.add_provider_for_display(
     Gdk.Display.get_default(),
     cssProvider,
