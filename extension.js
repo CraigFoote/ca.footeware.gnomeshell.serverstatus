@@ -60,7 +60,6 @@ const ServerStatus = GObject.registerClass({
                 server_setting: savedSetting,
                 update_icon_callback: this.updateIcon,
             });
-            log('adding ' + panel);
             this.menu.box.add_child(panel);
             statusPanels.push(panel);
         }
@@ -72,7 +71,6 @@ const ServerStatus = GObject.registerClass({
     }
 
     onPrefChanged() {
-        log('pref changed');
         statusPanels = [];
         this.menu.box.destroy_all_children();
         // get preferences from gsettings

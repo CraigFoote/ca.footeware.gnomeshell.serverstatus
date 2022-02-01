@@ -16,7 +16,6 @@ const clearInterval = GLib.source_remove;
 const serverSetting = Me.imports.serverSetting;
 const Status = Me.imports.status;
 
-let intervalID;
 let updateTaskbarCallback;
 
 var StatusPanel = GObject.registerClass({
@@ -53,21 +52,14 @@ var StatusPanel = GObject.registerClass({
     );
     this.add_child(settingsLabel);
 
-    intervalID = this.setInterval(() => this.update(this.setting.url), this.setting.frequency * 1000);
-  }
+    this.intervalID = this.setInterval(() => this.update(this.setting.url), this.setting.frequency * 1000);
 
-  run_dispose() {
-    clearInterval(intervalID);
-    this.serverIcon = null;
-    this.serverUpIcon = null;
-    this.serverDownIcon = null;
-    this.serverBadIcon = null;
-    super.run_dispose;
-  }
-
-  destroy(){
-    this.run_dispose();
-    super.destroy();
+    this.connect('destroy', (actor) => {
+      if (this.intervalID) {
+        clearInterval(this.intervalID);
+        this.intervalID = null;
+      }
+    });
   }
 
   getStatus() {
@@ -98,19 +90,13 @@ var StatusPanel = GObject.registerClass({
       let request = Soup.Message.new(httpMethod, url);
       this.session.queue_message(request, (session, message) => {
         const gicon = (message.status_code == 200) ? this.serverUpIcon : this.serverDownIcon;
-        log('before null check, icon is ' + icon);
-        if (icon != null) {
-          log('after null check, icon is ' + icon);
-          icon.gicon = gicon;
-          this.updateTaskbarCallback();
-        }
+        icon.gicon = gicon;
+        this.updateTaskbarCallback();
       });
     } catch (e) {
       // thrown with malformed URL
-      if (icon != null) {
-        icon.gicon = this.serverBadIcon;
-        this.updateTaskbarCallback();
-      }
+      icon.gicon = this.serverBadIcon;
+      this.updateTaskbarCallback();
     } finally {
       // not sure what this does
       return GLib.SOURCE_REMOVE;
