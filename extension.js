@@ -71,6 +71,8 @@ const ServerStatus = GObject.registerClass({
     }
 
     onPrefChanged() {
+        // show init icon
+        panelIcon.gicon = serverIcon;
         statusPanels = [];
         this.menu.box.destroy_all_children();
         // get preferences from gsettings

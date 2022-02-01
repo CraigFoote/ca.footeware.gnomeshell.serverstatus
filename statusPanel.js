@@ -52,6 +52,8 @@ var StatusPanel = GObject.registerClass({
     );
     this.add_child(settingsLabel);
 
+    // call once then schedule
+    this.update(this.setting.url);
     this.intervalID = this.setInterval(() => this.update(this.setting.url), this.setting.frequency * 1000);
 
     this.connect('destroy', (actor) => {
