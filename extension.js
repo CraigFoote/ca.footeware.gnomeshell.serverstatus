@@ -29,7 +29,6 @@ let extensionSettings;
 let extensionListenerId;
 
 function init() {
-    prefSettings = ExtensionUtils.getSettings(schemaId);
 }
 
 const ServerStatus = GObject.registerClass({
@@ -137,6 +136,7 @@ const ServerStatus = GObject.registerClass({
 });
 
 function enable() {
+    prefSettings = ExtensionUtils.getSettings(schemaId);
     serverStatus = new ServerStatus();
     Main.panel.addToStatusArea('Server Status', serverStatus, 1);
 }
@@ -147,6 +147,7 @@ function disable() {
     serverUpIcon = null;
     serverDownIcon = null;
     serverBadIcon = null;
+    prefSettings = null;
     if (serverStatus !== null) {
         serverStatus.destroy();
     }

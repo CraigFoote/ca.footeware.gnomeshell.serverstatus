@@ -1,7 +1,6 @@
 'use strict';
 
 const GLib = imports.gi.GLib;
-const Gtk = imports.gi.Gtk;
 const Gio = imports.gi.Gio;
 const St = imports.gi.St;
 const GObject = imports.gi.GObject;
