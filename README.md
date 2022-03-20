@@ -7,7 +7,7 @@ A gnome extension with indicator in task bar displaying status of entered web se
 - red for down 
 - yellow for bad URL
 
-The task bar shows the worst status from the set of all server status's in the popup menu. Server down is considered worse than bad url.
+The task bar shows the worst status from the set of all server statuses in the popup menu. Server down is considered worse than bad url.
 
 
 
