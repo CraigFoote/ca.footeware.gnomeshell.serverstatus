@@ -40,7 +40,7 @@ var SettingsEditor = class SettingsEditor {
     // main container
     this.mainBox = new Gtk.Box({
       orientation: Gtk.Orientation.VERTICAL,
-      spacing: 20,
+      spacing: 10,
       css_classes: ['padded'],
       homogeneous: false,
     });
@@ -57,7 +57,7 @@ It should be of format http[s]://host[:port][/path].`,
 
     // scrolling container for all server panels
     const scroller = new Gtk.ScrolledWindow({
-      min_content_width: 1000,
+      min_content_width: 700,
       min_content_height: 300,
       css_classes: ['bordered', 'lighter'],
     });
@@ -71,8 +71,7 @@ It should be of format http[s]://host[:port][/path].`,
     scroller.set_child(serversBox);
 
     // create a panel for each entry in serverSettings
-    for (let i = 0; i < this.savedSettings.length; i++) {
-      const aSetting = this.savedSettings[i];
+    for (const aSetting of this.savedSettings) {
       const newPanel = new serverPanel.ServerPanel(serversBox, removePanel, save);
       newPanel.load(aSetting);
       newPanel.create();
@@ -126,8 +125,7 @@ var removePanel = function (panel) {
  */
 var save = function () {
   const settings = [];
-  for (let i = 0; i < serverPanels.length; i++) {
-    const panel = serverPanels[i];
+  for (const panel of serverPanels) {
     const setting = panel.getSetting();
     // convert non-string property values to strings
     setting.frequency = setting.frequency.toString();

@@ -38,8 +38,8 @@ const getPreferences = function () {
   const variant = prefSettings.get_value('server-settings');
   const saved = variant.deep_unpack();
   const serverSettings = [];
-  for (let i = 0; i < saved.length; i++) {
-    const rawSetting = saved[i];
+  for (const element of saved) {
+    const rawSetting = element;
     const url = rawSetting['url'];
     const frequency = rawSetting['frequency'];
     const is_get = rawSetting['is_get'];
@@ -60,4 +60,3 @@ const readCss = function () {
     cssProvider,
     Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
 }
-
