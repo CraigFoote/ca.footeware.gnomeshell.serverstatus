@@ -60,12 +60,13 @@ var StatusPanel = GObject.registerClass({
 				clearInterval(this.intervalID);
 				this.intervalID = null;
 			}
+			delete this.panelIcon, this;
 		});
 	}
 
 	getStatus() {
-		if (this.panelIcon != null && this.panelIcon.gicon != null) {
-			switch (this.panelIcon.gicon) {
+		if (this.panelIcon?.gicon) {
+			switch (this.panelIcon?.gicon) {
 				case this.serverUpIcon:
 					return Status.Status.Up;
 					break;
@@ -91,27 +92,27 @@ var StatusPanel = GObject.registerClass({
 	}
 
 	get(httpMethod, url, icon) {
-	    try {
-		    let message = Soup.Message.new(httpMethod, url);
-		    this.session.send_and_read_async(
-			    message,
-			    GLib.PRIORITY_DEFAULT,
-			    null,
-			    (session, result) => {
-				    let gicon;
-				    if (message.get_status() === Soup.Status.OK) {
-					    gicon = this.serverUpIcon;
-				    } else {
-					    gicon = this.serverDownIcon;
-				    }
-				    icon.gicon = gicon;
-				    this.updateTaskbarCallback();
-				    // not sure what this does
-				    return GLib.SOURCE_REMOVE;
-			    }
+		try {
+			let message = Soup.Message.new(httpMethod, url);
+			this.session.send_and_read_async(
+				message,
+				GLib.PRIORITY_DEFAULT,
+				null,
+				(session, result) => {
+					let gicon;
+					if (message.get_status() === Soup.Status.OK) {
+						gicon = this.serverUpIcon;
+					} else {
+						gicon = this.serverDownIcon;
+					}
+					icon.gicon = gicon;
+					this.updateTaskbarCallback?.();
+					// not sure what this does
+					return GLib.SOURCE_REMOVE;
+				}
 			)
-		} catch(e){
-		    console.log(e);
+		} catch (e) {
+			// 
 		}
 	}
 

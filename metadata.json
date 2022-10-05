@@ -2,9 +2,8 @@
   "description": "Indicator displaying status of entered web server urls, green for up, red for down.",
   "name": "Server Status Indicator",
   "shell-version": [
-    "40",
-    "42",
-    "43"
+    "43",
+    "43.0"
   ],
   "url": "https://github.com/CraigFoote/ca.footeware.gnomeshell.serverstatus.git",
   "uuid": "serverstatus@footeware.ca",

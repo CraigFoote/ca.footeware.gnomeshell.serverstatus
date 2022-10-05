@@ -89,7 +89,7 @@ const ServerStatus = GObject.registerClass({
 	updateIcon() {
 		const statusList = [];
 		for (const element of statusPanels) {
-			statusList.push(element.getStatus());
+			statusList.push(element?.getStatus());
 		}
 		// determine worst status
 		let haveDown = false;
