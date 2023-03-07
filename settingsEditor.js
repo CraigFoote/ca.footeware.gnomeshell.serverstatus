@@ -40,7 +40,7 @@ var SettingsEditor = class SettingsEditor {
     // main container
     this.mainBox = new Gtk.Box({
       orientation: Gtk.Orientation.VERTICAL,
-      spacing: 10,
+      spacing: 5,
       css_classes: ['padded'],
       homogeneous: false,
     });
@@ -48,7 +48,7 @@ var SettingsEditor = class SettingsEditor {
     // help label
     const helpLabel = new Gtk.Label({
       label: `HTTP HEAD is faster than GET but not always supported.\n
-If you get a red indicator, try switching to GET.\n\n
+If you get a red indicator, try switching to GET.\n
 If you get a yellow indicator, there's something wrong with the URL.\n
 It should be of format http[s]://host[:port][/path].`,
       halign: Gtk.Align.CENTER,
@@ -58,7 +58,7 @@ It should be of format http[s]://host[:port][/path].`,
     // scrolling container for all server panels
     const scroller = new Gtk.ScrolledWindow({
       min_content_width: 700,
-      min_content_height: 300,
+      min_content_height: 250,
       css_classes: ['bordered', 'lighter'],
     });
     this.mainBox.append(scroller);

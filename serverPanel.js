@@ -45,12 +45,13 @@ var ServerPanel = class ServerPanel {
       vexpand: false,
       row_homogeneous: false,
       column_homogeneous: false,
-      column_spacing: 20,
-      row_spacing: 20,
-      margin_start: 20,
-      margin_top: 20,
-      margin_end: 20,
-      margin_bottom: 20,
+      column_spacing: 5,
+      row_spacing: 5,
+      margin_start: 5,
+      margin_top: 5,
+      margin_end: 5,
+      margin_bottom: 5,
+      halign: Gtk.Align.CENTER,
       css_classes: ['bordered', 'padded', 'shadowed', 'lighter'],
     });
 
@@ -65,7 +66,7 @@ var ServerPanel = class ServerPanel {
 
     // URL entry
     this.urlEntry = new Gtk.Entry({
-      width_chars: 50,
+      width_chars: 30,
     });
     if (this.savedSetting && this.savedSetting.url) {
       this.urlEntry.text = this.savedSetting.url;
