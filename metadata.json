@@ -3,11 +3,10 @@
   "name": "Server Status Indicator",
   "shell-version": [
     "43",
-    "44",
-    "44.rc"
+    "44"
   ],
   "url": "https://github.com/CraigFoote/ca.footeware.gnomeshell.serverstatus.git",
   "uuid": "serverstatus@footeware.ca",
   "settings-schema": "org.gnome.shell.extensions.serverstatus",
-  "version": 10
+  "version": 11
 }
