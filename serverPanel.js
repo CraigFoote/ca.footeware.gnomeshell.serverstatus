@@ -66,7 +66,7 @@ var ServerPanel = class ServerPanel {
 
     // URL entry
     this.urlEntry = new Gtk.Entry({
-      width_chars: 30,
+      width_chars: 40,
     });
     if (this.savedSetting && this.savedSetting.url) {
       this.urlEntry.text = this.savedSetting.url;
@@ -86,7 +86,7 @@ var ServerPanel = class ServerPanel {
 
     // frequency spinButton
     const adjustment = new Gtk.Adjustment({
-      value: 10,
+      value: 60,
       lower: 10,
       upper: 300,
       step_increment: 10,
@@ -98,7 +98,7 @@ var ServerPanel = class ServerPanel {
       adjustment: adjustment,
       value: this.savedSetting && this.savedSetting.frequency ? this.savedSetting.frequency : 60,
     });
-    this.grid.attach(this.freqButton, 1, 1, 1, 1);
+    this.grid.attach(this.freqButton, 1, 1, 2, 1);
     this.freqButton.connect('changed', () => {
       this.createSetting();
       this.saveCallback();

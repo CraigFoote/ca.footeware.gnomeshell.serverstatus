@@ -62,6 +62,7 @@ const ServerStatus = GObject.registerClass({
 			statusPanels.push(panel);
 		}
 
+        // listen for changes to server settings and update display
 		extensionSettings = ExtensionUtils.getSettings();
 		extensionListenerId = extensionSettings.connect('changed', () => {
 			this.onPrefChanged();
@@ -73,7 +74,7 @@ const ServerStatus = GObject.registerClass({
 		panelIcon.gicon = serverIcon;
 		statusPanels = [];
 		this.menu.box.destroy_all_children();
-		// get preferences from gsettings
+		// get preferences fresh from gsettings
 		savedSettings = this.getPreferences();
 		// panel items, one per server setting
 		for (const savedSetting of savedSettings) {

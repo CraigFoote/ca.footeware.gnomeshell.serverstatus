@@ -1,5 +1,6 @@
 'use strict';
 
+const Clutter = imports.gi.Clutter;
 const GLib = imports.gi.GLib;
 const Gio = imports.gi.Gio;
 const St = imports.gi.St;
@@ -45,6 +46,7 @@ var StatusPanel = GObject.registerClass({
 
 		const settingsLabel = new St.Label({
 			style_class: 'label',
+			y_align: Clutter.ActorAlign.CENTER,
 		});
 		settingsLabel.set_text(
 			(this.setting.is_get == 'true' ? 'GET' : 'HEAD') + ' : ' + this.setting.url + ' @ ' + this.setting.frequency + 's'
@@ -92,27 +94,29 @@ var StatusPanel = GObject.registerClass({
 	}
 
 	get(httpMethod, url, icon) {
-		try {
-			let message = Soup.Message.new(httpMethod, url);
-			this.session.send_and_read_async(
-				message,
-				GLib.PRIORITY_DEFAULT,
-				null,
-				(session, result) => {
-					let gicon;
-					if (message.get_status() === Soup.Status.OK) {
-						gicon = this.serverUpIcon;
-					} else {
-						gicon = this.serverDownIcon;
-					}
-					icon.gicon = gicon;
-					this.updateTaskbarCallback?.();
-					// not sure what this does
-					return GLib.SOURCE_REMOVE;
-				}
-			)
-		} catch (e) {
-			// 
+		let message = Soup.Message.new(httpMethod, url);
+		if (message) {
+		    this.session.send_and_read_async(
+			    message,
+			    GLib.PRIORITY_DEFAULT,
+			    null,
+			    (session, result) => {
+				    let gicon;
+				    if (message.get_status() === Soup.Status.OK) {
+					    gicon = this.serverUpIcon;
+				    } else {
+				    	gicon = this.serverDownIcon;
+				    }
+				    icon.gicon = gicon;
+				    this.updateTaskbarCallback?.();
+				    // not sure what this does
+				    return GLib.SOURCE_REMOVE;
+			    }
+		    )
+		} else {
+		    // message was null because of malformed url
+		    icon.gicon = this.serverBadIcon;
+		    this.updateTaskbarCallback?.();
 		}
 	}
 
