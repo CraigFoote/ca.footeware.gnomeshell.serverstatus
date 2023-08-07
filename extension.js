@@ -62,7 +62,7 @@ const ServerStatus = GObject.registerClass({
 			statusPanels.push(panel);
 		}
 
-        // listen for changes to server settings and update display
+        	// listen for changes to server settings and update display
 		extensionSettings = ExtensionUtils.getSettings();
 		extensionListenerId = extensionSettings.connect('changed', () => {
 			this.onPrefChanged();
