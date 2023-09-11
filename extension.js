@@ -1,90 +1,105 @@
 'use strict';
 
-const Gio = imports.gi.Gio;
-const GObject = imports.gi.GObject;
-const St = imports.gi.St;
-const Soup = imports.gi.Soup;
-const GLib = imports.gi.GLib;
-const PanelMenu = imports.ui.panelMenu;
-const PopupMenu = imports.ui.popupMenu;
-const Main = imports.ui.main;
-const Mainloop = imports.mainloop;
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-const statusPanel = Me.imports.statusPanel;
-const serverSetting = Me.imports.serverSetting;
-const Status = Me.imports.status;
-const schemaId = 'org.gnome.shell.extensions.serverstatus';
+import GObject from 'gi://GObject';
+import St from 'gi://St';
+import { Extension, gettext as _ } from 'resource:///org/gnome/shell/extensions/extension.js';
+import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import { ServerSetting } from './serverSetting.js';
+import { ServerStatusPanel } from './serverStatusPanel.js';
+import { Status } from './status.js';
+import { IconProvider } from './iconProvider.js';
 
-let statusPanels = [];
-let serverStatus;
-let panelIcon;
+let iconProvider;
 let serverIcon;
-let serverUpIcon;
-let serverDownIcon;
-let serverBadIcon;
-let prefSettings;
 let savedSettings;
-let extensionSettings;
+let panelIcon;
+let statusPanels;
 let extensionListenerId;
 
-function init() {
-}
+const Indicator = GObject.registerClass(
+	class Indicator extends PanelMenu.Button {
+		_init() {
+			super._init(0.0, _('Server Status Indicator'));
+			panelIcon = new St.Icon({
+				gicon: iconProvider.getIcon(Status.Init),
+				style_class: 'system-status-icon',
+			});
+			this.add_child(panelIcon);
+			statusPanels = [];
+		}
+	});
 
-const ServerStatus = GObject.registerClass({
-	GTypeName: 'ServerStatus',
-}, class ServerStatus extends PanelMenu.Button {
-	_init() {
-		super._init(0);
+export default class ServerStatusIndicatorExtension extends Extension {
+	enable() {
+		iconProvider = new IconProvider(this.path + '/assets/');
 
-		const path = Me.dir.get_path();
-		serverIcon = Gio.icon_new_for_string(path + '/assets/server.svg');
-		serverUpIcon = Gio.icon_new_for_string(path + '/assets/server-up.svg');
-		serverDownIcon = Gio.icon_new_for_string(path + '/assets/server-down.svg');
-		serverBadIcon = Gio.icon_new_for_string(path + '/assets/server-bad.svg');
+		this._settings = this.getSettings();
+		this._indicator = new Indicator();
 
-		// taskbar icon
-		panelIcon = new St.Icon({
-			gicon: serverIcon,
-			style_class: 'system-status-icon',
-		});
-		this.add_child(panelIcon);
+		Main.panel.addToStatusArea(this.uuid, this._indicator);
+		savedSettings = this.parseSettings();
 
-		// get preferences from gsettings
-		savedSettings = this.getPreferences();
 		// panel items, one per server setting
 		for (const savedSetting of savedSettings) {
-			const panel = new statusPanel.StatusPanel({
-				server_setting: savedSetting,
-				update_icon_callback: this.updateIcon,
-			});
-			this.menu.box.add_child(panel);
+			const panel = this.getPanel(savedSetting);
+			this._indicator.menu.box.add(panel);
 			statusPanels.push(panel);
 		}
 
-        	// listen for changes to server settings and update display
-		extensionSettings = ExtensionUtils.getSettings();
-		extensionListenerId = extensionSettings.connect('changed', () => {
+		// listen for changes to server settings and update display
+		extensionListenerId = this._settings.connect('changed', () => {
 			this.onPrefChanged();
 		});
 	}
 
+	disable() {
+		this._settings.disconnect(extensionListenerId);
+		this._indicator.destroy();
+		this._indicator = null;
+		this._settings = null;
+		savedSettings = null;
+		if (iconProvider) {
+			iconProvider.destroy();
+			iconProvider = null;
+		}
+		savedSettings = null;
+		panelIcon = null;
+	}
+
+	parseSettings() {
+		const variant = this._settings.get_value('server-settings');
+		const saved = variant.deep_unpack();
+		const savedSettings = [];
+		for (const rawSetting of saved) {
+			const url = rawSetting['url'];
+			const frequency = rawSetting['frequency'];
+			const is_get = rawSetting['is_get'];
+			const setting = new ServerSetting(url, frequency, is_get);
+			savedSettings.push(setting);
+		}
+		return savedSettings;
+	}
+
 	onPrefChanged() {
-		// show init icon
-		panelIcon.gicon = serverIcon;
+		panelIcon.gicon = iconProvider.getIcon(Status.Init);
 		statusPanels = [];
-		this.menu.box.destroy_all_children();
-		// get preferences fresh from gsettings
-		savedSettings = this.getPreferences();
+		this._indicator.menu.box.destroy_all_children();
+		savedSettings = this.parseSettings();
 		// panel items, one per server setting
 		for (const savedSetting of savedSettings) {
-			const panel = new statusPanel.StatusPanel({
-				server_setting: savedSetting,
-				update_icon_callback: this.updateIcon,
-			});
-			this.menu.box.add(panel);
+			const panel = this.getPanel(savedSetting);
+			this._indicator.menu.box.add(panel);
 			statusPanels.push(panel);
 		}
+	}
+
+	getPanel(setting) {
+		return new ServerStatusPanel({
+			server_setting: setting,
+			update_icon_callback: this.updateIcon,
+			icon_provider: iconProvider,
+		});
 	}
 
 	updateIcon() {
@@ -96,58 +111,20 @@ const ServerStatus = GObject.registerClass({
 		let haveDown = false;
 		let haveBad = false;
 		for (const s of statusList) {
-			if (s == Status.Status.Down) {
+			if (s == Status.Down) {
 				haveDown = true;
-			}
-			else if (s == Status.Status.Bad) {
+			} else if (s == Status.Bad) {
 				haveBad = true;
 			}
 		}
-		if (panelIcon != null) {
+		if (panelIcon) {
 			if (haveDown) {
-				panelIcon.gicon = serverDownIcon;
+				panelIcon.gicon = iconProvider.getIcon(Status.Down);
 			} else if (haveBad) {
-				panelIcon.gicon = serverBadIcon;
+				panelIcon.gicon = iconProvider.getIcon(Status.Bad);;
 			} else {
-				panelIcon.gicon = serverUpIcon;
+				panelIcon.gicon = iconProvider.getIcon(Status.Up);;
 			}
 		}
-	}
-
-	/**
-	 * Read and parse preferences from GSettings.
-	 * 
-	 * @returns a list of ServerSetting objects
-	 */
-	getPreferences() {
-		const variant = prefSettings.get_value('server-settings');
-		const saved = variant.deep_unpack();
-		const serverSettings = [];
-		for (const rawSetting of saved) {
-			const url = rawSetting['url'];
-			const frequency = rawSetting['frequency'];
-			const is_get = rawSetting['is_get'];
-			const setting = new serverSetting.ServerSetting(url, frequency, is_get);
-			serverSettings.push(setting);
-		}
-		return serverSettings;
-	}
-});
-
-function enable() {
-	prefSettings = ExtensionUtils.getSettings(schemaId);
-	serverStatus = new ServerStatus();
-	Main.panel.addToStatusArea('Server Status', serverStatus, 1);
-}
-
-function disable() {
-	extensionSettings.disconnect(extensionListenerId);
-	serverIcon = null;
-	serverUpIcon = null;
-	serverDownIcon = null;
-	serverBadIcon = null;
-	prefSettings = null;
-	if (serverStatus !== null) {
-		serverStatus.destroy();
 	}
 }
