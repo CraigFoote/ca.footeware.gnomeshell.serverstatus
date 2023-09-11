@@ -1,19 +1,19 @@
 @charset "UTF-8";
 
 .main-box {
-    border-width: 1px;
-    border-radius: 10px;
-    margin: 5px;
-    background-color: rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+	border-width: 1px;
+	border-radius: 10px;
+	margin: 5px;
+	background-color: rgba(255, 255, 255, 0.1);
+	box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
 }
 
 .icon {
-    width: 30px;
-    height: 30px;
-    padding: 5px;
+	width: 30px;
+	height: 30px;
+	padding: 5px;
 }
 
 .label {
-    padding: 5px;
+	padding: 5px;
 }

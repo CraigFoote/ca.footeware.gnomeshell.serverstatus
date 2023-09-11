@@ -1,13 +1,13 @@
 'use strict';
 
-var Status = class Status {
+export class Status {
 
-  static Init = Symbol("init")
-  static Up = Symbol("up")
-  static Down = Symbol("down")
-  static Bad = Symbol("bad")
+	static Init = Symbol("init")
+	static Up = Symbol("up")
+	static Down = Symbol("down")
+	static Bad = Symbol("bad")
 
-  constructor(name) {
-    this.name = name;
-  }
+	constructor(name) {
+		this.name = name;
+	}
 }
