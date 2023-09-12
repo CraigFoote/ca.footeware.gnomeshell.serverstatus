@@ -8,15 +8,12 @@ import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/
 import { ServerSetting } from './serverSetting.js';
 import { ServerGroup } from './serverGroup.js';
 
-let serverGroups;
-let prefSettings;
-
 export default class ServerStatusPreferences extends ExtensionPreferences {
 
 	fillPreferencesWindow(window) {
 		this.page = new Adw.PreferencesPage();
-		serverGroups = [];
-		prefSettings = this.getSettings();
+		this.serverGroups = [];
+		this.prefSettings = this.getSettings();
 
 		const helpGroup = new Adw.PreferencesGroup({
 			description: `HTTP HEAD is faster than GET but not always supported.\n
@@ -31,9 +28,15 @@ It should be of format http[s]://host[:port][/path].`,
 			title: 'Add a new server',
 		});
 		addRow.connect('activated', () => {
-			let newGroup = new ServerGroup(window, this.page, this.saveSettings, this.removeServer, null);
+			let newGroup = new ServerGroup(
+				window,
+				this.page,
+				this.saveSettings,
+				this.serverGroups,
+				this.prefSettings,
+				null); // controls will not be initialized
 			this.page.add(newGroup.getGroup());
-			serverGroups.push(newGroup);
+			this.serverGroups.push(newGroup);
 			this.saveSettings();
 		});
 		const addImage = Gtk.Image.new_from_icon_name('list-add-symbolic');
@@ -42,11 +45,17 @@ It should be of format http[s]://host[:port][/path].`,
 		this.addGroup.add(addRow);
 		this.page.add(this.addGroup);
 
-		const parsedSettings = this.parseSettings(prefSettings);
+		const parsedSettings = this.parseSettings(this.prefSettings);
 		for (const savedSettings of parsedSettings) {
-			let newGroup = new ServerGroup(window, this.page, this.saveSettings, this.removeServer, savedSettings);
+			let newGroup = new ServerGroup(
+				window,
+				this.page,
+				this.saveSettings,
+				this.serverGroups,
+				this.prefSettings,
+				savedSettings);
 			this.page.add(newGroup.getGroup());
-			serverGroups.push(newGroup);
+			this.serverGroups.push(newGroup);
 		}
 
 		window.add(this.page);
@@ -66,19 +75,9 @@ It should be of format http[s]://host[:port][/path].`,
 		return settings;
 	}
 
-	removeServer(server) {
-		for (let i = 0; i < serverGroups.length; i++) {
-			let candidate = serverGroups[i];
-			if (candidate.getId() === server.getId()) {
-				serverGroups.splice(i, 1);
-				break;
-			}
-		}
-	}
-
-	saveSettings() {
+	saveSettings(prefSettings) {
 		const serverSettingList = [];
-		for (const serverGroup of serverGroups) {
+		for (const serverGroup of this.serverGroups) {
 			const settings = serverGroup.getSettings();
 			if (settings) {
 				settings.url = settings.url.trim();
