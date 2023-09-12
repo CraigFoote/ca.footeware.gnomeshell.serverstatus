@@ -16,6 +16,7 @@ export class ServerGroup {
 		this.id = this.guid();
 		this.initComponents();
 		this.createServerSettings();
+		this.saveCallback(this.prefSettings);
 	}
 
 	initComponents() {
@@ -87,7 +88,7 @@ export class ServerGroup {
 		deleteRow.set_activatable_widget(deleteImage);
 		this.serverSettingGroup.add(deleteRow);
 	}
-	
+
 	removeServer() {
 		for (let i = 0; i < this.serverGroups.length; i++) {
 			let candidate = this.serverGroups[i];

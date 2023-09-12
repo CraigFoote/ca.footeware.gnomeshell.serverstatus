@@ -34,10 +34,10 @@ It should be of format http[s]://host[:port][/path].`,
 				this.saveSettings,
 				this.serverGroups,
 				this.prefSettings,
-				null); // controls will not be initialized
+				null); // widgets will not be initialized
 			this.page.add(newGroup.getGroup());
 			this.serverGroups.push(newGroup);
-			this.saveSettings();
+			this.saveSettings(this.prefSettings);
 		});
 		const addImage = Gtk.Image.new_from_icon_name('list-add-symbolic');
 		addRow.add_suffix(addImage);
@@ -87,17 +87,13 @@ It should be of format http[s]://host[:port][/path].`,
 			}
 		}
 		// persist
-		if (serverSettingList.length == 0) {
-			prefSettings.reset('server-settings');
-		} else {
-			prefSettings.set_value(
-				'server-settings',
-				new GLib.Variant(
-					'aa{ss}',
-					serverSettingList
-				)
-			);
-		}
+		prefSettings.set_value(
+			'server-settings',
+			new GLib.Variant(
+				'aa{ss}',
+				serverSettingList
+			)
+		);
 		Gio.Settings.sync();
 	}
 }
