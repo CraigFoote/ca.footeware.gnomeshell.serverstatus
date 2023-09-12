@@ -11,7 +11,6 @@ import { Status } from './status.js';
 import { IconProvider } from './iconProvider.js';
 
 let iconProvider;
-let serverIcon;
 let savedSettings;
 let panelIcon;
 let statusPanels;
@@ -65,6 +64,7 @@ export default class ServerStatusIndicatorExtension extends Extension {
 		}
 		savedSettings = null;
 		panelIcon = null;
+		statusPanels = [];
 	}
 
 	parseSettings() {
