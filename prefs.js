@@ -9,7 +9,6 @@ import { ServerSetting } from './serverSetting.js';
 import { ServerGroup } from './serverGroup.js';
 
 let serverGroups;
-let addGroup;
 let prefSettings;
 
 export default class ServerStatusPreferences extends ExtensionPreferences {
@@ -27,7 +26,7 @@ It should be of format http[s]://host[:port][/path].`,
 		});
 		this.page.add(helpGroup);
 
-		addGroup = new Adw.PreferencesGroup({});
+		this.addGroup = new Adw.PreferencesGroup({});
 		const addRow = new Adw.ActionRow({
 			title: 'Add a new server',
 		});
@@ -40,8 +39,8 @@ It should be of format http[s]://host[:port][/path].`,
 		const addImage = Gtk.Image.new_from_icon_name('list-add-symbolic');
 		addRow.add_suffix(addImage);
 		addRow.set_activatable_widget(addImage);
-		addGroup.add(addRow);
-		this.page.add(addGroup);
+		this.addGroup.add(addRow);
+		this.page.add(this.addGroup);
 
 		const parsedSettings = this.parseSettings(prefSettings);
 		for (const savedSettings of parsedSettings) {
