@@ -11,7 +11,6 @@ import { Status } from './status.js';
 import { IconProvider } from './iconProvider.js';
 
 let iconProvider;
-let serverIcon;
 let savedSettings;
 let panelIcon;
 let statusPanels;
@@ -51,6 +50,8 @@ export default class ServerStatusIndicatorExtension extends Extension {
 		extensionListenerId = this._settings.connect('changed', () => {
 			this.onPrefChanged();
 		});
+
+		this.onPrefChanged();
 	}
 
 	disable() {
@@ -65,6 +66,7 @@ export default class ServerStatusIndicatorExtension extends Extension {
 		}
 		savedSettings = null;
 		panelIcon = null;
+		statusPanels = [];
 	}
 
 	parseSettings() {
@@ -92,6 +94,7 @@ export default class ServerStatusIndicatorExtension extends Extension {
 			this._indicator.menu.box.add(panel);
 			statusPanels.push(panel);
 		}
+		this.updateIcon();
 	}
 
 	getPanel(setting) {
@@ -110,20 +113,25 @@ export default class ServerStatusIndicatorExtension extends Extension {
 		// determine worst status
 		let haveDown = false;
 		let haveBad = false;
+		let haveUp = false;
 		for (const s of statusList) {
 			if (s == Status.Down) {
 				haveDown = true;
 			} else if (s == Status.Bad) {
 				haveBad = true;
+			} else if (s == Status.Up) {
+				haveUp = true;
 			}
 		}
 		if (panelIcon) {
 			if (haveDown) {
 				panelIcon.gicon = iconProvider.getIcon(Status.Down);
 			} else if (haveBad) {
-				panelIcon.gicon = iconProvider.getIcon(Status.Bad);;
+				panelIcon.gicon = iconProvider.getIcon(Status.Bad);
+			} else if (haveUp) {
+				panelIcon.gicon = iconProvider.getIcon(Status.Up);
 			} else {
-				panelIcon.gicon = iconProvider.getIcon(Status.Up);;
+				panelIcon.gicon = iconProvider.getIcon(Status.Init);
 			}
 		}
 	}

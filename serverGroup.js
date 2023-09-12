@@ -6,15 +6,17 @@ import { ServerSetting } from './serverSetting.js';
 
 export class ServerGroup {
 
-	constructor(window, page, saveCallback, removeCallback, settings) {
+	constructor(window, page, saveCallback, serverGroups, prefSettings, settings) {
 		this.window = window;
 		this.page = page;
 		this.saveCallback = saveCallback;
-		this.removeCallback = removeCallback;
+		this.serverGroups = serverGroups;
+		this.prefSettings = prefSettings;
 		this.settings = settings;
 		this.id = this.guid();
 		this.initComponents();
 		this.createServerSettings();
+		this.saveCallback(this.prefSettings);
 	}
 
 	initComponents() {
@@ -28,7 +30,7 @@ export class ServerGroup {
 		});
 		this.urlRow.connect('apply', () => {
 			this.createServerSettings();
-			this.saveCallback();
+			this.saveCallback(this.prefSettings);
 		});
 		this.serverSettingGroup.add(this.urlRow);
 
@@ -38,7 +40,7 @@ export class ServerGroup {
 		this.frequencyRow.set_title('Frequency (secs.)');
 		this.frequencyRow.connect('input', () => {
 			this.createServerSettings();
-			this.saveCallback();
+			this.saveCallback(this.prefSettings);
 		})
 		this.serverSettingGroup.add(this.frequencyRow);
 
@@ -49,7 +51,7 @@ export class ServerGroup {
 		});
 		this.useGetSwitch.connect('notify::active', () => {
 			this.createServerSettings();
-			this.saveCallback();
+			this.saveCallback(this.prefSettings);
 		});
 		this.serverSettingGroup.add(this.useGetSwitch);
 
@@ -73,8 +75,8 @@ export class ServerGroup {
 			messageDialog.connect('response', (widget, responseId) => {
 				if (responseId === 'delete') {
 					this.createServerSettings();
-					this.removeCallback(this);
-					this.saveCallback();
+					this.removeServer();
+					this.saveCallback(this.prefSettings);
 					this.page.remove(this.serverSettingGroup);
 				}
 				messageDialog.destroy();
@@ -85,6 +87,16 @@ export class ServerGroup {
 		deleteRow.add_suffix(deleteImage);
 		deleteRow.set_activatable_widget(deleteImage);
 		this.serverSettingGroup.add(deleteRow);
+	}
+
+	removeServer() {
+		for (let i = 0; i < this.serverGroups.length; i++) {
+			let candidate = this.serverGroups[i];
+			if (candidate.getId() === this.getId()) {
+				this.serverGroups.splice(i, 1);
+				break;
+			}
+		}
 	}
 
 	getSettings() {

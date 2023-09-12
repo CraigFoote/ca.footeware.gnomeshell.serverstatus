@@ -7,7 +7,6 @@ import GObject from 'gi://GObject';
 import Soup from 'gi://Soup';
 import { Status } from './status.js';
 
-const clearInterval = GLib.source_remove;
 let updateTaskbarCallback;
 
 export const ServerStatusPanel = GObject.registerClass({
@@ -52,7 +51,7 @@ export const ServerStatusPanel = GObject.registerClass({
 
 		this.connect('destroy', (actor) => {
 			if (this.intervalID) {
-				clearInterval(this.intervalID);
+				GLib.source_remove(this.intervalID);
 				this.intervalID = null;
 			}
 			delete this.panelIcon, this;
