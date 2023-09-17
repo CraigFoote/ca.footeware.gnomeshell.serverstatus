@@ -7,24 +7,21 @@ import GObject from 'gi://GObject';
 import Soup from 'gi://Soup';
 import { Status } from './status.js';
 
-let updateTaskbarCallback;
-
 export const ServerStatusPanel = GObject.registerClass({
 	GTypeName: 'ServerStatusPanel',
 }, class ServerStatusPanel extends St.BoxLayout {
-	_init({
-		server_setting,
-		update_icon_callback,
-		icon_provider,
+	_init(
+		serverSetting,
+		updateTaskbarCallback,
+		iconProvider,
 		...otherProps
-	} = {}) {
+	) {
 		super._init(otherProps);
+		this.serverSetting = serverSetting;
+		this.updateTaskbarCallback = updateTaskbarCallback;
+		this.iconProvider = iconProvider;
 
 		this.style_class = 'main-box';
-
-		this.setting = server_setting;
-		this.updateTaskbarCallback = update_icon_callback;
-		this.iconProvider = icon_provider;
 
 		this.session = new Soup.Session({
 			timeout: 10, //seconds
@@ -41,15 +38,15 @@ export const ServerStatusPanel = GObject.registerClass({
 			y_align: Clutter.ActorAlign.CENTER,
 		});
 		settingsLabel.set_text(
-			(this.setting.is_get == 'true' ? 'GET' : 'HEAD') + ' : ' + this.setting.url + ' @ ' + this.setting.frequency + 's'
+			(serverSetting.is_get == 'true' ? 'GET' : 'HEAD') + ' : ' + serverSetting.url + ' @ ' + serverSetting.frequency + 's'
 		);
 		this.add_child(settingsLabel);
 
 		// call once then schedule
-		this.update(this.setting.url);
-		this.intervalID = this.setInterval(() => this.update(this.setting.url), this.setting.frequency * 1000);
+		this.update(serverSetting.url);
+		this.intervalID = this.setInterval(() => this.update(serverSetting.url), serverSetting.frequency * 1000);
 
-		this.connect('destroy', (actor) => {
+		this.connect('destroy', () => {
 			if (this.intervalID) {
 				GLib.source_remove(this.intervalID);
 				this.intervalID = null;
@@ -63,27 +60,27 @@ export const ServerStatusPanel = GObject.registerClass({
 	}
 
 	update(url) {
-		const httpMethod = this.setting.is_get == 'true' ? 'GET' : 'HEAD';
+		const httpMethod = this.serverSetting.is_get == 'true' ? 'GET' : 'HEAD';
 		this.get(httpMethod, url, this.panelIcon);
 		return GLib.SOURCE_CONTINUE;
 	}
 
-	get(httpMethod, url, icon) {
+	get(httpMethod, url, panelIcon) {
 		let message = Soup.Message.new(httpMethod, url);
 		if (message) {
 			this.session.send_and_read_async(
 				message,
 				GLib.PRIORITY_DEFAULT,
 				null,
-				(session, result) => {
-					let gicon;
-					if (message.get_status() === Soup.Status.OK) {
-						gicon = this.iconProvider.getIcon(Status.Up);
-					} else {
-						gicon = this.iconProvider.getIcon(Status.Down);
-					}
-					if (icon) {
-						icon.gicon = gicon;
+				() => {
+					if (panelIcon) {
+						let newIcon;
+						if (message.get_status() === Soup.Status.OK) {
+							newIcon = this.iconProvider.getIcon(Status.Up);
+						} else {
+							newIcon = this.iconProvider.getIcon(Status.Down);
+						}
+						panelIcon.gicon = newIcon;
 						this.updateTaskbarCallback?.();
 					}
 					return GLib.SOURCE_REMOVE;
@@ -91,7 +88,7 @@ export const ServerStatusPanel = GObject.registerClass({
 			)
 		} else {
 			// message was null because of malformed url
-			icon.gicon = this.iconProvider.getIcon(Status.Bad);
+			panelIcon.gicon = this.iconProvider.getIcon(Status.Bad);
 			this.updateTaskbarCallback?.();
 		}
 	}

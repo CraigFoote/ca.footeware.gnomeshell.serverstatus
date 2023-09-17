@@ -11,7 +11,7 @@ import { ServerGroup } from './serverGroup.js';
 export default class ServerStatusPreferences extends ExtensionPreferences {
 
 	fillPreferencesWindow(window) {
-		this.page = new Adw.PreferencesPage();
+		const page = new Adw.PreferencesPage();
 		this.serverGroups = [];
 		this.prefSettings = this.getSettings();
 
@@ -21,44 +21,43 @@ If you get a red indicator, try switching to GET.\n
 If you get a yellow indicator, there's something wrong with the URL.\n
 It should be of format http[s]://host[:port][/path].`,
 		});
-		this.page.add(helpGroup);
+		page.add(helpGroup);
 
-		this.addGroup = new Adw.PreferencesGroup({});
+		const addGroup = new Adw.PreferencesGroup({});
 		const addRow = new Adw.ActionRow({
 			title: 'Add a new server',
 		});
 		addRow.connect('activated', () => {
 			let newGroup = new ServerGroup(
 				window,
-				this.page,
-				this.saveSettings,
+				page,
 				this.serverGroups,
 				this.prefSettings,
+				this.saveSettings,
 				null); // widgets will not be initialized
-			this.page.add(newGroup.getGroup());
+			page.add(newGroup.getGroup());
 			this.serverGroups.push(newGroup);
-			this.saveSettings(this.prefSettings);
 		});
 		const addImage = Gtk.Image.new_from_icon_name('list-add-symbolic');
 		addRow.add_suffix(addImage);
 		addRow.set_activatable_widget(addImage);
-		this.addGroup.add(addRow);
-		this.page.add(this.addGroup);
+		addGroup.add(addRow);
+		page.add(addGroup);
 
 		const parsedSettings = this.parseSettings(this.prefSettings);
 		for (const savedSettings of parsedSettings) {
 			let newGroup = new ServerGroup(
 				window,
-				this.page,
-				this.saveSettings,
+				page,
 				this.serverGroups,
 				this.prefSettings,
+				this.saveSettings,
 				savedSettings);
-			this.page.add(newGroup.getGroup());
+			page.add(newGroup.getGroup());
 			this.serverGroups.push(newGroup);
 		}
 
-		window.add(this.page);
+		window.add(page);
 	}
 
 	parseSettings(rawSettings) {
@@ -68,16 +67,19 @@ It should be of format http[s]://host[:port][/path].`,
 		for (const rawSetting of savedRawSettings) {
 			const url = rawSetting['url'];
 			const frequency = rawSetting['frequency'];
-			const is_get = rawSetting['is_get'];
-			const setting = new ServerSetting(url, frequency, is_get);
+
+			let isGet;
+			isGet = rawSetting['is_get'];
+
+			const setting = new ServerSetting(url, frequency, isGet);
 			settings.push(setting);
 		}
 		return settings;
 	}
 
-	saveSettings(prefSettings) {
+	saveSettings(serverGroups, prefSettings) {
 		const serverSettingList = [];
-		for (const serverGroup of this.serverGroups) {
+		for (const serverGroup of serverGroups) {
 			const settings = serverGroup.getSettings();
 			if (settings) {
 				settings.url = settings.url.trim();

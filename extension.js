@@ -11,7 +11,6 @@ import { Status } from './status.js';
 import { IconProvider } from './iconProvider.js';
 
 let iconProvider;
-let savedSettings;
 let panelIcon;
 let statusPanels;
 let extensionListenerId;
@@ -33,21 +32,21 @@ export default class ServerStatusIndicatorExtension extends Extension {
 	enable() {
 		iconProvider = new IconProvider(this.path + '/assets/');
 
-		this._settings = this.getSettings();
-		this._indicator = new Indicator();
+		this.settings = this.getSettings();
+		this.indicator = new Indicator();
 
-		Main.panel.addToStatusArea(this.uuid, this._indicator);
-		savedSettings = this.parseSettings();
+		Main.panel.addToStatusArea(this.uuid, this.indicator);
+		this.savedSettings = this.parseSettings();
 
 		// panel items, one per server setting
-		for (const savedSetting of savedSettings) {
+		for (const savedSetting of this.savedSettings) {
 			const panel = this.getPanel(savedSetting);
-			this._indicator.menu.box.add(panel);
+			this.indicator.menu.box.add(panel);
 			statusPanels.push(panel);
 		}
 
 		// listen for changes to server settings and update display
-		extensionListenerId = this._settings.connect('changed', () => {
+		extensionListenerId = this.settings.connect('changed', () => {
 			this.onPrefChanged();
 		});
 
@@ -55,22 +54,21 @@ export default class ServerStatusIndicatorExtension extends Extension {
 	}
 
 	disable() {
-		this._settings.disconnect(extensionListenerId);
-		this._indicator.destroy();
-		this._indicator = null;
-		this._settings = null;
-		savedSettings = null;
+		this.settings.disconnect(extensionListenerId);
+		this.savedSettings = null;
+		this.indicator.destroy();
+		this.indicator = null;
+		this.settings = null;
 		if (iconProvider) {
 			iconProvider.destroy();
 			iconProvider = null;
 		}
-		savedSettings = null;
 		panelIcon = null;
 		statusPanels = [];
 	}
 
 	parseSettings() {
-		const variant = this._settings.get_value('server-settings');
+		const variant = this.settings.get_value('server-settings');
 		const saved = variant.deep_unpack();
 		const savedSettings = [];
 		for (const rawSetting of saved) {
@@ -86,40 +84,37 @@ export default class ServerStatusIndicatorExtension extends Extension {
 	onPrefChanged() {
 		panelIcon.gicon = iconProvider.getIcon(Status.Init);
 		statusPanels = [];
-		this._indicator.menu.box.destroy_all_children();
-		savedSettings = this.parseSettings();
+		this.indicator.menu.box.destroy_all_children();
+		this.savedSettings = this.parseSettings();
 		// panel items, one per server setting
-		for (const savedSetting of savedSettings) {
+		for (const savedSetting of this.savedSettings) {
 			const panel = this.getPanel(savedSetting);
-			this._indicator.menu.box.add(panel);
+			this.indicator.menu.box.add(panel);
 			statusPanels.push(panel);
 		}
 		this.updateIcon();
 	}
 
 	getPanel(setting) {
-		return new ServerStatusPanel({
-			server_setting: setting,
-			update_icon_callback: this.updateIcon,
-			icon_provider: iconProvider,
-		});
+		return new ServerStatusPanel(setting, this.updateIcon, iconProvider);
 	}
 
 	updateIcon() {
 		const statusList = [];
-		for (const element of statusPanels) {
-			statusList.push(element?.getStatus());
+		for (const statusPanel of statusPanels) {
+			const status = statusPanel.getStatus();
+			statusList.push(status);
 		}
 		// determine worst status
 		let haveDown = false;
 		let haveBad = false;
 		let haveUp = false;
 		for (const s of statusList) {
-			if (s == Status.Down) {
+			if (s === Status.Down) {
 				haveDown = true;
-			} else if (s == Status.Bad) {
+			} else if (s === Status.Bad) {
 				haveBad = true;
-			} else if (s == Status.Up) {
+			} else if (s === Status.Up) {
 				haveUp = true;
 			}
 		}
