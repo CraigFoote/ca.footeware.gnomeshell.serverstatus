@@ -15,6 +15,9 @@ let panelIcon;
 let statusPanels;
 let extensionListenerId;
 
+/**
+ * The taskbar indicator with a clickable icon showing worst status of all server statuses.
+ */
 const Indicator = GObject.registerClass(
 	class Indicator extends PanelMenu.Button {
 		_init() {
@@ -28,6 +31,10 @@ const Indicator = GObject.registerClass(
 		}
 	});
 
+/**
+ * The main extension class. Creates an <code>Indicator</code> and keeps 
+ * it updated based on status of specified servers settings.
+ */
 export default class ServerStatusIndicatorExtension extends Extension {
 	enable() {
 		iconProvider = new IconProvider(this.path + '/assets/');
@@ -49,10 +56,11 @@ export default class ServerStatusIndicatorExtension extends Extension {
 		extensionListenerId = this.settings.connect('changed', () => {
 			this.onPrefChanged();
 		});
-
-		this.onPrefChanged();
 	}
 
+	/**
+	 * Destroys and nulls artifacts for garbage collection.
+	 */
 	disable() {
 		this.settings.disconnect(extensionListenerId);
 		this.savedSettings = null;
@@ -66,7 +74,10 @@ export default class ServerStatusIndicatorExtension extends Extension {
 		panelIcon = null;
 		statusPanels = [];
 	}
-
+	
+	/**
+	 * Creates <code>ServerSettings</code> objects based on discovered gsettings entries.
+	 */
 	parseSettings() {
 		const variant = this.settings.get_value('server-settings');
 		const saved = variant.deep_unpack();
@@ -81,6 +92,9 @@ export default class ServerStatusIndicatorExtension extends Extension {
 		return savedSettings;
 	}
 
+	/**
+	 * Preferences have changed the set of server settings so we can update the indicator icon.
+	 */
 	onPrefChanged() {
 		panelIcon.gicon = iconProvider.getIcon(Status.Init);
 		statusPanels = [];
@@ -95,10 +109,16 @@ export default class ServerStatusIndicatorExtension extends Extension {
 		this.updateIcon();
 	}
 
+	/**
+	 * Create a <code>ServerStatusPanel</code> with a set of server settings.
+	 */
 	getPanel(setting) {
 		return new ServerStatusPanel(setting, this.updateIcon, iconProvider);
 	}
 
+	/**
+	 * Update the indicator icon based on changes in server settings.
+	 */
 	updateIcon() {
 		const statusList = [];
 		for (const statusPanel of statusPanels) {

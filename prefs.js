@@ -8,6 +8,9 @@ import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/
 import { ServerSetting } from './serverSetting.js';
 import { ServerGroup } from './serverGroup.js';
 
+/**
+ * The main preferences class that creates server groups and saves to gsettings.
+ */
 export default class ServerStatusPreferences extends ExtensionPreferences {
 
 	fillPreferencesWindow(window) {
@@ -15,6 +18,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
 		this.serverGroups = [];
 		this.prefSettings = this.getSettings();
 
+		// help group
 		const helpGroup = new Adw.PreferencesGroup({
 			description: `HTTP HEAD is faster than GET but not always supported.\n
 If you get a red indicator, try switching to GET.\n
@@ -23,11 +27,14 @@ It should be of format http[s]://host[:port][/path].`,
 		});
 		page.add(helpGroup);
 
+		// add group
 		const addGroup = new Adw.PreferencesGroup({});
 		const addRow = new Adw.ActionRow({
 			title: 'Add a new server',
 		});
-		addRow.connect('activated', () => {
+		const addButton = Gtk.Button.new_from_icon_name('list-add-symbolic');
+		addRow.add_suffix(addButton);
+		addButton.connect('clicked', () => {
 			let newGroup = new ServerGroup(
 				window,
 				page,
@@ -37,13 +44,12 @@ It should be of format http[s]://host[:port][/path].`,
 				null); // widgets will not be initialized
 			page.add(newGroup.getGroup());
 			this.serverGroups.push(newGroup);
+			this.saveSettings(this.serverGroups, this.prefSettings)
 		});
-		const addImage = Gtk.Image.new_from_icon_name('list-add-symbolic');
-		addRow.add_suffix(addImage);
-		addRow.set_activatable_widget(addImage);
 		addGroup.add(addRow);
 		page.add(addGroup);
 
+		// create one server group per discovered settings
 		const parsedSettings = this.parseSettings(this.prefSettings);
 		for (const savedSettings of parsedSettings) {
 			let newGroup = new ServerGroup(
@@ -60,6 +66,9 @@ It should be of format http[s]://host[:port][/path].`,
 		window.add(page);
 	}
 
+	/**
+	 * Create <code>ServerSetting</code> objects, one per gsettings entry.
+	 */
 	parseSettings(rawSettings) {
 		const variant = rawSettings.get_value('server-settings');
 		const savedRawSettings = variant.deep_unpack();
@@ -77,6 +86,9 @@ It should be of format http[s]://host[:port][/path].`,
 		return settings;
 	}
 
+	/**
+	 * Save current server settings to gsettings.
+	 */
 	saveSettings(serverGroups, prefSettings) {
 		const serverSettingList = [];
 		for (const serverGroup of serverGroups) {

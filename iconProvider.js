@@ -3,6 +3,9 @@
 import Gio from 'gi://Gio';
 import { Status } from './status.js';
 
+/**
+ * Provides gicons and their statuses. 
+ */
 export class IconProvider {
 
 	constructor(assetPath) {
@@ -12,6 +15,9 @@ export class IconProvider {
 		this.serverBadIcon = Gio.icon_new_for_string(assetPath + '/server-bad.svg');
 	}
 
+	/**
+	 * Get a gicon for the provided <code>Status</code>.
+	 */
 	getIcon(status) {
 		let icon;
 		switch (status) {
@@ -30,6 +36,9 @@ export class IconProvider {
 		return icon;
 	}
 
+	/**
+	 * Get a <code>Status</code> for the provided gicon.
+	 */
 	getStatus(icon) {
 		let status;
 		switch (icon) {
@@ -48,6 +57,9 @@ export class IconProvider {
 		return status;
 	}
 
+	/**
+	 * Sets all status-related gicons to null for garbage collection.
+	 */
 	destroy() {
 		this.serverIcon = null;
 		this.serverUpIcon = null;

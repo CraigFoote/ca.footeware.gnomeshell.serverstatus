@@ -4,6 +4,10 @@ import Gtk from 'gi://Gtk';
 import Adw from 'gi://Adw';
 import { ServerSetting } from './serverSetting.js';
 
+/**
+ * A new group is displayed when Add is clicked in the preferences dialog. 
+ * It displays controls for settings for a server.
+ */
 export class ServerGroup {
 
 	constructor(window, page, serverGroups, prefSettings, saveCallback, settings) {
@@ -48,7 +52,10 @@ export class ServerGroup {
 		const deleteRow = new Adw.ActionRow({
 			title: 'Delete this server',
 		});
-		deleteRow.connect('activated', () => {
+		const deleteButton = Gtk.Button.new_from_icon_name('edit-delete-symbolic');
+		deleteRow.add_suffix(deleteButton);
+		this.serverSettingGroup.add(deleteRow);
+		deleteButton.connect('clicked', () => {
 			const messageDialog = new Adw.MessageDialog({
 				transient_for: window,
 				destroy_with_parent: true,
@@ -72,23 +79,27 @@ export class ServerGroup {
 			});
 			messageDialog.present();
 		});
-		const deleteImage = Gtk.Image.new_from_icon_name('edit-delete-symbolic');
-		deleteRow.add_suffix(deleteImage);
-		deleteRow.set_activatable_widget(deleteImage);
-		this.serverSettingGroup.add(deleteRow);
-
+		
 		this.createServerSettings();
-		saveCallback(this.serverGroups, prefSettings);
 	}
 
+	/**
+	 * Return this group's server settings.
+	 */
 	getSettings() {
 		return this.settings;
 	}
 
+	/**
+	 * Return this group.
+	 */
 	getGroup() {
 		return this.serverSettingGroup;
 	}
 
+	/**
+	 * Create a <Code>ServerSetting</code> based on control values.
+	 */
 	createServerSettings() {
 		this.settings = new ServerSetting(
 			this.urlRow.text,
@@ -97,6 +108,9 @@ export class ServerGroup {
 		);
 	}
 
+	/**
+	 * Create a unique ID for this group.
+	 */
 	createUID() {
 		const buf = [];
 		const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -107,10 +121,16 @@ export class ServerGroup {
 		return buf.join('');
 	}
 
+	/**
+	 * Return this group's unique ID.
+	 */
 	getId() {
 		return this.id;
 	}
 
+	/**
+	 * Remove this group from the set of all groups.
+	 */
 	removeGroup(id) {
 		for (let i = 0; i < this.serverGroups.length; i++) {
 			let candidate = this.serverGroups[i];

@@ -7,6 +7,10 @@ import GObject from 'gi://GObject';
 import Soup from 'gi://Soup';
 import { Status } from './status.js';
 
+/**
+ * A series of these panels is shown when the indicator icon is clicked. 
+ * Each shows a server status and settings.
+ */
 export const ServerStatusPanel = GObject.registerClass({
 	GTypeName: 'ServerStatusPanel',
 }, class ServerStatusPanel extends St.BoxLayout {
@@ -31,6 +35,8 @@ export const ServerStatusPanel = GObject.registerClass({
 			gicon: this.iconProvider.getIcon(Status.Init),
 			style_class: 'icon',
 		});
+		let panelIconDisposed = false;
+		this.panelIcon.connect("destroy", () => panelIconDisposed = true);
 		this.add_child(this.panelIcon);
 
 		const settingsLabel = new St.Label({
@@ -43,7 +49,7 @@ export const ServerStatusPanel = GObject.registerClass({
 		this.add_child(settingsLabel);
 
 		// call once then schedule
-		this.update(serverSetting.url);
+		this.update(serverSetting.url, panelIconDisposed);
 		this.intervalID = this.setInterval(() => this.update(serverSetting.url), serverSetting.frequency * 1000);
 
 		this.connect('destroy', () => {
@@ -55,17 +61,29 @@ export const ServerStatusPanel = GObject.registerClass({
 		});
 	}
 
+	/**
+	 * Returns the status of the server this panel represents.
+	 * 
+	 * @return <code>Status</code>
+	 */
 	getStatus() {
 		return this.iconProvider.getStatus(this.panelIcon?.gicon);
 	}
 
-	update(url) {
+	/**
+	 * Update this panel by invoking the URL on a schedule.
+	 */
+	update(url, panelIconDisposed) {
 		const httpMethod = this.serverSetting.is_get == 'true' ? 'GET' : 'HEAD';
-		this.get(httpMethod, url, this.panelIcon);
+		this.get(httpMethod, url, this.panelIcon, panelIconDisposed);
 		return GLib.SOURCE_CONTINUE;
 	}
 
-	get(httpMethod, url, panelIcon) {
+	/**
+	 * Execute the URL invocation asynchronously and update the panel icon 
+	 * appropriately then trigger the updating of the indicator icon appropriately.
+	 */
+	get(httpMethod, url, panelIcon, panelIconDisposed) {
 		let message = Soup.Message.new(httpMethod, url);
 		if (message) {
 			this.session.send_and_read_async(
@@ -73,7 +91,7 @@ export const ServerStatusPanel = GObject.registerClass({
 				GLib.PRIORITY_DEFAULT,
 				null,
 				() => {
-					if (panelIcon) {
+					if (panelIcon && !panelIconDisposed) {
 						let newIcon;
 						if (message.get_status() === Soup.Status.OK) {
 							newIcon = this.iconProvider.getIcon(Status.Up);
@@ -93,6 +111,9 @@ export const ServerStatusPanel = GObject.registerClass({
 		}
 	}
 
+	/**
+	 * Schedule the URL invocation.
+	 */
 	setInterval(func, delay) {
 		return GLib.timeout_add(GLib.PRIORITY_DEFAULT, delay, func);
 	}
