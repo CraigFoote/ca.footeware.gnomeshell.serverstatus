@@ -15,8 +15,8 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
 
 	fillPreferencesWindow(window) {
 		const page = new Adw.PreferencesPage();
-		this.serverGroups = [];
-		this.prefSettings = this.getSettings();
+		const serverGroups = [];
+		const prefSettings = this.getSettings();
 
 		// help group
 		const helpGroup = new Adw.PreferencesGroup({
@@ -38,29 +38,29 @@ It should be of format http[s]://host[:port][/path].`,
 			let newGroup = new ServerGroup(
 				window,
 				page,
-				this.serverGroups,
-				this.prefSettings,
+				serverGroups,
+				prefSettings,
 				this.saveSettings,
 				null); // widgets will not be initialized
 			page.add(newGroup.getGroup());
-			this.serverGroups.push(newGroup);
-			this.saveSettings(this.serverGroups, this.prefSettings)
+			serverGroups.push(newGroup);
+			this.saveSettings(serverGroups, prefSettings)
 		});
 		addGroup.add(addRow);
 		page.add(addGroup);
 
 		// create one server group per discovered settings
-		const parsedSettings = this.parseSettings(this.prefSettings);
+		const parsedSettings = this.parseSettings(prefSettings);
 		for (const savedSettings of parsedSettings) {
 			let newGroup = new ServerGroup(
 				window,
 				page,
-				this.serverGroups,
-				this.prefSettings,
+				serverGroups,
+				prefSettings,
 				this.saveSettings,
 				savedSettings);
 			page.add(newGroup.getGroup());
-			this.serverGroups.push(newGroup);
+			serverGroups.push(newGroup);
 		}
 
 		window.add(page);
