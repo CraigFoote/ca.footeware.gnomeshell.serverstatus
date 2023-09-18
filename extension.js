@@ -63,6 +63,7 @@ export default class ServerStatusIndicatorExtension extends Extension {
 	 */
 	disable() {
 		this.settings.disconnect(extensionListenerId);
+		extensionListenerId = null;
 		this.savedSettings = null;
 		this.indicator.destroy();
 		this.indicator = null;
