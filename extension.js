@@ -39,21 +39,37 @@ export default class ServerStatusIndicatorExtension extends Extension {
 	enable() {
 		iconProvider = new IconProvider(this.path + '/assets/');
 
-		this.settings = this.getSettings();
+		// get settings stored in gsettings
+		this.rawSettings = this.getSettings();
 		this.indicator = new Indicator();
 
+		// add the indicator to the taskbar
 		Main.panel.addToStatusArea(this.uuid, this.indicator);
 		this.savedSettings = this.parseSettings();
 
+		// create a box to hold server panels
+		this.serversBox = new St.BoxLayout({
+			vertical: true,
+		});
+		this.indicator.menu.box.add(this.serversBox);
+
 		// panel items, one per server setting
 		for (const savedSetting of this.savedSettings) {
-			const panel = this.getPanel(savedSetting);
-			this.indicator.menu.box.add(panel);
+			const panel = new ServerStatusPanel(savedSetting, this.updateIcon, iconProvider);
+			this.serversBox.add(panel);
 			statusPanels.push(panel);
 		}
 
+		// Open Prefs button
+		const prefsButton = new St.Button({
+			icon_name: 'preferences-system-symbolic',
+			style_class: 'prefs-button',
+		});
+		prefsButton.connect('clicked', () => this.openPreferences());
+		this.indicator.menu.box.add(prefsButton);
+
 		// listen for changes to server settings and update display
-		extensionListenerId = this.settings.connect('changed', () => {
+		extensionListenerId = this.rawSettings.connect('changed', () => {
 			this.onPrefChanged();
 		});
 	}
@@ -62,12 +78,12 @@ export default class ServerStatusIndicatorExtension extends Extension {
 	 * Destroys and nulls artifacts for garbage collection.
 	 */
 	disable() {
-		this.settings.disconnect(extensionListenerId);
+		this.rawSettings.disconnect(extensionListenerId);
 		extensionListenerId = null;
 		this.savedSettings = null;
 		this.indicator.destroy();
 		this.indicator = null;
-		this.settings = null;
+		this.rawSettings = null;
 		if (iconProvider) {
 			iconProvider.destroy();
 			iconProvider = null;
@@ -75,12 +91,12 @@ export default class ServerStatusIndicatorExtension extends Extension {
 		panelIcon = null;
 		statusPanels = [];
 	}
-	
+
 	/**
 	 * Creates <code>ServerSettings</code> objects based on discovered gsettings entries.
 	 */
 	parseSettings() {
-		const variant = this.settings.get_value('server-settings');
+		const variant = this.rawSettings.get_value('server-settings');
 		const saved = variant.deep_unpack();
 		const savedSettings = [];
 		for (const rawSetting of saved) {
@@ -99,22 +115,16 @@ export default class ServerStatusIndicatorExtension extends Extension {
 	onPrefChanged() {
 		panelIcon.gicon = iconProvider.getIcon(Status.Init);
 		statusPanels = [];
-		this.indicator.menu.box.destroy_all_children();
+		// clear server box and repopulate
+		this.serversBox.destroy_all_children();
 		this.savedSettings = this.parseSettings();
 		// panel items, one per server setting
 		for (const savedSetting of this.savedSettings) {
-			const panel = this.getPanel(savedSetting);
-			this.indicator.menu.box.add(panel);
+			const panel = new ServerStatusPanel(savedSetting, this.updateIcon, iconProvider);
+			this.serversBox.add(panel);
 			statusPanels.push(panel);
 		}
 		this.updateIcon();
-	}
-
-	/**
-	 * Create a <code>ServerStatusPanel</code> with a set of server settings.
-	 */
-	getPanel(setting) {
-		return new ServerStatusPanel(setting, this.updateIcon, iconProvider);
 	}
 
 	/**
@@ -139,6 +149,7 @@ export default class ServerStatusIndicatorExtension extends Extension {
 				haveUp = true;
 			}
 		}
+		// set taskbar indicator icon with appropriate color
 		if (panelIcon) {
 			if (haveDown) {
 				panelIcon.gicon = iconProvider.getIcon(Status.Down);
