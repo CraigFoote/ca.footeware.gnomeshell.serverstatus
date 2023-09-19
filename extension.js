@@ -52,6 +52,10 @@ export default class ServerStatusIndicatorExtension extends Extension {
 			statusPanels.push(panel);
 		}
 
+		// Open Prefs button
+		this.createPrefsButton();
+		this.indicator.menu.box.add(this.prefsButton);
+
 		// listen for changes to server settings and update display
 		extensionListenerId = this.settings.connect('changed', () => {
 			this.onPrefChanged();
@@ -72,10 +76,11 @@ export default class ServerStatusIndicatorExtension extends Extension {
 			iconProvider.destroy();
 			iconProvider = null;
 		}
+		this.prefsButton = null;
 		panelIcon = null;
 		statusPanels = [];
 	}
-	
+
 	/**
 	 * Creates <code>ServerSettings</code> objects based on discovered gsettings entries.
 	 */
@@ -107,6 +112,8 @@ export default class ServerStatusIndicatorExtension extends Extension {
 			this.indicator.menu.box.add(panel);
 			statusPanels.push(panel);
 		}
+		this.createPrefsButton();
+		this.indicator.menu.box.add(this.prefsButton);
 		this.updateIcon();
 	}
 
@@ -115,6 +122,17 @@ export default class ServerStatusIndicatorExtension extends Extension {
 	 */
 	getPanel(setting) {
 		return new ServerStatusPanel(setting, this.updateIcon, iconProvider);
+	}
+
+	/**
+	 * Gets the button that opens preferences.
+	 */
+	createPrefsButton() {
+		this.prefsButton = new St.Button({
+			icon_name: 'preferences-system-symbolic',
+			style_class: 'prefs',
+		});
+		this.prefsButton.connect('clicked', () => this.openPreferences());
 	}
 
 	/**
