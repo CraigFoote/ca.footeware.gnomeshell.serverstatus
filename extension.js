@@ -106,7 +106,7 @@ export default class ServerStatusIndicatorExtension extends Extension {
 			const setting = new ServerSetting(url, frequency, is_get);
 			savedSettings.push(setting);
 		}
-		return savedSettings;
+		return savedSettings.reverse();
 	}
 
 	/**

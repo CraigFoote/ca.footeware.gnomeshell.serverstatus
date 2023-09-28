@@ -35,15 +35,18 @@ It should be of format http[s]://host[:port][/path].`,
 		const addButton = Gtk.Button.new_from_icon_name('list-add-symbolic');
 		addRow.add_suffix(addButton);
 		addButton.connect('clicked', () => {
-			let newGroup = new ServerGroup(
+			// ServerGroup is a wrapper around a PreferenceGroup, returned by getGroup()
+			const newGroup = new ServerGroup(
 				window,
 				page,
 				serverGroups,
 				prefSettings,
 				this.saveSettings,
 				null); // widgets will not be initialized
-			page.add(newGroup.getGroup());
+			newGroup.getGroup().insert_after(addGroup.parent, addGroup);
 			serverGroups.push(newGroup);
+			// make url field focused
+			newGroup.getUrlInput().grab_focus();
 			this.saveSettings(serverGroups, prefSettings)
 		});
 		addGroup.add(addRow);
@@ -52,14 +55,15 @@ It should be of format http[s]://host[:port][/path].`,
 		// create one server group per discovered settings
 		const parsedSettings = this.parseSettings(prefSettings);
 		for (const savedSettings of parsedSettings) {
-			let newGroup = new ServerGroup(
+			// ServerGroup is a wrapper around a PreferenceGroup, returned by getGroup()
+			const newGroup = new ServerGroup(
 				window,
 				page,
 				serverGroups,
 				prefSettings,
 				this.saveSettings,
 				savedSettings);
-			page.add(newGroup.getGroup());
+			newGroup.getGroup().insert_after(addGroup.parent, addGroup);
 			serverGroups.push(newGroup);
 		}
 

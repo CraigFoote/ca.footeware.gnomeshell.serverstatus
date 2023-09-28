@@ -96,6 +96,13 @@ export class ServerGroup {
 	getGroup() {
 		return this.serverSettingGroup;
 	}
+	
+	/**
+	 * Returns the URL EntryRow.
+	 */
+	getUrlInput(){
+		return this.urlRow;
+	}
 
 	/**
 	 * Create a <Code>ServerSetting</code> based on control values.
