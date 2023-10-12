@@ -44,7 +44,7 @@ export const ServerStatusPanel = GObject.registerClass({
 			y_align: Clutter.ActorAlign.CENTER,
 		});
 		settingsLabel.set_text(
-			(serverSetting.is_get == 'true' ? 'GET' : 'HEAD') + ' : ' + serverSetting.url + ' @ ' + serverSetting.frequency + 's'
+			(serverSetting.is_get == 'true' ? 'GET' : 'HEAD') + ' : ' + serverSetting.name + ' @ ' + serverSetting.frequency + 's'
 		);
 		this.add_child(settingsLabel);
 

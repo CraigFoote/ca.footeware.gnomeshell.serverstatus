@@ -14,6 +14,18 @@ export class ServerGroup {
 		this.id = this.createUID();
 		this.serverGroups = serverGroups;
 		this.serverSettingGroup = new Adw.PreferencesGroup({});
+		
+		// name text field
+		this.nameRow = new Adw.EntryRow({
+			title: 'Name',
+			text: (settings != undefined) ? settings.name : '',
+			show_apply_button: true,
+		});
+		this.nameRow.connect('apply', () => {
+			this.createServerSettings();
+			saveCallback(this.serverGroups, prefSettings);
+		});
+		this.serverSettingGroup.add(this.nameRow);
 
 		// url text field
 		this.urlRow = new Adw.EntryRow({
@@ -100,8 +112,8 @@ export class ServerGroup {
 	/**
 	 * Returns the URL EntryRow.
 	 */
-	getUrlInput(){
-		return this.urlRow;
+	getNameInput(){
+		return this.nameRow;
 	}
 
 	/**
@@ -109,6 +121,7 @@ export class ServerGroup {
 	 */
 	createServerSettings() {
 		this.settings = new ServerSetting(
+			this.nameRow.text,
 			this.urlRow.text,
 			this.frequencyRow.value,
 			this.useGetSwitch.active

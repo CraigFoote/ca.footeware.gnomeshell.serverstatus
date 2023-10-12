@@ -46,7 +46,7 @@ It should be of format http[s]://host[:port][/path].`,
 			newGroup.getGroup().insert_after(addGroup.parent, addGroup);
 			serverGroups.push(newGroup);
 			// make url field focused
-			newGroup.getUrlInput().grab_focus();
+			newGroup.getNameInput().grab_focus();
 			this.saveSettings(serverGroups, prefSettings)
 		});
 		addGroup.add(addRow);
@@ -78,13 +78,11 @@ It should be of format http[s]://host[:port][/path].`,
 		const savedRawSettings = variant.deep_unpack();
 		const settings = [];
 		for (const rawSetting of savedRawSettings) {
-			const url = rawSetting['url'];
-			const frequency = rawSetting['frequency'];
-
-			let isGet;
-			isGet = rawSetting['is_get'];
-
-			const setting = new ServerSetting(url, frequency, isGet);
+			const name = (rawSetting['name'] != undefined) ? rawSetting['name'] : '';
+			const url = (rawSetting['url'] != undefined) ? rawSetting['url'] : '';
+			const frequency = (rawSetting['frequency'] != undefined) ? rawSetting['frequency'] : '60';
+			const isGet = (rawSetting['is_get'] != undefined) ? rawSetting['is_get'] : 'false';
+			const setting = new ServerSetting(name, url, frequency, isGet);
 			settings.push(setting);
 		}
 		return settings;
@@ -98,6 +96,7 @@ It should be of format http[s]://host[:port][/path].`,
 		for (const serverGroup of serverGroups) {
 			const settings = serverGroup.getSettings();
 			if (settings) {
+				settings.name = settings.name.trim();
 				settings.url = settings.url.trim();
 				settings.frequency = settings.frequency.toString();
 				settings.is_get = settings.is_get.toString();
