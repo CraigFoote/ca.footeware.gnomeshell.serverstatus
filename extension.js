@@ -100,10 +100,11 @@ export default class ServerStatusIndicatorExtension extends Extension {
 		const saved = variant.deep_unpack();
 		const savedSettings = [];
 		for (const rawSetting of saved) {
-			const url = rawSetting['url'];
-			const frequency = rawSetting['frequency'];
-			const is_get = rawSetting['is_get'];
-			const setting = new ServerSetting(url, frequency, is_get);
+			const name = (rawSetting['name'] != undefined) ? rawSetting['name'] : '';
+			const url = (rawSetting['url'] != undefined) ? rawSetting['url'] : '';
+			const frequency = (rawSetting['frequency'] != undefined) ? rawSetting['frequency'] : '60';
+			const is_get = (rawSetting['is_get'] != undefined) ? rawSetting['is_get'] : 'false';
+			const setting = new ServerSetting(name, url, frequency, is_get);
 			savedSettings.push(setting);
 		}
 		return savedSettings.reverse();
