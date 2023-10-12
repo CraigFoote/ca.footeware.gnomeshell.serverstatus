@@ -4,11 +4,9 @@
 	<schema id="org.gnome.shell.extensions.serverstatus"
 		path="/org/gnome/shell/extensions/serverstatus/">
 		<key type="aa{ss}" name="server-settings">
-			<default>[{"url": "http://footeware.ca", "frequency": "30",
-				"is_get": "false"}]</default>
+			<default>[{"name": "Footeware", "url": "http://footeware.ca", "frequency": "60", "is_get": "false"}]</default>
 			<summary>A list of server setting maps</summary>
-			<description>A list of {url, frequency, is_get} keys mapped to
-				string values, one list entry per server panel.</description>
+			<description>A list of {name, url, frequency, is_get} keys mapped to string values, one list entry per server panel.</description>
 		</key>
 	</schema>
 
