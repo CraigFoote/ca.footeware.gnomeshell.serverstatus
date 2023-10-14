@@ -64,7 +64,7 @@ export const ServerStatusPanel = GObject.registerClass({
 	/**
 	 * Returns the status of the server this panel represents.
 	 * 
-	 * @return <code>Status</code>
+	 * @return {Status}
 	 */
 	getStatus() {
 		return this.iconProvider.getStatus(this.panelIcon?.gicon);
@@ -72,6 +72,9 @@ export const ServerStatusPanel = GObject.registerClass({
 
 	/**
 	 * Update this panel by invoking the URL on a schedule.
+	 * 
+	 * @param {String} url 
+	 * @param {boolean} panelIconDisposed whether the panel icon has been disposed
 	 */
 	update(url, panelIconDisposed) {
 		const httpMethod = this.serverSetting.is_get == 'true' ? 'GET' : 'HEAD';
@@ -82,6 +85,11 @@ export const ServerStatusPanel = GObject.registerClass({
 	/**
 	 * Execute the URL invocation asynchronously and update the panel icon 
 	 * appropriately then trigger the updating of the indicator icon appropriately.
+	 * 
+	 * @param {String} httpMethod
+	 * @param {String} url
+	 * @param {Gio.Icon} panelIcon
+	 * @param {boolean} panelIconDisposed    
 	 */
 	get(httpMethod, url, panelIcon, panelIconDisposed) {
 		let message = Soup.Message.new(httpMethod, url);
@@ -113,6 +121,9 @@ export const ServerStatusPanel = GObject.registerClass({
 
 	/**
 	 * Schedule the URL invocation.
+	 * 
+	 * @param {Function} func callback
+	 * @param {int} delay 
 	 */
 	setInterval(func, delay) {
 		return GLib.timeout_add(GLib.PRIORITY_DEFAULT, delay, func);

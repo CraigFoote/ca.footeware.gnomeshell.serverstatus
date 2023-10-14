@@ -13,6 +13,11 @@ import { ServerGroup } from './serverGroup.js';
  */
 export default class ServerStatusPreferences extends ExtensionPreferences {
 
+	/**
+	 * Called by system when preferences are opened.
+	 * 
+	 * @param {Gtk.Window} window 
+	 */
 	fillPreferencesWindow(window) {
 		this.window = window;
 		this.page = new Adw.PreferencesPage();
@@ -72,7 +77,13 @@ It should be of format http[s]://host[:port][/path].`,
 		window.add(this.page);
 	}
 
-	reorder(preferences, serverGroups, saveCallback, reorderCallback) {
+	/**
+	 * Render the displayed groups in their new order.
+	 * 
+	 * @param {ExtensionPreferences} preferences
+	 * @param {ServerGroup[]} serverGroups
+	 */
+	reorder(preferences, serverGroups) {
 		// remove all Adw.PreferenceGroups related to ServerGroups and...
 		for (const serverGroup of serverGroups) {
 			preferences.page.remove(serverGroup.getGroup());
@@ -86,11 +97,14 @@ It should be of format http[s]://host[:port][/path].`,
 
 	/**
 	 * Save current server settings to gsettings.
+	 * 
+	 * @param {ExtensionPreferences} preferences
+	 * @param {ServerGroup[]} serverGroups
 	 */
 	save(preferences, serverGroups) {
 		const serverSettingList = [];
 		for (const serverGroup of serverGroups) {
-			const settings = serverGroup.getSettings();
+			const settings = serverGroup.settings;
 			if (settings) {
 				settings.name = settings.name.trim();
 				settings.url = settings.url.trim();

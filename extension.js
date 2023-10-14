@@ -95,6 +95,8 @@ export default class ServerStatusIndicatorExtension extends Extension {
 
 	/**
 	 * Creates <code>ServerSettings</code> objects based on discovered gsettings entries.
+	 * 
+	 * @returns {ServerSettings[]}
 	 */
 	parseSettings() {
 		const variant = this.rawSettings.get_value('server-settings');

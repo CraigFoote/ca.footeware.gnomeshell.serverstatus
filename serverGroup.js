@@ -16,7 +16,7 @@ export class ServerGroup {
 	 * @param {ServerStatusPreferences} preferences 
 	 * @param {Function} saveCallback
 	 * @param {Function} reorderCallback
-	 * @param {ServerSetting} settings, may be null
+	 * @param {ServerSetting} settings, may be null in which case the expander is automatically opened and name field focused.
 	 */
 	constructor(preferences, serverGroups, saveCallback, reorderCallback, settings) {
 		this.id = this.createUID();
@@ -93,15 +93,17 @@ export class ServerGroup {
 		});
 		const moveUpButton = Gtk.Button.new_from_icon_name('go-up-symbolic');
 		moveUpButton.connect('clicked', () => {
-			this.moveUp(serverGroups);
-			reorderCallback(this.preferences, serverGroups, saveCallback, reorderCallback);
-			saveCallback(this.preferences, serverGroups);
+			if (this.moveUp(serverGroups)) { // does a move actually happen?
+				reorderCallback(this.preferences, serverGroups);
+				saveCallback(this.preferences, serverGroups);
+			}
 		});
 		const moveDownButton = Gtk.Button.new_from_icon_name('go-down-symbolic');
 		moveDownButton.connect('clicked', () => {
-			this.moveDown(serverGroups);
-			reorderCallback(this.preferences, serverGroups, saveCallback, reorderCallback);
-			saveCallback(this.preferences, serverGroups);
+			if (this.moveDown(serverGroups)) { // does a move actually happen?
+				reorderCallback(this.preferences, serverGroups);
+				saveCallback(this.preferences, serverGroups);
+			}
 		});
 		const moveButtonBox = Gtk.Box.new(Gtk.Orientation.GTK_ORIENTATION_HORIZONTAL, 10);
 		moveButtonBox.append(moveUpButton);
@@ -133,7 +135,7 @@ export class ServerGroup {
 			messageDialog.connect('response', (_, response) => {
 				if (response === 'delete') {
 					this.createServerSettings();
-					this.removeGroup(this.getId(), serverGroups);
+					this.removeGroup(this.id, serverGroups);
 					saveCallback(this.preferences, serverGroups);
 					this.preferences.page.remove(this.serverSettingGroup);
 				}
@@ -150,6 +152,11 @@ export class ServerGroup {
 		}
 	}
 
+	/**
+	 * Get the title based on current settings.
+	 * 
+	 * @returns {String}
+	 */
 	getTitle() {
 		if (this.settings == undefined || this.settings.name == undefined) {
 			return '';
@@ -158,6 +165,11 @@ export class ServerGroup {
 		}
 	}
 
+	/**
+	 * Get the subtitle based on current settings.
+	 * 
+	 * @returns {String}
+	 */
 	getSubtitle() {
 		if (this.settings == undefined || this.settings.url == undefined || this.settings.frequency == undefined || this.settings.is_get == undefined) {
 			return '';
@@ -166,35 +178,68 @@ export class ServerGroup {
 		}
 	}
 
+	/**
+	 * Update the expander title & subtitle after settings have changed.
+	 */
 	updateExpander() {
 		this.expander.set_title(this.getTitle());
 		this.expander.set_subtitle(this.getSubtitle());
 	}
 
+	/**
+	 * Move this {Adw.PreferenceGroup} down by one in the list.
+	 * 
+	 * @param {ServerGroup[]} serverGroups 
+	 * @returns true if a move occurred.
+	 */
 	moveDown(serverGroups) {
 		const index = this.getPosition(serverGroups);
 		if (index < serverGroups.length) {
 			this.move(index, index + 1, serverGroups);
+			return true;
 		}
+		return false;
 	}
 
+	/**
+	 * Move this <code>Adw.PreferenceGroup</code> up by one in the list.
+	 * 
+	 * @param {ServerGroup[]} serverGroups
+	 * @returns true if a move occurred.
+	 */
 	moveUp(serverGroups) {
 		const index = this.getPosition(serverGroups);
 		if (index > 0) {
 			this.move(index, index - 1, serverGroups);
+			return true;
 		}
+		return false;
 	}
 
+	/**
+	 * Find the index of this in the provided araay.
+	 * 
+	 * @param {ServerGroup[]} serverGroups
+	 * @returns int
+	 * @throws error if index cannot be determined
+	 */
 	getPosition(serverGroups) {
 		for (let i = 0; i < serverGroups.length; i++) {
 			let serverGroup = serverGroups[i];
-			if (serverGroup.getId() === this.getId()) {
+			if (serverGroup.id === this.id) {
 				return i;
 			}
 		}
 		throw "Position not found for " + this.nameRow.text;
 	}
 
+	/**
+	 * Move this in provided array using provided 'from' index and 'to' index.
+	 * 
+	 * @param {int} fromIndex
+	 * @param {int} toIndex
+	 * @param {ServerGroup[]} serverGroups
+	 */
 	move(fromIndex, toIndex, serverGroups) {
 		var serverGroup = serverGroups[fromIndex];
 		serverGroups.splice(fromIndex, 1);
@@ -204,6 +249,8 @@ export class ServerGroup {
 
 	/**
 	 * Return this group's server settings.
+	 * 
+	 * @returns {ServerSetting}
 	 */
 	getSettings() {
 		return this.settings;
@@ -211,13 +258,17 @@ export class ServerGroup {
 
 	/**
 	 * Return this group.
+	 * 
+	 * @returns {Adw.PreferencesGroup}
 	 */
 	getGroup() {
 		return this.serverSettingGroup;
 	}
 
 	/**
-	 * Returns the URL EntryRow.
+	 * Returns the Name EntryRow.
+	 * 
+	 * @returns {Adw.EntryRow}
 	 */
 	getNameInput() {
 		return this.nameRow;
@@ -237,6 +288,8 @@ export class ServerGroup {
 
 	/**
 	 * Create a unique ID for this group.
+	 * 
+	 * @returns {String}
 	 */
 	createUID() {
 		const buf = [];
@@ -249,19 +302,15 @@ export class ServerGroup {
 	}
 
 	/**
-	 * Return this group's unique ID.
-	 */
-	getId() {
-		return this.id;
-	}
-
-	/**
 	 * Remove this group from the set of all groups.
+	 * 
+	 * @param {String} id
+	 * @param {ServerGroup[]} serverGroups
 	 */
 	removeGroup(id, serverGroups) {
 		for (let i = 0; i < serverGroups.length; i++) {
 			let candidate = serverGroups[i];
-			if (candidate.getId() === id) {
+			if (candidate.id === id) {
 				serverGroups.splice(i, 1);
 				break;
 			}
