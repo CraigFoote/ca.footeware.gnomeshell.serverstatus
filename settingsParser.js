@@ -2,23 +2,26 @@
 
 import { ServerSetting } from './serverSetting.js';
 
+/**
+ * Convert <code>Gtk.Settings</code> into <code>ServerSettings</code>.
+ */
 export class SettingsParser {
 	
 	/**
-	 * Parse gsettings into ServerSettings.
+	 * Parse.
 	 *
-	 * @param {Gtk.Settings} rawSettings
-	 * @returns ServerSetting[]
+	 * @param {Gtk.Settings} gtkSettings
+	 * @returns {ServerSetting[]}
 	 */
-	static parse(rawSettings) {
-		const variant = rawSettings.get_value('server-settings');
-		const savedRawSettings = variant.deep_unpack();
+	static parse(gtkSettings) {
+		const variant = gtkSettings.get_value('server-settings');
+		const savedGtkSettings = variant.deep_unpack();
 		const settings = [];
-		for (const rawSetting of savedRawSettings) {
-			const name = (rawSetting['name'] != undefined) ? rawSetting['name'] : '';
-			const url = (rawSetting['url'] != undefined) ? rawSetting['url'] : '';
-			const frequency = (rawSetting['frequency'] != undefined) ? rawSetting['frequency'] : '60';
-			const isGet = (rawSetting['is_get'] != undefined) ? rawSetting['is_get'] : 'false';
+		for (const gtkSetting of savedGtkSettings) {
+			const name = (gtkSetting['name'] != undefined) ? gtkSetting['name'] : '';
+			const url = (gtkSetting['url'] != undefined) ? gtkSetting['url'] : '';
+			const frequency = (gtkSetting['frequency'] != undefined) ? gtkSetting['frequency'] : '60';
+			const isGet = (gtkSetting['is_get'] != undefined) ? gtkSetting['is_get'] : 'false';
 			const setting = new ServerSetting(name, url, frequency, isGet);
 			settings.push(setting);
 		}

@@ -86,11 +86,13 @@ It should be of format http[s]://host[:port][/path].`,
 	reorder(preferences, serverGroups) {
 		// remove all Adw.PreferenceGroups related to ServerGroups and...
 		for (const serverGroup of serverGroups) {
+			// remove it from whatever position it's in
 			preferences.page.remove(serverGroup.getGroup());
 		}
 
 		// ...add them back in new order
 		for (const serverGroup of serverGroups) {
+			// add sequentially
 			preferences.page.add(serverGroup.getGroup());
 		}
 	}
