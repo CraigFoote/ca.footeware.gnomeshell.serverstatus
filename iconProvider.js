@@ -8,6 +8,11 @@ import { Status } from './status.js';
  */
 export class IconProvider {
 
+	/**
+	 * Constructor.
+	 * 
+	 * @param {String} assetPath path to image resources
+	 */
 	constructor(assetPath) {
 		this.serverIcon = Gio.icon_new_for_string(assetPath + '/server.svg');
 		this.serverUpIcon = Gio.icon_new_for_string(assetPath + '/server-up.svg');
@@ -16,7 +21,10 @@ export class IconProvider {
 	}
 
 	/**
-	 * Get a gicon for the provided <code>Status</code>.
+	 * Get a gicon for the provided {Status}.
+	 * 
+	 * @param {Status} status
+	 * @returns {Gio.icon}
 	 */
 	getIcon(status) {
 		let icon;
@@ -37,7 +45,9 @@ export class IconProvider {
 	}
 
 	/**
-	 * Get a <code>Status</code> for the provided gicon.
+	 * Get a {Status} for the provided gicon.
+	 * 
+	 * @param {Gio.icon} icon
 	 */
 	getStatus(icon) {
 		let status;

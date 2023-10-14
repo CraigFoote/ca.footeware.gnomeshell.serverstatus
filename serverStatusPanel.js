@@ -3,13 +3,14 @@
 import Clutter from 'gi://Clutter';
 import GLib from 'gi://GLib';
 import St from 'gi://St';
+import Gio from 'gi://Gio';
 import GObject from 'gi://GObject';
 import Soup from 'gi://Soup';
 import { Status } from './status.js';
 
 /**
  * A series of these panels is shown when the indicator icon is clicked. 
- * Each shows a server status and settings.
+ * Each shows a server status and settings, and opens a browser to the URL when clicked.
  */
 export const ServerStatusPanel = GObject.registerClass({
 	GTypeName: 'ServerStatusPanel',
@@ -31,6 +32,7 @@ export const ServerStatusPanel = GObject.registerClass({
 			timeout: 10, //seconds
 		});
 
+		// icon displaying status by color
 		this.panelIcon = new St.Icon({
 			gicon: this.iconProvider.getIcon(Status.Init),
 			style_class: 'icon',
@@ -39,14 +41,14 @@ export const ServerStatusPanel = GObject.registerClass({
 		this.panelIcon.connect("destroy", () => panelIconDisposed = true);
 		this.add_child(this.panelIcon);
 
-		const settingsLabel = new St.Label({
+		// settings display, click to open browser
+		const settingsButton = new St.Button({
+			label: (serverSetting.is_get == 'true' ? 'GET' : 'HEAD') + ' : ' + serverSetting.name + ' @ ' + serverSetting.frequency + 's',
 			style_class: 'label',
 			y_align: Clutter.ActorAlign.CENTER,
 		});
-		settingsLabel.set_text(
-			(serverSetting.is_get == 'true' ? 'GET' : 'HEAD') + ' : ' + serverSetting.name + ' @ ' + serverSetting.frequency + 's'
-		);
-		this.add_child(settingsLabel);
+		settingsButton.connect('clicked', () => this.openBrowser(serverSetting.url));
+		this.add_child(settingsButton);
 
 		// call once then schedule
 		this.update(serverSetting.url, panelIconDisposed);
@@ -64,7 +66,7 @@ export const ServerStatusPanel = GObject.registerClass({
 	/**
 	 * Returns the status of the server this panel represents.
 	 * 
-	 * @return <code>Status</code>
+	 * @return {Status}
 	 */
 	getStatus() {
 		return this.iconProvider.getStatus(this.panelIcon?.gicon);
@@ -72,6 +74,9 @@ export const ServerStatusPanel = GObject.registerClass({
 
 	/**
 	 * Update this panel by invoking the URL on a schedule.
+	 * 
+	 * @param {String} url 
+	 * @param {boolean} panelIconDisposed whether the panel icon has been disposed
 	 */
 	update(url, panelIconDisposed) {
 		const httpMethod = this.serverSetting.is_get == 'true' ? 'GET' : 'HEAD';
@@ -82,6 +87,11 @@ export const ServerStatusPanel = GObject.registerClass({
 	/**
 	 * Execute the URL invocation asynchronously and update the panel icon 
 	 * appropriately then trigger the updating of the indicator icon appropriately.
+	 * 
+	 * @param {String} httpMethod
+	 * @param {String} url
+	 * @param {Gio.Icon} panelIcon
+	 * @param {boolean} panelIconDisposed    
 	 */
 	get(httpMethod, url, panelIcon, panelIconDisposed) {
 		let message = Soup.Message.new(httpMethod, url);
@@ -113,8 +123,15 @@ export const ServerStatusPanel = GObject.registerClass({
 
 	/**
 	 * Schedule the URL invocation.
+	 * 
+	 * @param {Function} func callback
+	 * @param {int} delay 
 	 */
 	setInterval(func, delay) {
 		return GLib.timeout_add(GLib.PRIORITY_DEFAULT, delay, func);
+	}
+
+	openBrowser(url) {
+		Gio.AppInfo.launch_default_for_uri_async(url, null, null, null);
 	}
 })

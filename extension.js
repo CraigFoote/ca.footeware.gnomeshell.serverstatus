@@ -53,8 +53,9 @@ export default class ServerStatusIndicatorExtension extends Extension {
 		});
 		this.indicator.menu.box.add(this.serversBox);
 
-		// panel items, one per server setting
-		for (const savedSetting of this.savedSettings) {
+		// panel items, one per server setting, add to top of list so it needs to be reversed
+		const reversedSettings = this.savedSettings;
+		for (const savedSetting of reversedSettings) {
 			const panel = new ServerStatusPanel(savedSetting, this.updateIcon, iconProvider);
 			this.serversBox.add(panel);
 			statusPanels.push(panel);
@@ -94,6 +95,8 @@ export default class ServerStatusIndicatorExtension extends Extension {
 
 	/**
 	 * Creates <code>ServerSettings</code> objects based on discovered gsettings entries.
+	 * 
+	 * @returns {ServerSettings[]}
 	 */
 	parseSettings() {
 		const variant = this.rawSettings.get_value('server-settings');
@@ -107,7 +110,7 @@ export default class ServerStatusIndicatorExtension extends Extension {
 			const setting = new ServerSetting(name, url, frequency, is_get);
 			savedSettings.push(setting);
 		}
-		return savedSettings.reverse();
+		return savedSettings;
 	}
 
 	/**

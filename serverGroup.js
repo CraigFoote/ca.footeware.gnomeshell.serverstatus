@@ -10,11 +10,34 @@ import { ServerSetting } from './serverSetting.js';
  */
 export class ServerGroup {
 
-	constructor(window, page, serverGroups, prefSettings, saveCallback, settings) {
+	/**
+	 * Constructor.
+	 * 
+	 * @param {ServerStatusPreferences} preferences 
+	 * @param {Function} saveCallback
+	 * @param {Function} reorderCallback
+	 * @param {ServerSetting} settings, may be null in which case the expander is automatically opened and name field focused.
+	 */
+	constructor(preferences, serverGroups, saveCallback, reorderCallback, settings) {
 		this.id = this.createUID();
-		this.serverGroups = serverGroups;
+		this.preferences = preferences;
+
 		this.serverSettingGroup = new Adw.PreferencesGroup({});
-		
+
+		// expander
+		this.expander = Adw.ExpanderRow.new();
+		let title = '';
+		if (settings != undefined) {
+			title = settings.name;
+		}
+		this.expander.set_title(title);
+		let subtitle = '';
+		if (settings != undefined) {
+			subtitle = (settings.is_get == 'true' ? 'GET' : 'HEAD') + ' : ' + settings.url + ' @ ' + settings.frequency + 's';
+		}
+		this.expander.set_subtitle(subtitle);
+		this.serverSettingGroup.add(this.expander);
+
 		// name text field
 		this.nameRow = new Adw.EntryRow({
 			title: 'Name',
@@ -23,9 +46,10 @@ export class ServerGroup {
 		});
 		this.nameRow.connect('apply', () => {
 			this.createServerSettings();
-			saveCallback(this.serverGroups, prefSettings);
+			saveCallback(preferences, serverGroups);
+			this.updateExpander();
 		});
-		this.serverSettingGroup.add(this.nameRow);
+		this.expander.add_row(this.nameRow);
 
 		// url text field
 		this.urlRow = new Adw.EntryRow({
@@ -35,9 +59,10 @@ export class ServerGroup {
 		});
 		this.urlRow.connect('apply', () => {
 			this.createServerSettings();
-			saveCallback(this.serverGroups, prefSettings);
+			saveCallback(preferences, serverGroups);
+			this.updateExpander();
 		});
-		this.serverSettingGroup.add(this.urlRow);
+		this.expander.add_row(this.urlRow);
 
 		// frequency spinner
 		this.frequencyRow = Adw.SpinRow.new_with_range(10, 300, 10);
@@ -45,31 +70,58 @@ export class ServerGroup {
 		this.frequencyRow.set_title('Frequency (secs.)');
 		this.frequencyRow.connect('input', () => {
 			this.createServerSettings();
-			saveCallback(this.serverGroups, prefSettings);
+			saveCallback(preferences, serverGroups);
+			this.updateExpander();
 		})
-		this.serverSettingGroup.add(this.frequencyRow);
+		this.expander.add_row(this.frequencyRow);
 
 		// 'use GET' switch
-		this.useGetSwitch = new Adw.SwitchRow({
+		this.useGetSwitchRow = new Adw.SwitchRow({
 			title: 'Use GET rather than HEAD',
 			active: (settings != undefined) ? !settings.is_get : false,
 		});
-		this.useGetSwitch.connect('notify::active', () => {
+		this.useGetSwitchRow.connect('notify::active', () => {
 			this.createServerSettings();
-			saveCallback(this.serverGroups, prefSettings);
+			saveCallback(preferences, serverGroups);
+			this.updateExpander();
 		});
-		this.serverSettingGroup.add(this.useGetSwitch);
+		this.expander.add_row(this.useGetSwitchRow);
+
+		// move up/down row
+		const moveRow = new Adw.ActionRow({
+			title: 'Move Up/Down',
+		});
+		const moveUpButton = Gtk.Button.new_from_icon_name('go-up-symbolic');
+		moveUpButton.connect('clicked', () => {
+			if (this.moveUp(serverGroups)) { // does a move actually happen?
+				reorderCallback(this.preferences, serverGroups);
+				saveCallback(this.preferences, serverGroups);
+			}
+		});
+		const moveDownButton = Gtk.Button.new_from_icon_name('go-down-symbolic');
+		moveDownButton.connect('clicked', () => {
+			if (this.moveDown(serverGroups)) { // does a move actually happen?
+				reorderCallback(this.preferences, serverGroups);
+				saveCallback(this.preferences, serverGroups);
+			}
+		});
+		const moveButtonBox = Gtk.Box.new(Gtk.Orientation.GTK_ORIENTATION_HORIZONTAL, 10);
+		moveButtonBox.append(moveUpButton);
+		moveButtonBox.append(moveDownButton);
+		moveRow.add_suffix(moveButtonBox);
+		this.serverSettingGroup.add(moveRow);
 
 		// delete button
 		const deleteRow = new Adw.ActionRow({
 			title: 'Delete this server',
 		});
 		const deleteButton = Gtk.Button.new_from_icon_name('edit-delete-symbolic');
+		deleteButton.set_css_classes(['destructive-action']);
 		deleteRow.add_suffix(deleteButton);
 		this.serverSettingGroup.add(deleteRow);
 		deleteButton.connect('clicked', () => {
 			const messageDialog = new Adw.MessageDialog({
-				transient_for: window,
+				transient_for: this.preferences.window,
 				destroy_with_parent: true,
 				modal: true,
 				heading: 'Confirm Delete',
@@ -80,23 +132,125 @@ export class ServerGroup {
 			messageDialog.set_response_appearance('delete', Adw.ResponseAppearance.ADW_RESPONSE_DESTRUCTIVE);
 			messageDialog.set_default_response('cancel');
 			messageDialog.set_close_response('cancel');
-			messageDialog.connect('response', (actor, response) => {
+			messageDialog.connect('response', (_, response) => {
 				if (response === 'delete') {
 					this.createServerSettings();
-					this.removeGroup(this.getId());
-					saveCallback(this.serverGroups, prefSettings);
-					page.remove(this.serverSettingGroup);
+					this.removeGroup(this.id, serverGroups);
+					saveCallback(this.preferences, serverGroups);
+					this.preferences.page.remove(this.serverSettingGroup);
 				}
 				messageDialog.destroy();
 			});
 			messageDialog.present();
 		});
-		
+
 		this.createServerSettings();
+
+		if (settings == undefined) {
+			this.expander.set_expanded(true);
+			this.nameRow.grab_focus();
+		}
+	}
+
+	/**
+	 * Get the title based on current settings.
+	 * 
+	 * @returns {String}
+	 */
+	getTitle() {
+		if (this.settings == undefined || this.settings.name == undefined) {
+			return '';
+		} else {
+			return (this.settings.name.length > 0) ? this.settings.name : 'unnamed';
+		}
+	}
+
+	/**
+	 * Get the subtitle based on current settings.
+	 * 
+	 * @returns {String}
+	 */
+	getSubtitle() {
+		if (this.settings == undefined || this.settings.url == undefined || this.settings.frequency == undefined || this.settings.is_get == undefined) {
+			return '';
+		} else {
+			return (this.settings.is_get == 'true' ? 'GET' : 'HEAD') + ' : ' + this.settings.url + ' @ ' + this.settings.frequency + 's';
+		}
+	}
+
+	/**
+	 * Update the expander title & subtitle after settings have changed.
+	 */
+	updateExpander() {
+		this.expander.set_title(this.getTitle());
+		this.expander.set_subtitle(this.getSubtitle());
+	}
+
+	/**
+	 * Move this {Adw.PreferenceGroup} down by one in the list.
+	 * 
+	 * @param {ServerGroup[]} serverGroups 
+	 * @returns true if a move occurred.
+	 */
+	moveDown(serverGroups) {
+		const index = this.getPosition(serverGroups);
+		if (index < serverGroups.length) {
+			this.move(index, index + 1, serverGroups);
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Move this <code>Adw.PreferenceGroup</code> up by one in the list.
+	 * 
+	 * @param {ServerGroup[]} serverGroups
+	 * @returns true if a move occurred.
+	 */
+	moveUp(serverGroups) {
+		const index = this.getPosition(serverGroups);
+		if (index > 0) {
+			this.move(index, index - 1, serverGroups);
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Find the index of this in the provided araay.
+	 * 
+	 * @param {ServerGroup[]} serverGroups
+	 * @returns int
+	 * @throws error if index cannot be determined
+	 */
+	getPosition(serverGroups) {
+		for (let i = 0; i < serverGroups.length; i++) {
+			let serverGroup = serverGroups[i];
+			if (serverGroup.id === this.id) {
+				return i;
+			}
+		}
+		throw "Position not found for " + this.nameRow.text;
+	}
+
+	/**
+	 * Move this in provided array using provided 'from' index and 'to' index.
+	 * 
+	 * @param {int} fromIndex
+	 * @param {int} toIndex
+	 * @param {ServerGroup[]} serverGroups
+	 */
+	move(fromIndex, toIndex, serverGroups) {
+		var serverGroup = serverGroups[fromIndex];
+		serverGroups.splice(fromIndex, 1);
+		serverGroups.splice(toIndex, 0, serverGroup);
+		return serverGroups;
 	}
 
 	/**
 	 * Return this group's server settings.
+	 * 
+	 * @returns {ServerSetting}
 	 */
 	getSettings() {
 		return this.settings;
@@ -104,15 +258,19 @@ export class ServerGroup {
 
 	/**
 	 * Return this group.
+	 * 
+	 * @returns {Adw.PreferencesGroup}
 	 */
 	getGroup() {
 		return this.serverSettingGroup;
 	}
-	
+
 	/**
-	 * Returns the URL EntryRow.
+	 * Returns the Name EntryRow.
+	 * 
+	 * @returns {Adw.EntryRow}
 	 */
-	getNameInput(){
+	getNameInput() {
 		return this.nameRow;
 	}
 
@@ -124,12 +282,14 @@ export class ServerGroup {
 			this.nameRow.text,
 			this.urlRow.text,
 			this.frequencyRow.value,
-			this.useGetSwitch.active
+			this.useGetSwitchRow.active
 		);
 	}
 
 	/**
 	 * Create a unique ID for this group.
+	 * 
+	 * @returns {String}
 	 */
 	createUID() {
 		const buf = [];
@@ -142,20 +302,16 @@ export class ServerGroup {
 	}
 
 	/**
-	 * Return this group's unique ID.
-	 */
-	getId() {
-		return this.id;
-	}
-
-	/**
 	 * Remove this group from the set of all groups.
+	 * 
+	 * @param {String} id
+	 * @param {ServerGroup[]} serverGroups
 	 */
-	removeGroup(id) {
-		for (let i = 0; i < this.serverGroups.length; i++) {
-			let candidate = this.serverGroups[i];
-			if (candidate.getId() === id) {
-				this.serverGroups.splice(i, 1);
+	removeGroup(id, serverGroups) {
+		for (let i = 0; i < serverGroups.length; i++) {
+			let candidate = serverGroups[i];
+			if (candidate.id === id) {
+				serverGroups.splice(i, 1);
 				break;
 			}
 		}
