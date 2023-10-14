@@ -18,10 +18,9 @@ export class ServerGroup {
 	 * @param {Function} reorderCallback
 	 * @param {ServerSetting} settings, may be null
 	 */
-	constructor(preferences, saveCallback, reorderCallback, settings) {
+	constructor(preferences, serverGroups, saveCallback, reorderCallback, settings) {
 		this.id = this.createUID();
 		this.preferences = preferences;
-		this.window = window;
 
 		this.serverSettingGroup = new Adw.PreferencesGroup({});
 
@@ -47,7 +46,7 @@ export class ServerGroup {
 		});
 		this.nameRow.connect('apply', () => {
 			this.createServerSettings();
-			saveCallback(preferences.serverGroups, preferences.prefSettings);
+			saveCallback(preferences, serverGroups);
 			this.updateExpander();
 		});
 		this.expander.add_row(this.nameRow);
@@ -60,7 +59,7 @@ export class ServerGroup {
 		});
 		this.urlRow.connect('apply', () => {
 			this.createServerSettings();
-			saveCallback(this.serverGroups, prefSettings);
+			saveCallback(preferences, serverGroups);
 			this.updateExpander();
 		});
 		this.expander.add_row(this.urlRow);
@@ -71,7 +70,7 @@ export class ServerGroup {
 		this.frequencyRow.set_title('Frequency (secs.)');
 		this.frequencyRow.connect('input', () => {
 			this.createServerSettings();
-			saveCallback(preferences.serverGroups, preferences.prefSettings);
+			saveCallback(preferences, serverGroups);
 			this.updateExpander();
 		})
 		this.expander.add_row(this.frequencyRow);
@@ -83,7 +82,7 @@ export class ServerGroup {
 		});
 		this.useGetSwitchRow.connect('notify::active', () => {
 			this.createServerSettings();
-			saveCallback(preferences.serverGroups, preferences.prefSettings);
+			saveCallback(preferences, serverGroups);
 			this.updateExpander();
 		});
 		this.expander.add_row(this.useGetSwitchRow);
@@ -94,15 +93,15 @@ export class ServerGroup {
 		});
 		const moveUpButton = Gtk.Button.new_from_icon_name('go-up-symbolic');
 		moveUpButton.connect('clicked', () => {
-			this.moveUp();
-			saveCallback(preferences.serverGroups, preferences.prefSettings);
-			reorderCallback(preferences, saveCallback);
+			this.moveUp(serverGroups);
+			reorderCallback(this.preferences, serverGroups, saveCallback, reorderCallback);
+			saveCallback(this.preferences, serverGroups);
 		});
 		const moveDownButton = Gtk.Button.new_from_icon_name('go-down-symbolic');
 		moveDownButton.connect('clicked', () => {
-			this.moveDown();
-			saveCallback(preferences.serverGroups, preferences.prefSettings);
-			reorderCallback(preferences, saveCallback);
+			this.moveDown(serverGroups);
+			reorderCallback(this.preferences, serverGroups, saveCallback, reorderCallback);
+			saveCallback(this.preferences, serverGroups);
 		});
 		const moveButtonBox = Gtk.Box.new(Gtk.Orientation.GTK_ORIENTATION_HORIZONTAL, 10);
 		moveButtonBox.append(moveUpButton);
@@ -134,9 +133,9 @@ export class ServerGroup {
 			messageDialog.connect('response', (_, response) => {
 				if (response === 'delete') {
 					this.createServerSettings();
-					this.removeGroup(this.getId());
-					saveCallback(this.preferences.serverGroups, this.preferences.prefSettings);
-					this.page.remove(this.serverSettingGroup);
+					this.removeGroup(this.getId(), serverGroups);
+					saveCallback(this.preferences, serverGroups);
+					this.preferences.page.remove(this.serverSettingGroup);
 				}
 				messageDialog.destroy();
 			});
@@ -172,34 +171,35 @@ export class ServerGroup {
 		this.expander.set_subtitle(this.getSubtitle());
 	}
 
-	moveUp() {
-		const position = this.getPosition();
-		if (position > 0) {
-			this.move(position, position - 1);
+	moveDown(serverGroups) {
+		const index = this.getPosition(serverGroups);
+		if (index < serverGroups.length) {
+			this.move(index, index + 1, serverGroups);
 		}
 	}
 
-	moveDown() {
-		const position = this.getPosition();
-		if (position < this.preferences.serverGroups.length) {
-			this.move(position, position + 1);
+	moveUp(serverGroups) {
+		const index = this.getPosition(serverGroups);
+		if (index > 0) {
+			this.move(index, index - 1, serverGroups);
 		}
 	}
 
-	getPosition() {
-		for (let i = 0; i < this.preferences.serverGroups.length; i++) {
-			let candidate = this.preferences.serverGroups[i];
-			if (candidate.getId() === this.getId()) {
+	getPosition(serverGroups) {
+		for (let i = 0; i < serverGroups.length; i++) {
+			let serverGroup = serverGroups[i];
+			if (serverGroup.getId() === this.getId()) {
 				return i;
 			}
 		}
-		return -1;
+		throw "Position not found for " + this.nameRow.text;
 	}
 
-	move(fromIndex, toIndex) {
-		var serverGroup = this.preferences.serverGroups[fromIndex];
-		this.preferences.serverGroups.splice(fromIndex, 1);
-		this.preferences.serverGroups.splice(toIndex, 0, serverGroup);
+	move(fromIndex, toIndex, serverGroups) {
+		var serverGroup = serverGroups[fromIndex];
+		serverGroups.splice(fromIndex, 1);
+		serverGroups.splice(toIndex, 0, serverGroup);
+		return serverGroups;
 	}
 
 	/**
@@ -258,11 +258,11 @@ export class ServerGroup {
 	/**
 	 * Remove this group from the set of all groups.
 	 */
-	removeGroup(id) {
-		for (let i = 0; i < this.serverGroups.length; i++) {
-			let candidate = this.serverGroups[i];
+	removeGroup(id, serverGroups) {
+		for (let i = 0; i < serverGroups.length; i++) {
+			let candidate = serverGroups[i];
 			if (candidate.getId() === id) {
-				this.serverGroups.splice(i, 1);
+				serverGroups.splice(i, 1);
 				break;
 			}
 		}

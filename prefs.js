@@ -16,7 +16,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
 	fillPreferencesWindow(window) {
 		this.window = window;
 		this.page = new Adw.PreferencesPage();
-		this.serverGroups = [];
+		const serverGroups = [];
 		this.prefSettings = this.getSettings();
 
 		// help group
@@ -40,62 +40,54 @@ It should be of format http[s]://host[:port][/path].`,
 			// ServerGroup is a wrapper around a PreferenceGroup, returned by getGroup()
 			const newGroup = new ServerGroup(
 				this,
-				this.saveSettings,
+				serverGroups,
+				this.save,
 				this.reorder,
-				null); // widgets will not be initialized
+				null); // widgets will not be initialized but it will be expanded
 			newGroup.getGroup().insert_after(this.addGroup.parent, this.addGroup); // add group to top of groups
-			this.serverGroups.push(newGroup);
+			serverGroups.unshift(newGroup); // add to beginning of array
 			// make url field focused
 			newGroup.getNameInput().grab_focus();
-			this.saveSettings(this.serverGroups, this.prefSettings)
+			this.save(this, serverGroups)
 		});
 		this.addGroup.add(addRow);
 		this.page.add(this.addGroup);
 
 		// create one server group per discovered settings
 		const parsedSettings = SettingsParser.parse(this.prefSettings);
-		for (const savedSettings of parsedSettings) {
+		// reverse to match order in prefs editor
+		const reversedSettings = parsedSettings.reverse();
+		for (const savedSettings of reversedSettings) {
 			// ServerGroup is a wrapper around a PreferenceGroup, returned by getGroup()
 			const newGroup = new ServerGroup(
 				this,
-				this.saveSettings,
+				serverGroups,
+				this.save,
 				this.reorder,
 				savedSettings);
 			newGroup.getGroup().insert_after(this.addGroup.parent, this.addGroup);
-			this.serverGroups.push(newGroup);
+			serverGroups.unshift(newGroup); // add to beginning of array
 		}
 
 		window.add(this.page);
 	}
 
-	reorder(preferences, saveSettings) {
-		// remove all groups and...
-		for (const serverGroup of preferences.serverGroups) {
-			const group = serverGroup.getGroup();
-			preferences.page.remove(group);
+	reorder(preferences, serverGroups, saveCallback, reorderCallback) {
+		// remove all Adw.PreferenceGroups related to ServerGroups and...
+		for (const serverGroup of serverGroups) {
+			preferences.page.remove(serverGroup.getGroup());
 		}
-		preferences.serverGroups = [];
 
 		// ...add them back in new order
-		const parsedSettings = SettingsParser.parse(preferences.prefSettings);
-		for (const savedSettings of parsedSettings) {
-			// ServerGroup is a wrapper around a PreferenceGroup, returned by getGroup()
-			const newGroup = new ServerGroup(
-				preferences,
-				preferences.saveSettings,
-				preferences.reorder,
-				savedSettings,
-				false);
-			preferences.page.add(newGroup.getGroup());
-			preferences.serverGroups.push(newGroup);
+		for (const serverGroup of serverGroups) {
+			preferences.page.add(serverGroup.getGroup());
 		}
-		saveSettings(preferences.serverGroups, preferences.prefSettings);
 	}
 
 	/**
 	 * Save current server settings to gsettings.
 	 */
-	saveSettings(serverGroups, prefSettings) {
+	save(preferences, serverGroups) {
 		const serverSettingList = [];
 		for (const serverGroup of serverGroups) {
 			const settings = serverGroup.getSettings();
@@ -108,7 +100,7 @@ It should be of format http[s]://host[:port][/path].`,
 			}
 		}
 		// persist
-		prefSettings.set_value(
+		preferences.prefSettings.set_value(
 			'server-settings',
 			new GLib.Variant(
 				'aa{ss}',

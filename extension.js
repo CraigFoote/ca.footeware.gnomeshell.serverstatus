@@ -53,8 +53,9 @@ export default class ServerStatusIndicatorExtension extends Extension {
 		});
 		this.indicator.menu.box.add(this.serversBox);
 
-		// panel items, one per server setting
-		for (const savedSetting of this.savedSettings) {
+		// panel items, one per server setting, add to top of list so it needs to be reversed
+		const reversedSettings = this.savedSettings;
+		for (const savedSetting of reversedSettings) {
 			const panel = new ServerStatusPanel(savedSetting, this.updateIcon, iconProvider);
 			this.serversBox.add(panel);
 			statusPanels.push(panel);
