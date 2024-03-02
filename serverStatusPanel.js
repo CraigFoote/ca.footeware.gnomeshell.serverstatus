@@ -131,6 +131,11 @@ export const ServerStatusPanel = GObject.registerClass({
 		return GLib.timeout_add(GLib.PRIORITY_DEFAULT, delay, func);
 	}
 
+	/**
+	 * Open a web browser at supplied URL.
+	 * 
+	 * @param {String} url
+	 */
 	openBrowser(url) {
 		Gio.AppInfo.launch_default_for_uri_async(url, null, null, null);
 	}
