@@ -24,13 +24,88 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
 		const serverGroups = [];
 		this.prefSettings = this.getSettings();
 
+		// instructions
+		const helpBox = new Gtk.Box({
+			orientation: Gtk.Orientation.VERTICAL,
+			spacing: 10,
+		});
+
+		// server-bad
+		const serverInitBox = new Gtk.Box({
+			orientation: Gtk.Orientation.HORIZONTAL,
+			spacing: 10,
+		});
+		const serverInitImage = new Gtk.Image({
+			file: this.path + "/assets/server.svg",
+			pixel_size: 36,
+		});
+		const serverInitDesc = new Gtk.Label({
+			label: "Initializing...",
+		});
+		serverInitBox.append(serverInitImage);
+		serverInitBox.append(serverInitDesc);
+
+		helpBox.append(serverInitBox);
+
+		// server-down
+		const serverDownBox = new Gtk.Box({
+			orientation: Gtk.Orientation.HORIZONTAL,
+			spacing: 10,
+		});
+		const serverDownImage = new Gtk.Image({
+			file: this.path + "/assets/server-down.svg",
+			pixel_size: 36,
+		});
+		const serverDownDesc = new Gtk.Label({
+			label: "If you get a server-down indicator, try switching to GET.\nHTTP HEAD is faster but not always supported.",
+		});
+		serverDownBox.append(serverDownImage);
+		serverDownBox.append(serverDownDesc);
+
+		helpBox.append(serverDownBox);
+
+		// server-bad
+		const serverBadBox = new Gtk.Box({
+			orientation: Gtk.Orientation.HORIZONTAL,
+			spacing: 10,
+		});
+		const serverBadImage = new Gtk.Image({
+			file: this.path + "/assets/server-bad.svg",
+			pixel_size: 36,
+		});
+		const serverBadDesc = new Gtk.Label({
+			label: "If you get a server-bad indicator, there's something wrong with the URL.\nIt should be of format http[s]://host[:port][/path].",
+		});
+		serverBadBox.append(serverBadImage);
+		serverBadBox.append(serverBadDesc);
+
+		helpBox.append(serverBadBox);
+
+		// server-up
+		const serverUpBox = new Gtk.Box({
+			orientation: Gtk.Orientation.HORIZONTAL,
+			spacing: 10,
+		});
+		const serverUpImage = new Gtk.Image({
+			file: this.path + "/assets/server-up.svg",
+			pixel_size: 36,
+		});
+		const serverUpDesc = new Gtk.Label({
+			label: "The desired server-up indicator.",
+		});
+		serverUpBox.append(serverUpImage);
+		serverUpBox.append(serverUpDesc);
+
+		helpBox.append(serverUpBox);
+
+		const helpBin = new Adw.Bin({
+			child: helpBox,
+		});
+		
 		// help group
 		const helpGroup = new Adw.PreferencesGroup({
-			description: `HTTP HEAD is faster than GET but not always supported.\n
-If you get a red indicator, try switching to GET.\n
-If you get a yellow indicator, there's something wrong with the URL.\n
-It should be of format http[s]://host[:port][/path].`,
 		});
+		helpGroup.add(helpBin);
 		this.page.add(helpGroup);
 
 		// add group

@@ -43,7 +43,7 @@ export const ServerStatusPanel = GObject.registerClass({
 
 		// settings display, click to open browser
 		const settingsButton = new St.Button({
-			label: (serverSetting.is_get == 'true' ? 'GET' : 'HEAD') + ' : ' + serverSetting.name + ' @ ' + serverSetting.frequency + 's',
+			label: serverSetting.name,
 			style_class: 'label',
 			y_align: Clutter.ActorAlign.CENTER,
 		});

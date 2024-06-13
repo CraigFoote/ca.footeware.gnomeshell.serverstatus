@@ -1,11 +1,14 @@
 # serverstatus@footeware.ca
 
-A gnome extension with indicator in task bar displaying status of entered web server URLs: 
+A GNOME Shell extension with an indicator in the task bar displaying status of entered web server URLs: 
 
-- white for initializing
-- green for up
-- red for down 
-- yellow for bad URL
+![](assets/server.svg) extension initializing
+
+![](assets/server-up.svg) server up and responding
+
+![](assets/server-down.svg) server down/unresponsive 
+
+![](assets/server-bad.svg) malformed URL
 
 The task bar shows the worst status from the set of all server statuses in the popup menu. Server down is considered worse than bad url.
 

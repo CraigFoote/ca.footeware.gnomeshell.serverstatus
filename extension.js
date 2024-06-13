@@ -53,9 +53,8 @@ export default class ServerStatusIndicatorExtension extends Extension {
 		});
 		this.indicator.menu.box.add_child(this.serversBox);
 
-		// panel items, one per server setting, add to top of list so it needs to be reversed
-		const reversedSettings = this.savedSettings;
-		for (const savedSetting of reversedSettings) {
+		// panel items, one per server setting
+		for (const savedSetting of this.savedSettings) {
 			const panel = new ServerStatusPanel(savedSetting, this.updateIcon, iconProvider);
 			this.serversBox.add_child(panel);
 			statusPanels.push(panel);
@@ -66,7 +65,10 @@ export default class ServerStatusIndicatorExtension extends Extension {
 			icon_name: 'preferences-system-symbolic',
 			style_class: 'prefs-button',
 		});
-		prefsButton.connect('clicked', () => this.openPreferences());
+		prefsButton.connect('clicked', () => {
+			this.indicator.menu.close();
+			this.openPreferences();
+		});
 		this.indicator.menu.box.add_child(prefsButton);
 
 		// listen for changes to server settings and update display
@@ -94,7 +96,7 @@ export default class ServerStatusIndicatorExtension extends Extension {
 	}
 
 	/**
-	 * Creates <code>ServerSettings</code> objects based on discovered gsettings entries.
+	 * Creates <code>ServerSetting</code> objects based on discovered gsettings entries.
 	 * 
 	 * @returns {ServerSetting[]}
 	 */
