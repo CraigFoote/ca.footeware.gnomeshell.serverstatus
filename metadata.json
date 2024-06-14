@@ -1,5 +1,5 @@
 {
-	"description": "Indicator displaying status of entered web server urls using emojis.",
+	"description": "Indicator displaying status of entered web server URLs using emojis.",
 	"name": "Server Status Indicator",
 	"shell-version": [
 		"45","46"

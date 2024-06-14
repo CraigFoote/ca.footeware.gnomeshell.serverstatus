@@ -24,7 +24,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
 		const serverGroups = [];
 		this.prefSettings = this.getSettings();
 
-		// instructions
+		// instructions/help
 		const helpBox = new Gtk.Box({
 			orientation: Gtk.Orientation.VERTICAL,
 			spacing: 10,
@@ -44,7 +44,6 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
 		});
 		serverInitBox.append(serverInitImage);
 		serverInitBox.append(serverInitDesc);
-
 		helpBox.append(serverInitBox);
 
 		// server-down
@@ -61,7 +60,6 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
 		});
 		serverDownBox.append(serverDownImage);
 		serverDownBox.append(serverDownDesc);
-
 		helpBox.append(serverDownBox);
 
 		// server-bad
@@ -78,7 +76,6 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
 		});
 		serverBadBox.append(serverBadImage);
 		serverBadBox.append(serverBadDesc);
-
 		helpBox.append(serverBadBox);
 
 		// server-up
@@ -95,7 +92,6 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
 		});
 		serverUpBox.append(serverUpImage);
 		serverUpBox.append(serverUpDesc);
-
 		helpBox.append(serverUpBox);
 
 		const helpBin = new Adw.Bin({
@@ -103,8 +99,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
 		});
 		
 		// help group
-		const helpGroup = new Adw.PreferencesGroup({
-		});
+		const helpGroup = new Adw.PreferencesGroup({});
 		helpGroup.add(helpBin);
 		this.page.add(helpGroup);
 
