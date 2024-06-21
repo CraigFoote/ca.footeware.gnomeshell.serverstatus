@@ -10,7 +10,7 @@ import { Status } from './status.js';
 
 /**
  * A series of these panels is shown when the indicator icon is clicked. 
- * Each shows a server status and settings, and opens a browser to the URL when clicked.
+ * Each shows a server status and name, and opens a browser to the URL when clicked.
  */
 export const ServerStatusPanel = GObject.registerClass({
 	GTypeName: 'ServerStatusPanel',
@@ -26,13 +26,13 @@ export const ServerStatusPanel = GObject.registerClass({
 		this.updateTaskbarCallback = updateTaskbarCallback;
 		this.iconProvider = iconProvider;
 
-		this.style_class = 'main-box';
+		this.style_class = 'server-box';
 
 		this.session = new Soup.Session({
 			timeout: 10, //seconds
 		});
 
-		// icon displaying status by color
+		// icon displaying status by emoji icon
 		this.panelIcon = new St.Icon({
 			gicon: this.iconProvider.getIcon(Status.Init),
 			style_class: 'icon',
@@ -41,14 +41,14 @@ export const ServerStatusPanel = GObject.registerClass({
 		this.panelIcon.connect("destroy", () => panelIconDisposed = true);
 		this.add_child(this.panelIcon);
 
-		// settings display, click to open browser
-		const settingsButton = new St.Button({
+		// server name display, click to open browser
+		const nameButton = new St.Button({
 			label: serverSetting.name,
 			style_class: 'label',
 			y_align: Clutter.ActorAlign.CENTER,
 		});
-		settingsButton.connect('clicked', () => this.openBrowser(serverSetting.url));
-		this.add_child(settingsButton);
+		nameButton.connect('clicked', () => this.openBrowser(serverSetting.url));
+		this.add_child(nameButton);
 
 		// call once then schedule
 		this.update(serverSetting.url, panelIconDisposed);

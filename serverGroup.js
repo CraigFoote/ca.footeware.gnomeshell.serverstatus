@@ -217,7 +217,7 @@ export class ServerGroup {
 	}
 
 	/**
-	 * Find the index of this in the provided araay.
+	 * Find the index of this in the provided array.
 	 * 
 	 * @param {ServerGroup[]} serverGroups
 	 * @returns int

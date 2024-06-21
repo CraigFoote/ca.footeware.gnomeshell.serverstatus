@@ -71,7 +71,7 @@ export default class ServerStatusIndicatorExtension extends Extension {
 		});
 		this.indicator.menu.box.add_child(prefsButton);
 
-		// listen for changes to server settings and update display
+		// listen for changes to server settings in gsettings and update display
 		extensionListenerId = this.rawSettings.connect('changed', () => {
 			this.onPrefChanged();
 		});
