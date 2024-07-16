@@ -93,14 +93,10 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
 		serverUpBox.append(serverUpImage);
 		serverUpBox.append(serverUpDesc);
 		helpBox.append(serverUpBox);
-
-		const helpBin = new Adw.Bin({
-			child: helpBox,
-		});
 		
 		// help group
 		const helpGroup = new Adw.PreferencesGroup({});
-		helpGroup.add(helpBin);
+		helpGroup.add(helpBox);
 		this.page.add(helpGroup);
 
 		// add group
