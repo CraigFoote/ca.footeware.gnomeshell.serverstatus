@@ -150,7 +150,7 @@ export class ServerGroup {
             messageDialog.connect("response", (_, response) => {
                 if (response === "delete") {
                     this.createServerSettings();
-                    this.removeGroup(this.id, preferences);
+                    this.removeGroup(this.id, preferences.serverGroups);
                     preferences.page.remove(this.serverSettingGroup);
                     preferences.save(preferences);
                 }
@@ -334,13 +334,13 @@ export class ServerGroup {
      * Remove this group from the set of all groups.
      *
      * @param {String} id
-     * @param {ServerStatusPreferences} preferences
+     * @param {ServerGroup[]} set of all groups everywhere infinity
      */
-    removeGroup(id, preferences) {
-        for (let i = 0; i < preferences.serverGroups.length; i++) {
-            let candidate = preferences.serverGroups[i];
+    removeGroup(id, serverGroups) {
+        for (let i = 0; i < serverGroups.length; i++) {
+            let candidate = serverGroups[i];
             if (candidate.id === id) {
-                preferences.serverGroups.splice(i, 1);
+                serverGroups.splice(i, 1);
                 break;
             }
         }
