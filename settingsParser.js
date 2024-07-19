@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 import { ServerSetting } from "./serverSetting.js";
 
@@ -32,25 +32,5 @@ export class SettingsParser {
             settings.push(setting);
         }
         return settings;
-    }
-
-    /**
-     * Parse a <code>Map</code> as returned from <code>JSON.parse</code>.
-     *
-     * @param {Map} map
-     * @returns {ServerSetting[]}
-     */
-    static parseMap(map) {
-        const serverSettings = [];
-        for (const setting of map) {
-            const name = setting["name"] != undefined ? setting["name"] : "";
-            const url = setting["url"] != undefined ? setting["url"] : "";
-            const frequency =
-                setting["frequency"] != undefined ? setting["frequency"] : "60";
-            const isGet =
-                setting["is_get"] != undefined ? setting["is_get"] : "false";
-            serverSettings.push(new ServerSetting(name, url, frequency, isGet));
-        }
-        return serverSettings;
     }
 }
