@@ -23,6 +23,13 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
         this.gioSettings = this.getSettings();
         this.serverGroups = [];
 
+        // destroy on close
+        window.connect('close-request', () => {
+            this.serverGroups = null;
+            this.gioSettings = null;
+            this.page = null;
+        });
+
         // instructions/help
         const helpBox = new Gtk.Box({
             orientation: Gtk.Orientation.VERTICAL,
