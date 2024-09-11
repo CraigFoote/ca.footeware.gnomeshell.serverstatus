@@ -1,25 +1,22 @@
 @charset "UTF-8";
 
-.server-box {
-	border-width: 1px;
-	border-radius: 10px;
-	border-color: #808080;
-	margin: 5px;
-	padding: 5px;
+.bordered {
+    border-width: 1px;
+    border-radius: 10px;
+    border-color: #808080;
+    margin: 5px;
 }
 
-.icon {
-	width: 30px;
-	height: 30px;
-	padding: 5px;
+.icon-lg {
+    width: 30px;
+    height: 30px;
 }
 
-.label {
-	padding: 5px;
+.icon-sm {
+    width: 15px;
+    height: 15px;
 }
 
-.prefs-button {
-	width: 15px;
-	height: 15px;
-	padding: 5px;
+.padded {
+    padding: 5px;
 }

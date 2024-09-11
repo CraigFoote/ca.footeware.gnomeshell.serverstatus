@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 import { ServerSetting } from "./serverSetting.js";
 

@@ -71,7 +71,7 @@ export default class ServerStatusIndicatorExtension extends Extension {
         // Open Prefs button
         const prefsButton = new St.Button({
             icon_name: "preferences-system-symbolic",
-            style_class: "prefs-button",
+            style_class: "icon-sm padded",
         });
         prefsButton.connect("clicked", () => {
             this.indicator.menu.close();

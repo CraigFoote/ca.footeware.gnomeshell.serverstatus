@@ -24,7 +24,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
         this.serverGroups = [];
 
         // destroy on close
-        window.connect('close-request', () => {
+        window.connect("close-request", () => {
             this.serverGroups = null;
             this.gioSettings = null;
             this.page = null;
@@ -106,17 +106,13 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
         this.page.add(helpGroup);
 
         // operations group
-        const operationsGroup = new Adw.PreferencesGroup(
-            {},
-        );
+        const operationsGroup = new Adw.PreferencesGroup({});
 
         // add
         const addRow = new Adw.ActionRow({
             title: "Add a new server",
         });
-        const addButton = Gtk.Button.new_from_icon_name(
-            "list-add-symbolic",
-        );
+        const addButton = Gtk.Button.new_from_icon_name("list-add-symbolic");
         addButton.set_css_classes(["suggested-action"]);
         addRow.add_suffix(addButton);
         addButton.connect("clicked", () => {
@@ -124,10 +120,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
             const newGroup = new ServerGroup(this, null); // widgets will not be initialized but group will be expanded
             newGroup
                 .getGroup()
-                .insert_after(
-                    operationsGroup.parent,
-                    operationsGroup,
-                ); // add group to top of groups
+                .insert_after(operationsGroup.parent, operationsGroup); // add group to top of groups
             this.serverGroups.unshift(newGroup); // add to beginning of array
             this.save(this, this.serverGroups);
 
@@ -138,24 +131,17 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
         this.page.add(operationsGroup);
 
         // create one server group per discovered settings
-        const parsedSettings =
-            SettingsParser.parseGtkSettings(
-                this.gioSettings,
-            );
+        const parsedSettings = SettingsParser.parseGtkSettings(
+            this.gioSettings,
+        );
         // add them back reversed, same as they were created, and displayed in indicator
         const reversed = parsedSettings.toReversed();
         for (const savedSettings of reversed) {
             // ServerGroup is a wrapper around a PreferenceGroup, returned by getGroup()
-            const newGroup = new ServerGroup(
-                this,
-                savedSettings,
-            );
+            const newGroup = new ServerGroup(this, savedSettings);
             newGroup
                 .getGroup()
-                .insert_after(
-                    operationsGroup.parent,
-                    operationsGroup,
-                );
+                .insert_after(operationsGroup.parent, operationsGroup);
             this.serverGroups.unshift(newGroup); // add to beginning of array
         }
 
@@ -193,10 +179,8 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
             if (settings) {
                 settings.name = settings.name.trim();
                 settings.url = settings.url.trim();
-                settings.frequency =
-                    settings.frequency.toString();
-                settings.is_get =
-                    settings.is_get.toString();
+                settings.frequency = settings.frequency.toString();
+                settings.is_get = settings.is_get.toString();
                 serverSettings.push(settings);
             }
         }
