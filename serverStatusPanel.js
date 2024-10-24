@@ -110,14 +110,24 @@ export const ServerStatusPanel = GObject.registerClass(
                     null,
                     () => {
                         if (panelIcon && !panelIconDisposed) {
-                            let newIcon;
-                            if (message.get_status() === Soup.Status.OK) {
-                                newIcon = this.iconProvider.getIcon(Status.Up);
-                            } else {
-                                newIcon = this.iconProvider.getIcon(
-                                    Status.Down,
-                                );
+                            // assume down until proven up
+                            let newIcon = this.iconProvider.getIcon(
+                                Status.Down,
+                            );
+
+                            try {
+                                const httpStatus = message.get_status();
+
+                                // treat 2xx and 3xx return codes as success
+                                if (httpStatus >= 200 && httpStatus < 400) {
+                                    newIcon = this.iconProvider.getIcon(
+                                        Status.Up,
+                                    );
+                                }
+                            } catch (error) {
+                                // ignore and use initial value for newIcon i.e. down
                             }
+
                             panelIcon.gicon = newIcon;
                             this.updateTaskbarCallback?.();
                         }
