@@ -20,13 +20,13 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         this.window = window;
         this.page = new Adw.PreferencesPage();
-        this.gioSettings = this.getSettings();
+        this.savedSettings = this.getSettings();
         this.serverGroups = [];
 
         // destroy on close
         window.connect("close-request", () => {
             this.serverGroups = null;
-            this.gioSettings = null;
+            this.savedSettings = null;
             this.page = null;
         });
 
@@ -78,7 +78,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
             pixel_size: 36,
         });
         const serverBadDesc = new Gtk.Label({
-            label: "If you get a server-bad indicator, there's something wrong with the URL.\nIt should be of format http[s]://host[:port][/path].",
+            label: "If you get a server-bad indicator, there's something wrong with\nthe URL. It should be of format http[s]://host[:port][/path].",
         });
         serverBadBox.append(serverBadImage);
         serverBadBox.append(serverBadDesc);
@@ -131,8 +131,8 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
         this.page.add(operationsGroup);
 
         // create one server group per discovered settings
-        const parsedSettings = SettingsParser.parseGtkSettings(
-            this.gioSettings,
+        const parsedSettings = SettingsParser.parseGioSettings(
+            this.savedSettings,
         );
         // add them back reversed, same as they were created, and displayed in indicator
         const reversed = parsedSettings.toReversed();
@@ -185,7 +185,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
             }
         }
         // persist
-        preferences.gioSettings.set_value(
+        preferences.savedSettings.set_value(
             "server-settings",
             new GLib.Variant("aa{ss}", serverSettings),
         );

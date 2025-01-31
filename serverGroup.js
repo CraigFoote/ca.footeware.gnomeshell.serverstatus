@@ -13,7 +13,7 @@ export class ServerGroup {
      * Constructor.
      *
      * @param {ServerStatusPreferences} preferences
-     * @param {ServerSetting} settings, may be null in which case the expander is automatically opened and name field focused.
+     * @param {ServerSetting} settings, may be null in which case the fields are empty, expander is automatically opened and name field focused.
      */
     constructor(preferences, settings) {
         this.id = this.createUID();
@@ -30,7 +30,7 @@ export class ServerGroup {
         let subtitle = "";
         if (settings != undefined) {
             subtitle =
-                (settings.is_get == "true" ? "GET" : "HEAD") +
+                (settings.is_get ? "GET" : "HEAD") +
                 " : " +
                 settings.url +
                 " @ " +
@@ -82,8 +82,9 @@ export class ServerGroup {
         // 'use GET' switch
         this.useGetSwitchRow = new Adw.SwitchRow({
             title: "Use GET rather than HEAD",
-            active: settings != undefined ? !settings.is_get : false,
         });
+        const isGet = settings != undefined ? settings.is_get : false;
+        this.useGetSwitchRow.set_active(isGet);
         this.useGetSwitchRow.connect("notify::active", () => {
             this.createServerSettings();
             preferences.save(preferences);
@@ -168,43 +169,24 @@ export class ServerGroup {
     }
 
     /**
-     * Get the title based on current settings.
+     * Get the title based on user input.
      *
      * @returns {String}
      */
     getTitle() {
-        if (this.settings == undefined || this.settings.name == undefined) {
-            return "";
-        } else {
-            return this.settings.name.length > 0
-                ? this.settings.name
-                : "unnamed";
-        }
+        return this.nameRow.text;
     }
 
     /**
-     * Get the subtitle based on current settings.
+     * Get the subtitle based on user input.
      *
      * @returns {String}
      */
     getSubtitle() {
-        if (
-            this.settings == undefined ||
-            this.settings.url == undefined ||
-            this.settings.frequency == undefined ||
-            this.settings.is_get == undefined
-        ) {
-            return "";
-        } else {
-            return (
-                (this.settings.is_get == "true" ? "GET" : "HEAD") +
-                " : " +
-                this.settings.url +
-                " @ " +
-                this.settings.frequency +
-                "s"
-            );
-        }
+        const url = this.urlRow.text;
+        const freq = this.frequencyRow.text;
+        const httpMethod = this.useGetSwitchRow.active ? "GET" : "HEAD";
+        return httpMethod + " : " + url + " @ " + freq + "s";
     }
 
     /**

@@ -3,32 +3,34 @@
 import { ServerSetting } from "./serverSetting.js";
 
 /**
- * Convert <code>Gtk.Settings</code> into <code>ServerSettings</code>.
+ * Convert <code>Gio.Settings</code> into <code>ServerSettings</code>.
  */
 export class SettingsParser {
     /**
-     * Parse a <code>Gtk.Settings</code> instance.
+     * Parse a <code>Gio.Settings</code> instance.
      *
-     * @param {Gtk.Settings} gtkSettings
+     * @param {Gio.Settings} gioSettings
      * @returns {ServerSetting[]}
      */
-    static parseGtkSettings(gtkSettings) {
-        const variant = gtkSettings.get_value("server-settings");
-        const savedGtkSettings = variant.deep_unpack();
+    static parseGioSettings(gioSettings) {
+        const variant = gioSettings.get_value("server-settings");
+        const savedSettings = variant.deep_unpack();
         const settings = [];
-        for (const gtkSetting of savedGtkSettings) {
+        for (const savedSetting of savedSettings) {
             const name =
-                gtkSetting["name"] != undefined ? gtkSetting["name"] : "";
-            const url = gtkSetting["url"] != undefined ? gtkSetting["url"] : "";
+                savedSetting["name"] != undefined ? savedSetting["name"] : "";
+            const url = savedSetting["url"] != undefined ? savedSetting["url"] : "";
             const frequency =
-                gtkSetting["frequency"] != undefined
-                    ? gtkSetting["frequency"]
-                    : "60";
+                savedSetting["frequency"] != undefined
+                    ? Number(savedSetting["frequency"])
+                    : 60; // convert from string to number
             const isGet =
-                gtkSetting["is_get"] != undefined
-                    ? gtkSetting["is_get"]
+                savedSetting["is_get"] != undefined
+                    ? savedSetting["is_get"]
                     : "false";
-            const setting = new ServerSetting(name, url, frequency, isGet);
+
+            const isGetBool = isGet === "true"; // convert to boolean
+            const setting = new ServerSetting(name, url, frequency, isGetBool);
             settings.push(setting);
         }
         return settings;
