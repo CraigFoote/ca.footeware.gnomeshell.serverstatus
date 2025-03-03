@@ -1,9 +1,9 @@
 {
     "description": "Indicator displaying status of entered web server URLs using emojis.",
     "name": "Server Status Indicator",
-    "shell-version": ["46", "47"],
+    "shell-version": ["46", "47", "48"],
     "url": "https://github.com/CraigFoote/ca.footeware.gnomeshell.serverstatus.git",
     "uuid": "serverstatus@footeware.ca",
     "settings-schema": "org.gnome.shell.extensions.serverstatus",
-    "version": 32
+    "version": 33
 }
