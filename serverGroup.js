@@ -22,6 +22,8 @@ export class ServerGroup {
 
         // expander
         this.expander = Adw.ExpanderRow.new();
+        // disable pango as it fails on & in url query strings
+        this.expander.set_use_markup(false);
         let title = "";
         if (settings != undefined) {
             title = settings.name;
