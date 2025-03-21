@@ -19,11 +19,12 @@ export class SettingsParser {
         for (const savedSetting of savedSettings) {
             const name =
                 savedSetting["name"] != undefined ? savedSetting["name"] : "";
-            const url = savedSetting["url"] != undefined ? savedSetting["url"] : "";
+            const url =
+                savedSetting["url"] != undefined ? savedSetting["url"] : "";
             const frequency =
                 savedSetting["frequency"] != undefined
                     ? Number(savedSetting["frequency"])
-                    : 60; // convert from string to number
+                    : 120; // convert from string to number, match schema default
             const isGet =
                 savedSetting["is_get"] != undefined
                     ? savedSetting["is_get"]

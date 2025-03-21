@@ -2,6 +2,7 @@
 
 import GObject from "gi://GObject";
 import St from "gi://St";
+import Clutter from "gi://Clutter";
 import {
     Extension,
     gettext as _,
@@ -24,7 +25,7 @@ let extensionListenerId;
 const Indicator = GObject.registerClass(
     class Indicator extends PanelMenu.Button {
         _init() {
-            super._init(0.0, _("Server Status Indicator"));
+            super._init(0.0, this.metadata.name);
             panelIcon = new St.Icon({
                 gicon: iconProvider.getIcon(Status.Init),
                 style_class: "system-status-icon",
@@ -53,7 +54,7 @@ export default class ServerStatusIndicatorExtension extends Extension {
 
         // create a box to hold server panels
         this.serversBox = new St.BoxLayout({
-            vertical: true,
+            orientation: Clutter.Orientation.VERTICAL,
         });
         this.indicator.menu.box.add_child(this.serversBox);
 
@@ -89,18 +90,36 @@ export default class ServerStatusIndicatorExtension extends Extension {
      * Destroys and nulls artifacts for garbage collection.
      */
     disable() {
-        this.rawSettings.disconnect(extensionListenerId);
-        extensionListenerId = null;
+        // disconnect listener
+        if (this.rawSettings && extensionListenerId) {
+            this.rawSettings.disconnect(extensionListenerId);
+            extensionListenerId = null;
+        }
+        // clean up each status panel
+        if (statusPanels) {
+            statusPanels.forEach((panel) => {
+                panel.destroy();
+            });
+            statusPanels = [];
+        }
+        // clean up the serversBox
+        if (this.serversBox) {
+            this.serversBox.destroy();
+            this.serversBox = null;
+        }
+        // clean up the indicator
+        if (this.indicator) {
+            this.indicator.destroy();
+            this.indicator = null;
+        }
+        // clean up other stuff
         this.savedSettings = null;
-        this.indicator.destroy();
-        this.indicator = null;
         this.rawSettings = null;
         if (iconProvider) {
             iconProvider.destroy();
             iconProvider = null;
         }
         panelIcon = null;
-        statusPanels = [];
     }
 
     /**
