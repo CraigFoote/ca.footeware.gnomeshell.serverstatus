@@ -25,7 +25,7 @@ let extensionListenerId;
 const Indicator = GObject.registerClass(
     class Indicator extends PanelMenu.Button {
         _init() {
-            super._init(0.0, this.metadata.name);
+            super._init(0.0, "Server Status Indicator");
             panelIcon = new St.Icon({
                 gicon: iconProvider.getIcon(Status.Init),
                 style_class: "system-status-icon",
