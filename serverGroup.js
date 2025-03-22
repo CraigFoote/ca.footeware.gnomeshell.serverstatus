@@ -100,18 +100,18 @@ export class ServerGroup {
         });
         const moveUpButton = Gtk.Button.new_from_icon_name("go-up-symbolic");
         moveUpButton.connect("clicked", () => {
+            // does a move actually happen?
             if (this.moveUp(preferences.serverGroups)) {
-                // does a move actually happen?
-                preferences.reorder(preferences);
+                preferences.reorder();
                 preferences.save();
             }
         });
         const moveDownButton =
             Gtk.Button.new_from_icon_name("go-down-symbolic");
         moveDownButton.connect("clicked", () => {
+            // does a move actually happen?
             if (this.moveDown(preferences.serverGroups)) {
-                // does a move actually happen?
-                preferences.reorder(preferences);
+                preferences.reorder();
                 preferences.save();
             }
         });

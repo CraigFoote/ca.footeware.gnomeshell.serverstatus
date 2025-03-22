@@ -150,20 +150,18 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
 
     /**
      * Render the displayed groups in their new order.
-     *
-     * @param {ExtensionPreferences} preferences
      */
-    reorder(preferences) {
+    reorder() {
         // remove all Adw.PreferenceGroups related to ServerGroups and...
-        for (const serverGroup of preferences.serverGroups) {
+        for (const serverGroup of this.serverGroups) {
             // remove it from whatever position it's in
-            preferences.page.remove(serverGroup.getGroup());
+            this.page.remove(serverGroup.getGroup());
         }
 
         // ...add them back in new order
-        for (const serverGroup of preferences.serverGroups) {
+        for (const serverGroup of this.serverGroups) {
             // add sequentially
-            preferences.page.add(serverGroup.getGroup());
+            this.page.add(serverGroup.getGroup());
         }
     }
 
