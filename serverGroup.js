@@ -5,15 +5,15 @@ import Adw from "gi://Adw";
 import { ServerSetting } from "./serverSetting.js";
 
 /**
- * A new group is displayed when Add is clicked in the preferences dialog.
- * It displays controls for settings for a server.
+ * A new group is displayed when _Add_ is clicked in the preferences dialog.
+ * It displays controls for the settings of a server.
  */
 export class ServerGroup {
     /**
      * Constructor.
      *
      * @param {ServerStatusPreferences} preferences
-     * @param {ServerSetting} settings, may be null in which case the fields are empty, expander is automatically opened and name field focused.
+     * @param {ServerSetting} settings, may be null in which case the fields remain empty, expander is automatically opened and name field focused.
      */
     constructor(preferences, settings) {
         this.id = this.createUID();
@@ -192,7 +192,7 @@ export class ServerGroup {
     }
 
     /**
-     * Update the expander title & subtitle after settings have changed.
+     * Update the expander title & subtitle.
      */
     updateExpander() {
         this.expander.set_title(this.getTitle());
@@ -254,7 +254,7 @@ export class ServerGroup {
      * @param {ServerGroup[]} serverGroups
      */
     move(fromIndex, toIndex, serverGroups) {
-        var serverGroup = serverGroups[fromIndex];
+        const serverGroup = serverGroups[fromIndex];
         serverGroups.splice(fromIndex, 1);
         serverGroups.splice(toIndex, 0, serverGroup);
     }

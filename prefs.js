@@ -18,7 +18,6 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
      * @param {Gtk.Window} window
      */
     fillPreferencesWindow(window) {
-        this.window = window;
         this.page = new Adw.PreferencesPage();
         this.savedSettings = this.getSettings();
         this.serverGroups = [];
@@ -145,7 +144,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
             this.serverGroups.unshift(newGroup); // add to beginning of array
         }
 
-        this.window.add(this.page);
+        window.add(this.page);
     }
 
     /**

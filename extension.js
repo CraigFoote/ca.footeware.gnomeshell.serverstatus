@@ -44,14 +44,8 @@ export default class ServerStatusIndicatorExtension extends Extension {
     enable() {
         iconProvider = new IconProvider(this.path + "/assets/");
 
-        // get settings stored in gsettings
-        this.rawSettings = this.getSettings();
-        this.savedSettings = this.parseSettings();
-        
-        // create indicator
+        // create indicator *after* iconProvider
         this.indicator = new Indicator(_(this.metadata.name));
-
-        // add the indicator to the taskbar
         Main.panel.addToStatusArea(this.uuid, this.indicator);
 
         // create a box to hold server panels
@@ -59,6 +53,10 @@ export default class ServerStatusIndicatorExtension extends Extension {
             orientation: Clutter.Orientation.VERTICAL,
         });
         this.indicator.menu.box.add_child(this.serversBox);
+
+        // get settings stored in gsettings
+        this.rawSettings = this.getSettings();
+        this.savedSettings = this.parseSettings();
 
         // panel items, one per server setting
         for (const savedSetting of this.savedSettings) {
