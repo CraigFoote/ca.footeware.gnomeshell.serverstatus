@@ -18,6 +18,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
      * @param {Gtk.Window} window
      */
     fillPreferencesWindow(window) {
+        this.window = window; // used in serverGroup.js
         this.page = new Adw.PreferencesPage();
         this.savedSettings = this.getSettings();
         this.serverGroups = [];
