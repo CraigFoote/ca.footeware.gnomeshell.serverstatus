@@ -24,8 +24,8 @@ let extensionListenerId;
  */
 const Indicator = GObject.registerClass(
     class Indicator extends PanelMenu.Button {
-        _init() {
-            super._init(0.0, "Server Status Indicator");
+        _init(extensionName) {
+            super._init(0.0, extensionName);
             panelIcon = new St.Icon({
                 gicon: iconProvider.getIcon(Status.Init),
                 style_class: "system-status-icon",
@@ -46,11 +46,13 @@ export default class ServerStatusIndicatorExtension extends Extension {
 
         // get settings stored in gsettings
         this.rawSettings = this.getSettings();
-        this.indicator = new Indicator();
+        this.savedSettings = this.parseSettings();
+        
+        // create indicator
+        this.indicator = new Indicator(_(this.metadata.name));
 
         // add the indicator to the taskbar
         Main.panel.addToStatusArea(this.uuid, this.indicator);
-        this.savedSettings = this.parseSettings();
 
         // create a box to hold server panels
         this.serversBox = new St.BoxLayout({
