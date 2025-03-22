@@ -122,7 +122,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
                 .getGroup()
                 .insert_after(operationsGroup.parent, operationsGroup); // add group to top of groups
             this.serverGroups.unshift(newGroup); // add to beginning of array
-            this.save(this, this.serverGroups);
+            this.save();
 
             // make name field focused
             newGroup.getNameInput().grab_focus();
@@ -169,12 +169,10 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
 
     /**
      * Save current server settings to gsettings.
-     *
-     * @param {ServerStatusPreferences} preferences
      */
-    save(preferences) {
+    save() {
         const serverSettings = [];
-        for (const serverGroup of preferences.serverGroups) {
+        for (const serverGroup of this.serverGroups) {
             const settings = serverGroup.settings;
             if (settings) {
                 settings.name = settings.name.trim();
@@ -185,7 +183,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
             }
         }
         // persist
-        preferences.savedSettings.set_value(
+        this.savedSettings.set_value(
             "server-settings",
             new GLib.Variant("aa{ss}", serverSettings),
         );

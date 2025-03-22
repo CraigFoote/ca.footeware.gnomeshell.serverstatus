@@ -50,7 +50,7 @@ export class ServerGroup {
         });
         this.nameRow.connect("apply", () => {
             this.createServerSettings();
-            preferences.save(preferences);
+            preferences.save();
             this.updateExpander();
         });
         this.expander.add_row(this.nameRow);
@@ -63,7 +63,7 @@ export class ServerGroup {
         });
         this.urlRow.connect("apply", () => {
             this.createServerSettings();
-            preferences.save(preferences);
+            preferences.save();
             this.updateExpander();
         });
         this.expander.add_row(this.urlRow);
@@ -76,7 +76,7 @@ export class ServerGroup {
         this.frequencyRow.set_title("Frequency (secs.)");
         this.frequencyRow.connect("input", () => {
             this.createServerSettings();
-            preferences.save(preferences);
+            preferences.save();
             this.updateExpander();
         });
         this.expander.add_row(this.frequencyRow);
@@ -89,7 +89,7 @@ export class ServerGroup {
         this.useGetSwitchRow.set_active(isGet);
         this.useGetSwitchRow.connect("notify::active", () => {
             this.createServerSettings();
-            preferences.save(preferences);
+            preferences.save();
             this.updateExpander();
         });
         this.expander.add_row(this.useGetSwitchRow);
@@ -103,7 +103,7 @@ export class ServerGroup {
             if (this.moveUp(preferences.serverGroups)) {
                 // does a move actually happen?
                 preferences.reorder(preferences);
-                preferences.save(preferences);
+                preferences.save();
             }
         });
         const moveDownButton =
@@ -112,7 +112,7 @@ export class ServerGroup {
             if (this.moveDown(preferences.serverGroups)) {
                 // does a move actually happen?
                 preferences.reorder(preferences);
-                preferences.save(preferences);
+                preferences.save();
             }
         });
         const moveButtonBox = Gtk.Box.new(
@@ -155,7 +155,7 @@ export class ServerGroup {
                     this.createServerSettings();
                     this.removeGroup(this.id, preferences.serverGroups);
                     preferences.page.remove(this.serverSettingGroup);
-                    preferences.save(preferences);
+                    preferences.save();
                 }
                 messageDialog.destroy();
             });
