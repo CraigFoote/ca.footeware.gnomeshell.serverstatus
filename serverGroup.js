@@ -49,9 +49,7 @@ export class ServerGroup {
             show_apply_button: true,
         });
         this.nameRow.connect("apply", () => {
-            this.createServerSettings();
-            preferences.save();
-            this.updateExpander();
+            this.update();
         });
         this.expander.add_row(this.nameRow);
 
@@ -62,9 +60,7 @@ export class ServerGroup {
             show_apply_button: true,
         });
         this.urlRow.connect("apply", () => {
-            this.createServerSettings();
-            preferences.save();
-            this.updateExpander();
+            this.update();
         });
         this.expander.add_row(this.urlRow);
 
@@ -75,9 +71,7 @@ export class ServerGroup {
         );
         this.frequencyRow.set_title("Frequency (secs.)");
         this.frequencyRow.connect("input", () => {
-            this.createServerSettings();
-            preferences.save();
-            this.updateExpander();
+            this.update();
         });
         this.expander.add_row(this.frequencyRow);
 
@@ -88,9 +82,7 @@ export class ServerGroup {
         const isGet = settings != undefined ? settings.is_get : false;
         this.useGetSwitchRow.set_active(isGet);
         this.useGetSwitchRow.connect("notify::active", () => {
-            this.createServerSettings();
-            preferences.save();
-            this.updateExpander();
+            this.update();
         });
         this.expander.add_row(this.useGetSwitchRow);
 
@@ -168,6 +160,15 @@ export class ServerGroup {
             this.expander.set_expanded(true);
             this.nameRow.grab_focus();
         }
+    }
+
+    /**
+     * Renew #serverSettings, save them and update UI.
+     */
+    update() {
+        this.createServerSettings();
+        this.preferences.save();
+        this.updateExpander();
     }
 
     /**

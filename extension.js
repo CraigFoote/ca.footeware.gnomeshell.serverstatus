@@ -123,7 +123,7 @@ export default class ServerStatusIndicatorExtension extends Extension {
     }
 
     /**
-     * Creates <code>ServerSetting</code> objects based on discovered gsettings entries.
+     * Creates `ServerSetting` objects based on discovered gsettings entries.
      *
      * @returns {ServerSetting[]}
      */
