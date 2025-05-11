@@ -56,9 +56,14 @@ export const ServerStatusPanel = GObject.registerClass(
 
             // call once then schedule
             this.update(serverSetting.url, panelIconDisposed);
-            this.intervalID = this.setInterval(
-                () => this.update(serverSetting.url),
+
+            this.intervalID = GLib.timeout_add(
+                GLib.PRIORITY_DEFAULT,
                 serverSetting.frequency * 1000,
+                () => {
+                    this.update(serverSetting.url, panelIconDisposed);
+                    return GLib.SOURCE_CONTINUE;
+                },
             );
 
             this.connect("destroy", () => {
@@ -117,7 +122,7 @@ export const ServerStatusPanel = GObject.registerClass(
 
                             try {
                                 // 429 Too Many Requests causes a 'bad Soup enum' error 🤨
-                                const httpStatus = message.get_status(); 
+                                const httpStatus = message.get_status();
 
                                 // treat 2xx and 3xx return codes as success
                                 if (httpStatus >= 200 && httpStatus < 400) {
@@ -140,16 +145,6 @@ export const ServerStatusPanel = GObject.registerClass(
                 panelIcon.gicon = this.iconProvider.getIcon(Status.Bad);
                 this.updateTaskbarCallback?.();
             }
-        }
-
-        /**
-         * Schedule the URL invocation.
-         *
-         * @param {Function} func callback
-         * @param {int} delay
-         */
-        setInterval(func, delay) {
-            return GLib.timeout_add(GLib.PRIORITY_DEFAULT, delay, func);
         }
 
         /**
