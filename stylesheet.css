@@ -20,3 +20,13 @@
 .padded {
     padding: 5px;
 }
+
+.duration {
+    font-size: 75%;
+    width: 75px;
+}
+
+.bin {
+    margin: 10px;
+    text-align: right;
+}

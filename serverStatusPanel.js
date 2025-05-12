@@ -54,14 +54,43 @@ export const ServerStatusPanel = GObject.registerClass(
             );
             this.add_child(nameButton);
 
-            // call once then schedule
-            this.update(serverSetting.url, panelIconDisposed);
+            // duration indicator
+            const durationIndicator = new St.Label({
+                text: "",
+                style_class: "duration",
+            });
+            let durationIndicatorDisposed = false;
+            durationIndicator.connect(
+                "destroy",
+                () => (durationIndicatorDisposed = true),
+            );
+            const durationIndicatorContainer = new St.Bin({
+                style_class: "bin",
+                x_expand: true,
+                x_align: Clutter.ActorAlign.END,
+                child: durationIndicator,
+            });
+            this.add_child(durationIndicatorContainer);
 
+            // call once then schedule
+            this.update(
+                serverSetting.url,
+                panelIconDisposed,
+                durationIndicator,
+                durationIndicatorDisposed,
+            );
+
+            // schedule recurring http calls
             this.intervalID = GLib.timeout_add(
                 GLib.PRIORITY_DEFAULT,
                 serverSetting.frequency * 1000,
                 () => {
-                    this.update(serverSetting.url, panelIconDisposed);
+                    this.update(
+                        serverSetting.url,
+                        panelIconDisposed,
+                        durationIndicator,
+                        durationIndicatorDisposed,
+                    );
                     return GLib.SOURCE_CONTINUE;
                 },
             );
@@ -89,11 +118,25 @@ export const ServerStatusPanel = GObject.registerClass(
          *
          * @param {String} url
          * @param {boolean} panelIconDisposed whether the panel icon has been disposed
+         * @param {St.Label} durationIndicator
+         * @param {boolean} durationIndicatorDisposed
          */
-        update(url, panelIconDisposed) {
+        update(
+            url,
+            panelIconDisposed,
+            durationIndicator,
+            durationIndicatorDisposed,
+        ) {
             const httpMethod =
                 this.serverSetting.is_get == "true" ? "GET" : "HEAD";
-            this.get(httpMethod, url, this.panelIcon, panelIconDisposed);
+            this.get(
+                httpMethod,
+                url,
+                this.panelIcon,
+                panelIconDisposed,
+                durationIndicator,
+                durationIndicatorDisposed,
+            );
             return GLib.SOURCE_CONTINUE;
         }
 
@@ -105,15 +148,32 @@ export const ServerStatusPanel = GObject.registerClass(
          * @param {String} url
          * @param {Gio.Icon} panelIcon
          * @param {boolean} panelIconDisposed
+         * @param {St.Label} durationIndicator
+         * @param {boolean} durationIndicatorDisposed
          */
-        get(httpMethod, url, panelIcon, panelIconDisposed) {
+        get(
+            httpMethod,
+            url,
+            panelIcon,
+            panelIconDisposed,
+            durationIndicator,
+            durationIndicatorDisposed,
+        ) {
+            // create http object
             let message = Soup.Message.new(httpMethod, url);
             if (message) {
+                // start duration calc.
+                const start = Date.now();
+                // do the actual http call
                 this.session.send_and_read_async(
                     message,
                     GLib.PRIORITY_DEFAULT,
                     null,
                     () => {
+                        // response received
+                        const duration = Date.now() - start;
+
+                        // parse result if emoji widget hasn't been destroyed
                         if (panelIcon && !panelIconDisposed) {
                             // assume down until proven up
                             let newIcon = this.iconProvider.getIcon(
@@ -136,6 +196,15 @@ export const ServerStatusPanel = GObject.registerClass(
 
                             panelIcon.gicon = newIcon;
                             this.updateTaskbarCallback?.();
+
+                            // update response time label if it hasn't been destroyed
+                            if (
+                                durationIndicator &&
+                                !durationIndicatorDisposed
+                            ) {
+                                durationIndicator.text =
+                                    duration.toString() + "ms";
+                            }
                         }
                         return GLib.SOURCE_REMOVE;
                     },
