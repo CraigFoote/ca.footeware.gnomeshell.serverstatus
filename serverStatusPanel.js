@@ -95,6 +95,7 @@ export const ServerStatusPanel = GObject.registerClass(
                 },
             );
 
+            // when destroyed, remove id to recurring http calls
             this.connect("destroy", () => {
                 if (this.intervalID) {
                     GLib.source_remove(this.intervalID);
@@ -142,7 +143,7 @@ export const ServerStatusPanel = GObject.registerClass(
 
         /**
          * Execute the URL invocation asynchronously and update the panel icon
-         * appropriately then trigger the updating of the indicator icon appropriately.
+         * appropriately then trigger the updating of the taskbar indicator icon appropriately.
          *
          * @param {String} httpMethod
          * @param {String} url
@@ -193,9 +194,7 @@ export const ServerStatusPanel = GObject.registerClass(
                             } catch (error) {
                                 // ignore and use initial value for newIcon i.e. Down
                             }
-
                             panelIcon.gicon = newIcon;
-                            this.updateTaskbarCallback?.();
 
                             // update response time label if it hasn't been destroyed
                             if (
@@ -205,6 +204,8 @@ export const ServerStatusPanel = GObject.registerClass(
                                 durationIndicator.text =
                                     duration.toString() + "ms";
                             }
+
+                            this.updateTaskbarCallback?.();
                         }
                         return GLib.SOURCE_REMOVE;
                     },
