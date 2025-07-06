@@ -14,6 +14,8 @@ A GNOME Shell extension with an indicator in the task bar displaying status of e
 
 The task bar shows the worst status from the set of all server statuses in the popup menu. Server down is considered worse than bad URL.
 
+There's a 10 second timeout on the requests. That seems reasonable to me but let me know if it's a problem for you.
+
 To customize, the four **.svg** files in the **assets** folder can be swapped out with your own icons. Just keep the same filenames.
 
 ---
