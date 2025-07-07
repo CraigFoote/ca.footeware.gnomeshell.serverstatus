@@ -138,7 +138,7 @@ export default class ServerStatusIndicatorExtension extends Extension {
             const frequency =
                 rawSetting["frequency"] != undefined
                     ? rawSetting["frequency"]
-                    : "60";
+                    : "120";
             const is_get =
                 rawSetting["is_get"] != undefined
                     ? rawSetting["is_get"]

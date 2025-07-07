@@ -101,7 +101,7 @@ export const ServerStatusPanel = GObject.registerClass(
                     GLib.source_remove(this.intervalID);
                     this.intervalID = null;
                 }
-                delete this.panelIcon, this;
+                (delete this.panelIcon, this);
             });
         }
 
@@ -205,9 +205,8 @@ export const ServerStatusPanel = GObject.registerClass(
                                     duration.toString() + "ms";
                             }
 
-                            this.updateTaskbarCallback?.();
+                            this.updateTaskbarCallback();
                         }
-                        return GLib.SOURCE_REMOVE;
                     },
                 );
             } else {
@@ -215,6 +214,7 @@ export const ServerStatusPanel = GObject.registerClass(
                 panelIcon.gicon = this.iconProvider.getIcon(Status.Bad);
                 this.updateTaskbarCallback?.();
             }
+            return GLib.SOURCE_CONTINUE;
         }
 
         /**
