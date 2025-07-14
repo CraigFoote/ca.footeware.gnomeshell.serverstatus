@@ -1,0 +1,24 @@
+{
+    "name": "serverstatus",
+    "version": "1.0.0",
+    "description": "A GNOME Shell extension with an indicator in the task bar displaying status of entered web server URLs using emojis:",
+    "homepage": "https://github.com/CraigFoote/ca.footeware.gnomeshell.serverstatus#readme",
+    "bugs": {
+        "url": "https://github.com/CraigFoote/ca.footeware.gnomeshell.serverstatus/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/CraigFoote/ca.footeware.gnomeshell.serverstatus.git"
+    },
+    "license": "GPL-3.0-or-later",
+    "author": "Craig Foote",
+    "type": "commonjs",
+    "main": "extension.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.30.1",
+        "eslint": "^9.30.1"
+    }
+}

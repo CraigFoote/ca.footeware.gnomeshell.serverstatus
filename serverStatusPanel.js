@@ -191,7 +191,7 @@ export const ServerStatusPanel = GObject.registerClass(
                                         Status.Up,
                                     );
                                 }
-                            } catch (error) {
+                            } catch {
                                 // ignore and use initial value for newIcon i.e. Down
                             }
                             panelIcon.gicon = newIcon;
@@ -206,6 +206,7 @@ export const ServerStatusPanel = GObject.registerClass(
                             }
 
                             this.updateTaskbarCallback();
+                            return GLib.SOURCE_CONTINUE;
                         }
                     },
                 );
