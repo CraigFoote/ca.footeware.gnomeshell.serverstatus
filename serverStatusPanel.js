@@ -28,7 +28,7 @@ export const ServerStatusPanel = GObject.registerClass(
             this.updateTaskbarCallback = updateTaskbarCallback;
             this.iconProvider = iconProvider;
 
-            this.style_class = "bordered";
+            this.style_class = "server-panel";
 
             this.session = new Soup.Session({
                 timeout: 10, //seconds

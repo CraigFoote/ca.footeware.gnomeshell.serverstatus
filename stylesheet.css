@@ -1,10 +1,7 @@
 @charset "UTF-8";
 
-.bordered {
-    border-width: 1px;
-    border-radius: 10px;
-    border-color: #808080;
-    margin: 5px;
+.server-panel {
+    margin: 3px;
 }
 
 .icon-lg {
