@@ -28,7 +28,15 @@ export const ServerStatusPanel = GObject.registerClass(
             this.updateTaskbarCallback = updateTaskbarCallback;
             this.iconProvider = iconProvider;
 
+            this.track_hover = true;
+            this.reactive = true;
             this.style_class = "server-panel";
+
+            // click to open browser
+            this.connect("button-press-event", () => {
+                this.openBrowser(serverSetting.url);
+                return Clutter.EVENT_PROPAGATE;
+            });
 
             this.session = new Soup.Session({
                 timeout: 10, //seconds
@@ -43,16 +51,13 @@ export const ServerStatusPanel = GObject.registerClass(
             this.panelIcon.connect("destroy", () => (panelIconDisposed = true));
             this.add_child(this.panelIcon);
 
-            // server name display, click to open browser
-            const nameButton = new St.Button({
-                label: serverSetting.name,
+            // server name display
+            const nameLabel = new St.Label({
+                text: serverSetting.name,
                 style_class: "padded",
                 y_align: Clutter.ActorAlign.CENTER,
             });
-            nameButton.connect("clicked", () =>
-                this.openBrowser(serverSetting.url),
-            );
-            this.add_child(nameButton);
+            this.add_child(nameLabel);
 
             // duration indicator
             const durationIndicator = new St.Label({
