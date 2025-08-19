@@ -14,12 +14,12 @@
     height: 30px;
 }
 
-.prefs-icon {
-    width: 15px;
-    height: 15px;
+.prefs-button {
+    width: 17px;
+    height: 17px;
 }
 
-.prefs-icon:hover {
+.prefs-button:hover {
     background-color: #3b3b3b;
     border-radius: 10px;
 }
