@@ -14,9 +14,14 @@
     height: 30px;
 }
 
-.icon-sm {
+.prefs-icon {
     width: 15px;
     height: 15px;
+}
+
+.prefs-icon:hover {
+    background-color: #3b3b3b;
+    border-radius: 10px;
 }
 
 .padded {
