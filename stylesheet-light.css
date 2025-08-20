@@ -15,8 +15,8 @@
 }
 
 .prefs-button {
-    width: 15px;
-    height: 15px;
+    width: 17px;
+    height: 17px;
 }
 
 .prefs-button:hover {
@@ -33,7 +33,7 @@
     text-align: right;
 }
 
-.duration {
+.small-text {
     font-size: 75%;
     width: 75px;
 }
