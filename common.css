@@ -1,0 +1,29 @@
+@charset "UTF-8";
+
+.server-panel {
+    margin: 3px;
+}
+
+.icon-lg {
+    width: 30px;
+    height: 30px;
+}
+
+.prefs-button {
+    width: 17px;
+    height: 17px;
+}
+
+.padded {
+    padding: 5px;
+}
+
+.bin {
+    margin: 10px;
+    text-align: right;
+}
+
+.duration {
+    font-size: 75%;
+    width: 75px;
+}

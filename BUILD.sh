@@ -4,7 +4,7 @@ zip serverstatus@footeware.ca.zip \
 *.js \
 metadata.json \
 LICENSE \
-stylesheet-*.css \
+*.css \
 schemas/* \
 assets/* \
 -x assets/screenshot.png \
