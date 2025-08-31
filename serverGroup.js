@@ -235,7 +235,7 @@ export class ServerGroup {
      *
      * @param {ServerGroup[]} serverGroups
      * @returns int
-     * @throws error if index cannot be determined
+     * @throws Error if index cannot be determined
      */
     getPosition(serverGroups) {
         for (let i = 0; i < serverGroups.length; i++) {
@@ -244,7 +244,7 @@ export class ServerGroup {
                 return i;
             }
         }
-        throw "Position not found for " + this.nameRow.text;
+        throw new Error("Position not found for " + this.nameRow.text);
     }
 
     /**
