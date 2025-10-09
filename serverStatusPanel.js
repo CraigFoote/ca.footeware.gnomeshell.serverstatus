@@ -19,13 +19,13 @@ export const ServerStatusPanel = GObject.registerClass(
     class ServerStatusPanel extends St.BoxLayout {
         static HTTP_TIMEOUT_SECONDS = 10;
 
-        _init(
+        constructor(
             serverSetting,
             updateTaskbarCallback,
             iconProvider,
             ...otherProps
         ) {
-            super._init(otherProps);
+            super(otherProps);
             this.serverSetting = serverSetting;
             this.updateTaskbarCallback = updateTaskbarCallback;
             this.iconProvider = iconProvider;
@@ -273,7 +273,6 @@ export const ServerStatusPanel = GObject.registerClass(
                             }
 
                             this.updateTaskbarCallback?.();
-                            return GLib.SOURCE_CONTINUE;
                         }
                     },
                 );
@@ -282,7 +281,6 @@ export const ServerStatusPanel = GObject.registerClass(
                 panelIcon.gicon = this.iconProvider.getIcon(Status.Bad);
                 this.updateTaskbarCallback?.();
             }
-            return GLib.SOURCE_CONTINUE;
         }
 
         /**

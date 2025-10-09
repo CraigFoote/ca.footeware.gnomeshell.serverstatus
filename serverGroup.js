@@ -195,14 +195,10 @@ export class ServerGroup {
      * @returns true if a move occurred.
      */
     moveDown(serverGroups) {
-        try {
-            const index = this.getPosition(serverGroups);
-            if (index < serverGroups.length - 1) {
-                this.move(index, index + 1, serverGroups);
-                return true;
-            }
-        } catch (error) {
-            console.warn(error);
+        const index = this.getPosition(serverGroups);
+        if (index !== -1 && index < serverGroups.length - 1) {
+            this.move(index, index + 1, serverGroups);
+            return true;
         }
         return false; // no move was made
     }
@@ -214,14 +210,10 @@ export class ServerGroup {
      * @returns true if a move occurred.
      */
     moveUp(serverGroups) {
-        try {
-            const index = this.getPosition(serverGroups);
-            if (index > 0) {
-                this.move(index, index - 1, serverGroups);
-                return true;
-            }
-        } catch (error) {
-            console.warn(error);
+        const index = this.getPosition(serverGroups);
+        if (index > 0) {
+            this.move(index, index - 1, serverGroups);
+            return true;
         }
         return false; // no move was made
     }
@@ -240,8 +232,7 @@ export class ServerGroup {
                 return i;
             }
         }
-        // should never happen
-        throw new Error("Position not found for " + this.nameRow.text);
+        return -1;
     }
 
     /**
