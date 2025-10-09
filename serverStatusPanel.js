@@ -9,7 +9,7 @@ import Soup from "gi://Soup";
 import { Status } from "./status.js";
 
 /**
- * A series of these panels is shown when the indicator icon is clicked.
+ * A series of these panels are shown when the indicator icon is clicked.
  * Each shows a server status and name, and opens a browser to the URL when clicked.
  */
 export const ServerStatusPanel = GObject.registerClass(
@@ -17,6 +17,8 @@ export const ServerStatusPanel = GObject.registerClass(
         GTypeName: "ServerStatusPanel",
     },
     class ServerStatusPanel extends St.BoxLayout {
+        static HTTP_TIMEOUT_SECONDS = 10;
+
         _init(
             serverSetting,
             updateTaskbarCallback,
@@ -32,6 +34,12 @@ export const ServerStatusPanel = GObject.registerClass(
             this.reactive = true;
             this.style_class = "server-panel";
 
+            // track pending requests for cleanup
+            this.pendingCancellables = new Set();
+
+            // flag to indicate panel is disposed and to ignore returning requests
+            this.isDestroyed = false;
+
             // click to open browser
             this.connect("button-press-event", () => {
                 this.openBrowser(serverSetting.url);
@@ -39,7 +47,7 @@ export const ServerStatusPanel = GObject.registerClass(
             });
 
             this.session = new Soup.Session({
-                timeout: 10, //seconds
+                timeout: ServerStatusPanel.HTTP_TIMEOUT_SECONDS,
             });
 
             // icon displaying status by emoji icon
@@ -100,13 +108,36 @@ export const ServerStatusPanel = GObject.registerClass(
                 },
             );
 
-            // when destroyed, remove id to recurring http calls
             this.connect("destroy", () => {
+                this.isDestroyed = true;
+
+                // remove id to recurring http calls
                 if (this.intervalID) {
                     GLib.source_remove(this.intervalID);
                     this.intervalID = null;
                 }
-                (delete this.panelIcon, this);
+
+                // clear all pending requests
+                if (this.pendingCancellables) {
+                    this.pendingCancellables.forEach((cancellable) => {
+                        if (!cancellable.is_cancelled()) {
+                            cancellable.cancel();
+                        }
+                    });
+                    this.pendingCancellables.clear();
+                    this.pendingCancellables = null;
+                }
+
+                // Clean up the HTTP session
+                if (this.session) {
+                    this.session = null;
+                }
+
+                // Clean up instance properties
+                this.panelIcon = null;
+                this.serverSetting = null;
+                this.updateTaskbarCallback = null;
+                this.iconProvider = null;
             });
         }
 
@@ -133,16 +164,17 @@ export const ServerStatusPanel = GObject.registerClass(
             durationIndicator,
             durationIndicatorDisposed,
         ) {
-            const httpMethod =
-                this.serverSetting.is_get == "true" ? "GET" : "HEAD";
-            this.get(
-                httpMethod,
-                url,
-                this.panelIcon,
-                panelIconDisposed,
-                durationIndicator,
-                durationIndicatorDisposed,
-            );
+            if (!this.isDestroyed) {
+                const httpMethod = this.serverSetting.isGet ? "GET" : "HEAD";
+                this.get(
+                    httpMethod,
+                    url,
+                    this.panelIcon,
+                    panelIconDisposed,
+                    durationIndicator,
+                    durationIndicatorDisposed,
+                );
+            }
             return GLib.SOURCE_CONTINUE;
         }
 
@@ -152,7 +184,7 @@ export const ServerStatusPanel = GObject.registerClass(
          *
          * @param {String} httpMethod
          * @param {String} url
-         * @param {Gio.Icon} panelIcon
+         * @param {St.Icon} panelIcon
          * @param {boolean} panelIconDisposed
          * @param {St.Label} durationIndicator
          * @param {boolean} durationIndicatorDisposed
@@ -165,39 +197,69 @@ export const ServerStatusPanel = GObject.registerClass(
             durationIndicator,
             durationIndicatorDisposed,
         ) {
-            // create http object
-            let message = Soup.Message.new(httpMethod, url);
+            if (this.isDestroyed) {
+                return;
+            }
+            // create http object, `new Soup.Message()` constructor is deprecated in favor of '.new' 🤨
+            const message = Soup.Message.new(httpMethod, url);
             if (message) {
+                // create a cancellable for this request
+                const cancellable = new Gio.Cancellable();
+                this.pendingCancellables.add(cancellable);
+
                 // start duration calc.
                 const start = Date.now();
+
                 // do the actual http call
                 this.session.send_and_read_async(
                     message,
                     GLib.PRIORITY_DEFAULT,
-                    null,
+                    cancellable,
                     () => {
-                        // response received
+                        // response received, complete duration calc.
                         const duration = Date.now() - start;
+
+                        if (this.isDestroyed || !this.pendingCancellables) {
+                            return;
+                        }
+
+                        // remove completed request from pending set
+                        this.pendingCancellables.delete(cancellable);
 
                         // parse result if emoji widget hasn't been destroyed
                         if (panelIcon && !panelIconDisposed) {
-                            // assume down until proven up
-                            let newIcon = this.iconProvider.getIcon(
-                                Status.Down,
-                            );
+                            let newIcon;
 
+                            // 429 Too Many Requests causes a 'bad Soup enum' error 🤨; use try-catch
                             try {
-                                // 429 Too Many Requests causes a 'bad Soup enum' error 🤨
-                                const httpStatus = message.get_status();
+                                const soupStatus = message.status_code;
 
-                                // treat 2xx and 3xx return codes as success
-                                if (httpStatus >= 200 && httpStatus < 400) {
+                                // check for timeout, Soup uses status code 1 for timeouts
+                                if (
+                                    soupStatus === 1 ||
+                                    soupStatus === Soup.Status.REQUEST_TIMEOUT
+                                ) {
+                                    // request timed out
+                                    newIcon = this.iconProvider.getIcon(
+                                        Status.Bad,
+                                    );
+                                } else if (
+                                    // consider 200 through 399 success result
+                                    soupStatus >= 200 &&
+                                    soupStatus < 400
+                                ) {
+                                    // success
                                     newIcon = this.iconProvider.getIcon(
                                         Status.Up,
                                     );
+                                } else {
+                                    // HTTP error
+                                    newIcon = this.iconProvider.getIcon(
+                                        Status.Down,
+                                    );
                                 }
                             } catch {
-                                // ignore and use initial value for newIcon i.e. Down
+                                newIcon = this.iconProvider.getIcon(Status.Bad);
                             }
                             panelIcon.gicon = newIcon;
 
@@ -210,7 +272,7 @@ export const ServerStatusPanel = GObject.registerClass(
                                     duration.toString() + "ms";
                             }
 
-                            this.updateTaskbarCallback();
+                            this.updateTaskbarCallback?.();
                             return GLib.SOURCE_CONTINUE;
                         }
                     },

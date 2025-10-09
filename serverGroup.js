@@ -21,31 +21,21 @@ export class ServerGroup {
         this.serverSettingGroup = new Adw.PreferencesGroup({});
 
         // expander
-        this.expander = Adw.ExpanderRow.new();
+        this.expander = new Adw.ExpanderRow();
         // disable pango as it fails on & in url query strings
         this.expander.set_use_markup(false);
-        let title = "";
-        if (settings != undefined) {
-            title = settings.name;
-        }
+        const title = settings?.name ?? "";
         this.expander.set_title(title);
-        let subtitle = "";
-        if (settings != undefined) {
-            subtitle =
-                (settings.is_get ? "GET" : "HEAD") +
-                " : " +
-                settings.url +
-                " @ " +
-                settings.frequency +
-                "s";
-        }
+        const subtitle = settings
+            ? `${settings.isGet ? "GET" : "HEAD"} : ${settings.url} @ ${settings.frequency}s`
+            : "";
         this.expander.set_subtitle(subtitle);
         this.serverSettingGroup.add(this.expander);
 
         // name text field
         this.nameRow = new Adw.EntryRow({
             title: "Name",
-            text: settings != undefined ? settings.name : "",
+            text: settings?.name ?? "",
             show_apply_button: true,
         });
         this.nameRow.connect("apply", () => {
@@ -56,7 +46,7 @@ export class ServerGroup {
         // url text field
         this.urlRow = new Adw.EntryRow({
             title: "URL",
-            text: settings != undefined ? settings.url : "",
+            text: settings?.url ?? "",
             show_apply_button: true,
         });
         this.urlRow.connect("apply", () => {
@@ -66,9 +56,7 @@ export class ServerGroup {
 
         // frequency spinner
         this.frequencyRow = Adw.SpinRow.new_with_range(10, 300, 10);
-        this.frequencyRow.set_value(
-            settings != undefined ? settings.frequency : 30,
-        );
+        this.frequencyRow.set_value(settings?.frequency ?? 120);
         this.frequencyRow.set_title("Frequency (secs.)");
         this.frequencyRow.connect("input", () => {
             this.update();
@@ -79,7 +67,7 @@ export class ServerGroup {
         this.useGetSwitchRow = new Adw.SwitchRow({
             title: "Use GET rather than HEAD",
         });
-        const isGet = settings != undefined ? settings.is_get : false;
+        const isGet = settings?.isGet ?? false;
         this.useGetSwitchRow.set_active(isGet);
         this.useGetSwitchRow.connect("notify::active", () => {
             this.update();
@@ -107,10 +95,10 @@ export class ServerGroup {
                 preferences.save();
             }
         });
-        const moveButtonBox = Gtk.Box.new(
-            Gtk.Orientation.GTK_ORIENTATION_HORIZONTAL,
-            10,
-        );
+        const moveButtonBox = new Gtk.Box({
+            orientation: Gtk.Orientation.HORIZONTAL,
+            spacing: 10,
+        });
         moveButtonBox.append(moveUpButton);
         moveButtonBox.append(moveDownButton);
         moveRow.add_suffix(moveButtonBox);
@@ -156,7 +144,7 @@ export class ServerGroup {
 
         this.createServerSettings();
 
-        if (settings == undefined) {
+        if (settings === null) {
             this.expander.set_expanded(true);
             this.nameRow.grab_focus();
         }
@@ -201,58 +189,67 @@ export class ServerGroup {
     }
 
     /**
-     * Move this {Adw.PreferenceGroup} down by one in the list.
+     * Move this `Adw.PreferenceGroup` down by one in the list.
      *
-     * @param {ServerGroup[]} serverGroups
+     * @param {ServerGroup} array of `ServerGroup`s
      * @returns true if a move occurred.
      */
     moveDown(serverGroups) {
-        const index = this.getPosition(serverGroups);
-        if (index < serverGroups.length) {
-            this.move(index, index + 1, serverGroups);
-            return true;
+        try {
+            const index = this.getPosition(serverGroups);
+            if (index < serverGroups.length - 1) {
+                this.move(index, index + 1, serverGroups);
+                return true;
+            }
+        } catch (error) {
+            console.warn(error);
         }
-        return false;
+        return false; // no move was made
     }
 
     /**
-     * Move this <code>Adw.PreferenceGroup</code> up by one in the list.
+     * Move this `Adw.PreferenceGroup` up by one in the list.
      *
-     * @param {ServerGroup[]} serverGroups
+     * @param {ServerGroup} array of `ServerGroup`s
      * @returns true if a move occurred.
      */
     moveUp(serverGroups) {
-        const index = this.getPosition(serverGroups);
-        if (index > 0) {
-            this.move(index, index - 1, serverGroups);
-            return true;
+        try {
+            const index = this.getPosition(serverGroups);
+            if (index > 0) {
+                this.move(index, index - 1, serverGroups);
+                return true;
+            }
+        } catch (error) {
+            console.warn(error);
         }
-        return false;
+        return false; // no move was made
     }
 
     /**
-     * Find the index of this in the provided array.
+     * Find the index of `this` in the provided array.
      *
-     * @param {ServerGroup[]} serverGroups
+     * @param {ServerGroup} array of `ServerGroup`s
      * @returns int
      * @throws Error if index cannot be determined
      */
     getPosition(serverGroups) {
         for (let i = 0; i < serverGroups.length; i++) {
-            let serverGroup = serverGroups[i];
+            const serverGroup = serverGroups[i];
             if (serverGroup.id === this.id) {
                 return i;
             }
         }
+        // should never happen
         throw new Error("Position not found for " + this.nameRow.text);
     }
 
     /**
-     * Move this in provided array using provided 'from' index and 'to' index.
+     * Move `this` in provided array using provided 'from' index and 'to' index.
      *
-     * @param {int} fromIndex
-     * @param {int} toIndex
-     * @param {ServerGroup[]} serverGroups
+     * @param {int} fromIndex the position being moved from
+     * @param {int} toIndex the move destination
+     * @param {ServerGroup} array of `ServerGroup`s
      */
     move(fromIndex, toIndex, serverGroups) {
         const serverGroup = serverGroups[fromIndex];
@@ -270,7 +267,7 @@ export class ServerGroup {
     }
 
     /**
-     * Return this group.
+     * Return this preference group.
      *
      * @returns {Adw.PreferencesGroup}
      */
@@ -279,7 +276,7 @@ export class ServerGroup {
     }
 
     /**
-     * Returns the Name EntryRow.
+     * Returns the _Name_ `EntryRow`.
      *
      * @returns {Adw.EntryRow}
      */
@@ -288,7 +285,7 @@ export class ServerGroup {
     }
 
     /**
-     * Create a <Code>ServerSetting</code> based on control values.
+     * Create a `ServerSetting` based on control values.
      */
     createServerSettings() {
         this.settings = new ServerSetting(
@@ -305,25 +302,25 @@ export class ServerGroup {
      * @returns {String}
      */
     createUID() {
-        const buf = [];
+        const buffer = [];
         const chars =
             "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         const charlen = chars.length;
         for (let i = 0; i < 32; i++) {
-            buf[i] = chars.charAt(Math.floor(Math.random() * charlen));
+            buffer[i] = chars.charAt(Math.floor(Math.random() * charlen));
         }
-        return buf.join("");
+        return buffer.join("");
     }
 
     /**
-     * Remove this group from the set of all groups.
+     * Remove the group with supplied id from the provided set of groups.
      *
-     * @param {String} id
-     * @param {ServerGroup[]} set of all groups everywhere infinity
+     * @param {String} id the id of the group to remove
+     * @param {ServerGroup} array of `ServerGroup`s without group with supplied id
      */
     removeGroup(id, serverGroups) {
         for (let i = 0; i < serverGroups.length; i++) {
-            let candidate = serverGroups[i];
+            const candidate = serverGroups[i];
             if (candidate.id === id) {
                 serverGroups.splice(i, 1);
                 break;

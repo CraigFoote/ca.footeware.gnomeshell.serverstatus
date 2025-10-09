@@ -1,51 +1,30 @@
 "use strict";
 
-import GObject from "gi://GObject";
 import St from "gi://St";
 import Clutter from "gi://Clutter";
 import {
     Extension,
     gettext as _,
 } from "resource:///org/gnome/shell/extensions/extension.js";
-import * as PanelMenu from "resource:///org/gnome/shell/ui/panelMenu.js";
 import * as Main from "resource:///org/gnome/shell/ui/main.js";
 import { ServerSetting } from "./serverSetting.js";
 import { ServerStatusPanel } from "./serverStatusPanel.js";
 import { Status } from "./status.js";
 import { IconProvider } from "./iconProvider.js";
-
-let iconProvider;
-let panelIcon;
-let statusPanels;
-let extensionListenerId;
+import { Indicator } from "./indicator.js";
 
 /**
- * The taskbar indicator with a clickable icon showing worst status of all server statuses.
- */
-const Indicator = GObject.registerClass(
-    class Indicator extends PanelMenu.Button {
-        _init(extensionName) {
-            super._init(0.0, extensionName);
-            panelIcon = new St.Icon({
-                gicon: iconProvider.getIcon(Status.Init),
-                style_class: "system-status-icon",
-            });
-            this.add_child(panelIcon);
-            statusPanels = [];
-        }
-    },
-);
-
-/**
- * The main extension class. Creates an <code>Indicator</code> and keeps
+ * The main extension class. Creates an `Indicator` and keeps
  * it updated based on status of specified servers settings.
  */
 export default class ServerStatusIndicatorExtension extends Extension {
     enable() {
-        iconProvider = new IconProvider(this.path + "/assets/");
+        this.iconProvider = new IconProvider(this.path + "/assets/");
 
-        // create indicator *after* iconProvider
-        this.indicator = new Indicator(_(this.metadata.name));
+        this.indicator = new Indicator(
+            _(this.metadata.name),
+            this.iconProvider,
+        );
         Main.panel.addToStatusArea(this.uuid, this.indicator);
 
         // create a box to hold server panels
@@ -62,11 +41,11 @@ export default class ServerStatusIndicatorExtension extends Extension {
         for (const savedSetting of this.savedSettings) {
             const panel = new ServerStatusPanel(
                 savedSetting,
-                this.updateIcon,
-                iconProvider,
+                () => this.updateIcon(),
+                this.iconProvider,
             );
             this.serversBox.add_child(panel);
-            statusPanels.push(panel);
+            this.indicator.addStatusPanel(panel);
         }
 
         // Open Prefs button
@@ -80,10 +59,11 @@ export default class ServerStatusIndicatorExtension extends Extension {
             this.indicator.menu.close();
             this.openPreferences();
         });
+
         this.indicator.menu.box.add_child(prefsButton);
 
         // listen for changes to server settings in gsettings and update display
-        extensionListenerId = this.rawSettings.connect("changed", () => {
+        this.extensionListenerId = this.rawSettings.connect("changed", () => {
             this.onPrefChanged();
         });
     }
@@ -92,17 +72,14 @@ export default class ServerStatusIndicatorExtension extends Extension {
      * Destroys and nulls artifacts for garbage collection.
      */
     disable() {
-        // disconnect listener
-        if (this.rawSettings && extensionListenerId) {
-            this.rawSettings.disconnect(extensionListenerId);
-            extensionListenerId = null;
+        // disconnect listener for pref changes
+        if (this.rawSettings && this.extensionListenerId) {
+            this.rawSettings.disconnect(this.extensionListenerId);
+            this.extensionListenerId = null;
         }
-        // clean up each status panel
-        if (statusPanels) {
-            statusPanels.forEach((panel) => {
-                panel.destroy();
-            });
-            statusPanels = [];
+        // clean up status panels through indicator
+        if (this.indicator) {
+            this.indicator.clearStatusPanels();
         }
         // clean up the serversBox
         if (this.serversBox) {
@@ -114,20 +91,22 @@ export default class ServerStatusIndicatorExtension extends Extension {
             this.indicator.destroy();
             this.indicator = null;
         }
-        // clean up other stuff
-        this.savedSettings = null;
-        this.rawSettings = null;
-        if (iconProvider) {
-            iconProvider.destroy();
-            iconProvider = null;
+        // destroy icon provider and its icons
+        if (this.iconProvider) {
+            this.iconProvider.destroy();
+            this.iconProvider = null;
         }
-        panelIcon = null;
+        // clean up other stuff
+        this.savedSettings.length = 0; // dereference elements
+        this.savedSettings = null;
+        this.rawSettings.length = 0; // dereference elements
+        this.rawSettings = null;
     }
 
     /**
      * Creates `ServerSetting` objects based on discovered gsettings entries.
      *
-     * @returns {ServerSetting[]}
+     * @returns {ServerSetting} array of `ServerSetting`s
      */
     parseSettings() {
         const variant = this.rawSettings.get_value("server-settings");
@@ -135,40 +114,42 @@ export default class ServerStatusIndicatorExtension extends Extension {
         const savedSettings = [];
         for (const rawSetting of saved) {
             const name =
-                rawSetting["name"] != undefined ? rawSetting["name"] : "";
-            const url = rawSetting["url"] != undefined ? rawSetting["url"] : "";
+                rawSetting["name"] !== undefined ? rawSetting["name"] : "";
+            const url =
+                rawSetting["url"] !== undefined ? rawSetting["url"] : "";
             const frequency =
-                rawSetting["frequency"] != undefined
-                    ? rawSetting["frequency"]
-                    : "120";
-            const is_get =
-                rawSetting["is_get"] != undefined
-                    ? rawSetting["is_get"]
-                    : "false";
-            const setting = new ServerSetting(name, url, frequency, is_get);
+                rawSetting["frequency"] !== undefined
+                    ? Number(rawSetting["frequency"])
+                    : 120;
+            const isGet =
+                rawSetting["is_get"] !== undefined
+                    ? rawSetting["is_get"] === "true"
+                    : false;
+            const setting = new ServerSetting(name, url, frequency, isGet);
             savedSettings.push(setting);
         }
         return savedSettings;
     }
 
     /**
-     * Preferences have changed the set of server settings so we can update the indicator icon.
+     * Preferences have changed the set of server settings so we
+     * need to update the indicator icon and menu server panels.
      */
     onPrefChanged() {
-        panelIcon.gicon = iconProvider.getIcon(Status.Init);
-        statusPanels = [];
-        // clear server box and repopulate
+        this.indicator.updatePanelIcon(Status.Init);
+        // clear servers' box and repopulate
+        this.indicator.clearStatusPanels();
         this.serversBox.destroy_all_children();
         this.savedSettings = this.parseSettings();
-        // panel items, one per server setting
+        // recreate panel items, one per server setting
         for (const savedSetting of this.savedSettings) {
             const panel = new ServerStatusPanel(
                 savedSetting,
-                this.updateIcon,
-                iconProvider,
+                () => this.updateIcon(),
+                this.iconProvider,
             );
             this.serversBox.add_child(panel);
-            statusPanels.push(panel);
+            this.indicator.addStatusPanel(panel);
         }
         this.updateIcon();
     }
@@ -177,35 +158,27 @@ export default class ServerStatusIndicatorExtension extends Extension {
      * Update the indicator icon based on changes in server settings.
      */
     updateIcon() {
+        if (!this.indicator) {
+            return;
+        }
+        let worstStatus;
         const statusList = [];
-        for (const statusPanel of statusPanels) {
-            const status = statusPanel.getStatus();
+        const panels = this.indicator.getStatusPanels();
+        for (const panel of panels) {
+            const status = panel.getStatus();
             statusList.push(status);
         }
-        // determine worst status
-        let haveDown = false;
-        let haveBad = false;
-        let haveUp = false;
-        for (const s of statusList) {
-            if (s === Status.Down) {
-                haveDown = true;
-            } else if (s === Status.Bad) {
-                haveBad = true;
-            } else if (s === Status.Up) {
-                haveUp = true;
-            }
+        // determine worst status, check worst to best statuses
+        if (statusList.includes(Status.Down)) {
+            worstStatus = Status.Down;
+        } else if (statusList.includes(Status.Bad)) {
+            worstStatus = Status.Bad;
+        } else if (statusList.includes(Status.Init)) {
+            worstStatus = Status.Init;
+        } else if (statusList.includes(Status.Up)) {
+            worstStatus = Status.Up;
         }
-        // set taskbar indicator icon with appropriate color
-        if (panelIcon) {
-            if (haveDown) {
-                panelIcon.gicon = iconProvider.getIcon(Status.Down);
-            } else if (haveBad) {
-                panelIcon.gicon = iconProvider.getIcon(Status.Bad);
-            } else if (haveUp) {
-                panelIcon.gicon = iconProvider.getIcon(Status.Up);
-            } else {
-                panelIcon.gicon = iconProvider.getIcon(Status.Init);
-            }
-        }
+        // update the panel icon
+        this.indicator.updatePanelIcon(worstStatus);
     }
 }

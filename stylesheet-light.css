@@ -3,10 +3,8 @@
 
 .server-panel:hover {
     background-color: rgba(0, 0, 0, 0.15);
-    border-radius: 10px;
 }
 
 .prefs-button:hover {
     background-color: rgba(0, 0, 0, 0.15);
-    border-radius: 10px;
 }

@@ -2,6 +2,7 @@
 
 .server-panel {
     margin: 3px;
+    border-radius: 10px;
 }
 
 .icon-lg {
@@ -12,6 +13,7 @@
 .prefs-button {
     width: 17px;
     height: 17px;
+    border-radius: 10px;
 }
 
 .padded {

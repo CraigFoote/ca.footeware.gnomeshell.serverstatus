@@ -26,7 +26,7 @@ export class IconProvider {
     }
 
     /**
-     * Get a gicon for the provided {Status}.
+     * Get a gicon for the provided status.
      *
      * @param {Status} status
      * @returns {Gio.icon}
@@ -50,7 +50,7 @@ export class IconProvider {
     }
 
     /**
-     * Get a {Status} for the provided gicon.
+     * Get a status for the provided gicon.
      *
      * @param {Gio.icon} icon
      */

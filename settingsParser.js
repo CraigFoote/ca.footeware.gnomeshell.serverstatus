@@ -3,14 +3,14 @@
 import { ServerSetting } from "./serverSetting.js";
 
 /**
- * Convert <code>Gio.Settings</code> into <code>ServerSettings</code>.
+ * Convert `Gio.Settings` into `ServerSetting`s.
  */
 export class SettingsParser {
     /**
-     * Parse a <code>Gio.Settings</code> instance.
+     * Parse a `Gio.Settings` instance.
      *
-     * @param {Gio.Settings} gioSettings
-     * @returns {ServerSetting[]}
+     * @param {Gio.Settings} gioSettings the persisted settings
+     * @returns {ServerSetting} array of `ServerSetting`s
      */
     static parseGioSettings(gioSettings) {
         const variant = gioSettings.get_value("server-settings");
@@ -18,20 +18,19 @@ export class SettingsParser {
         const settings = [];
         for (const savedSetting of savedSettings) {
             const name =
-                savedSetting["name"] != undefined ? savedSetting["name"] : "";
+                savedSetting["name"] !== undefined ? savedSetting["name"] : "";
             const url =
-                savedSetting["url"] != undefined ? savedSetting["url"] : "";
+                savedSetting["url"] !== undefined ? savedSetting["url"] : "";
             const frequency =
-                savedSetting["frequency"] != undefined
+                savedSetting["frequency"] !== undefined
                     ? Number(savedSetting["frequency"])
-                    : 120; // convert from string to number, match schema default
+                    : 120;
             const isGet =
-                savedSetting["is_get"] != undefined
-                    ? savedSetting["is_get"]
-                    : "false";
+                savedSetting["is_get"] !== undefined
+                    ? savedSetting["is_get"] === "true"
+                    : false;
 
-            const isGetBool = isGet === "true"; // convert to boolean
-            const setting = new ServerSetting(name, url, frequency, isGetBool);
+            const setting = new ServerSetting(name, url, frequency, isGet);
             settings.push(setting);
         }
         return settings;
