@@ -161,7 +161,6 @@ export default class ServerStatusIndicatorExtension extends Extension {
         if (!this.indicator) {
             return;
         }
-        let worstStatus;
         const statusList = [];
         const panels = this.indicator.getStatusPanels();
         for (const panel of panels) {
@@ -169,6 +168,7 @@ export default class ServerStatusIndicatorExtension extends Extension {
             statusList.push(status);
         }
         // determine worst status, check worst to best statuses
+        let worstStatus;
         if (statusList.includes(Status.Down)) {
             worstStatus = Status.Down;
         } else if (statusList.includes(Status.Bad)) {
