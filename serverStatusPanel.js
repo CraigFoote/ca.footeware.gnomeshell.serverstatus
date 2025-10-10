@@ -10,7 +10,7 @@ import { Status } from "./status.js";
 
 /**
  * A series of these panels are shown when the indicator icon is clicked.
- * Each shows a server status and name, and opens a browser to the URL when clicked.
+ * Each shows a server status and name, and opens a browser to its URL when clicked.
  */
 export const ServerStatusPanel = GObject.registerClass(
     {
@@ -30,6 +30,7 @@ export const ServerStatusPanel = GObject.registerClass(
             this.updateTaskbarCallback = updateTaskbarCallback;
             this.iconProvider = iconProvider;
 
+            // mouse rollover
             this.track_hover = true;
             this.reactive = true;
             this.style_class = "server-panel";
@@ -109,6 +110,7 @@ export const ServerStatusPanel = GObject.registerClass(
             );
 
             this.connect("destroy", () => {
+                // prevent other functions from acting on received responses
                 this.isDestroyed = true;
 
                 // remove id to recurring http calls

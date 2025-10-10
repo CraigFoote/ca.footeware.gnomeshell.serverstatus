@@ -222,8 +222,7 @@ export class ServerGroup {
      * Find the index of `this` in the provided array.
      *
      * @param {ServerGroup} array of `ServerGroup`s
-     * @returns int
-     * @throws Error if index cannot be determined
+     * @returns int index of `this` in provided array, -1 if not found
      */
     getPosition(serverGroups) {
         for (let i = 0; i < serverGroups.length; i++) {
@@ -249,11 +248,14 @@ export class ServerGroup {
     }
 
     /**
-     * Return this group's server settings.
+     * Return this group's server settings, creating it if null.
      *
      * @returns {ServerSetting}
      */
     getSettings() {
+        if (!this.settings) {
+            this.createServerSettings();
+        }
         return this.settings;
     }
 
