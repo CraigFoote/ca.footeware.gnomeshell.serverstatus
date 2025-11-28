@@ -121,10 +121,15 @@ export default class ServerStatusIndicatorExtension extends Extension {
                 rawSetting["frequency"] !== undefined
                     ? Number(rawSetting["frequency"])
                     : 120;
-            const isGet =
-                rawSetting["is_get"] !== undefined
-                    ? rawSetting["is_get"] === "true"
-                    : false;
+
+            // support old key
+            let isGet = false;
+            if (rawSetting["is_get"] != undefined) {
+                isGet = rawSetting["is_get"] === "true";
+            } else if (rawSetting["isGet"] != undefined) {
+                isGet = rawSetting["isGet"] === "true";
+            }
+            
             const setting = new ServerSetting(name, url, frequency, isGet);
             savedSettings.push(setting);
         }

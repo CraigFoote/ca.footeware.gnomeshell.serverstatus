@@ -25,10 +25,14 @@ export class SettingsParser {
                 savedSetting["frequency"] !== undefined
                     ? Number(savedSetting["frequency"])
                     : 120;
-            const isGet =
-                savedSetting["is_get"] !== undefined
-                    ? savedSetting["is_get"] === "true"
-                    : false;
+
+            // support old key
+            let isGet = false;
+            if (savedSetting["is_get"] != undefined) {
+                isGet = savedSetting["is_get"] === "true";
+            } else if (savedSetting["isGet"] != undefined) {
+                isGet = savedSetting["isGet"] === "true";
+            }
 
             const setting = new ServerSetting(name, url, frequency, isGet);
             settings.push(setting);
