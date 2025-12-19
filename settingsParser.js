@@ -28,9 +28,9 @@ export class SettingsParser {
 
             // support old key
             let isGet = false;
-            if (savedSetting["is_get"] != undefined) {
+            if (savedSetting["is_get"] !== undefined) {
                 isGet = savedSetting["is_get"] === "true";
-            } else if (savedSetting["isGet"] != undefined) {
+            } else if (savedSetting["isGet"] !== undefined) {
                 isGet = savedSetting["isGet"] === "true";
             }
 

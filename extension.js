@@ -7,11 +7,11 @@ import {
     gettext as _,
 } from "resource:///org/gnome/shell/extensions/extension.js";
 import * as Main from "resource:///org/gnome/shell/ui/main.js";
-import { ServerSetting } from "./serverSetting.js";
 import { ServerStatusPanel } from "./serverStatusPanel.js";
 import { Status } from "./status.js";
 import { IconProvider } from "./iconProvider.js";
 import { Indicator } from "./indicator.js";
+import { SettingsParser } from "./settingsParser.js";
 
 /**
  * The main extension class. Creates an `Indicator` and keeps
@@ -35,7 +35,7 @@ export default class ServerStatusIndicatorExtension extends Extension {
 
         // get settings stored in gsettings
         this.rawSettings = this.getSettings();
-        this.savedSettings = this.parseSettings();
+        this.savedSettings = SettingsParser.parseGioSettings(this.rawSettings);
 
         // panel items, one per server setting
         for (const savedSetting of this.savedSettings) {
@@ -104,39 +104,6 @@ export default class ServerStatusIndicatorExtension extends Extension {
     }
 
     /**
-     * Creates `ServerSetting` objects based on discovered gsettings entries.
-     *
-     * @returns {ServerSetting} array of `ServerSetting`s
-     */
-    parseSettings() {
-        const variant = this.rawSettings.get_value("server-settings");
-        const saved = variant.deep_unpack();
-        const savedSettings = [];
-        for (const rawSetting of saved) {
-            const name =
-                rawSetting["name"] !== undefined ? rawSetting["name"] : "";
-            const url =
-                rawSetting["url"] !== undefined ? rawSetting["url"] : "";
-            const frequency =
-                rawSetting["frequency"] !== undefined
-                    ? Number(rawSetting["frequency"])
-                    : 120;
-
-            // support old key
-            let isGet = false;
-            if (rawSetting["is_get"] != undefined) {
-                isGet = rawSetting["is_get"] === "true";
-            } else if (rawSetting["isGet"] != undefined) {
-                isGet = rawSetting["isGet"] === "true";
-            }
-            
-            const setting = new ServerSetting(name, url, frequency, isGet);
-            savedSettings.push(setting);
-        }
-        return savedSettings;
-    }
-
-    /**
      * Preferences have changed the set of server settings so we
      * need to update the indicator icon and menu server panels.
      */
@@ -145,7 +112,7 @@ export default class ServerStatusIndicatorExtension extends Extension {
         // clear servers' box and repopulate
         this.indicator.clearStatusPanels();
         this.serversBox.destroy_all_children();
-        this.savedSettings = this.parseSettings();
+        this.savedSettings = SettingsParser.parseGioSettings(this.rawSettings);
         // recreate panel items, one per server setting
         for (const savedSetting of this.savedSettings) {
             const panel = new ServerStatusPanel(
