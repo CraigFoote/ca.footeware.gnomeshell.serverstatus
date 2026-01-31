@@ -5,7 +5,7 @@ zip serverstatus@footeware.ca.zip \
 metadata.json \
 LICENSE \
 *.css \
-schemas/* \
+schemas/org.gnome.shell.extensions.serverstatus.gschema.xml \
 assets/* \
 -x assets/screenshot.png \
 -x assets/icon.png
