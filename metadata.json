@@ -9,5 +9,5 @@
     "url": "https://github.com/CraigFoote/ca.footeware.gnomeshell.serverstatus.git",
     "uuid": "serverstatus@footeware.ca",
     "settings-schema": "org.gnome.shell.extensions.serverstatus",
-    "version": 47
+    "version": 48
 }

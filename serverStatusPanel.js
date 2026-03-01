@@ -130,6 +130,7 @@ export const ServerStatusPanel = GObject.registerClass(
 
                 // Clean up the HTTP session
                 if (this.session) {
+                    this.session.abort();
                     this.session = null;
                 }
 
