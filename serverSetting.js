@@ -12,12 +12,14 @@ export class ServerSetting {
      * @param {Number} frequency
      * @param {Number} timeout
      * @param {boolean} isGet
+     * @param {boolean} notifies
      */
-    constructor(name, url, frequency, timeout, isGet) {
+    constructor(name, url, frequency, timeout, isGet, notifies) {
         this.name = name;
         this.url = url;
         this.frequency = frequency;
         this.timeout = timeout;
         this.isGet = isGet;
+        this.notifies = notifies;
     }
 }

@@ -6,7 +6,11 @@ import St from "gi://St";
 import Gio from "gi://Gio";
 import GObject from "gi://GObject";
 import Soup from "gi://Soup";
+import * as Main from "resource:///org/gnome/shell/ui/main.js";
+import * as MessageTray from 'resource:///org/gnome/shell/ui/messageTray.js';
 import { Status } from "./status.js";
+
+let notificationSource;
 
 /**
  * A series of these panels are shown when the indicator icon is clicked.
@@ -45,6 +49,7 @@ export const ServerStatusPanel = GObject.registerClass(
                 return Clutter.EVENT_PROPAGATE;
             });
 
+            // session from which to fire http requests
             this.session = new Soup.Session({
                 timeout: serverSetting.timeout,
             });
@@ -152,7 +157,7 @@ export const ServerStatusPanel = GObject.registerClass(
         }
 
         /**
-         * Update this panel by invoking the URL on a schedule.
+         * Invoked on a schedule, make request with provided URL.
          *
          * @param {String} url
          * @param {boolean} panelIconDisposed whether the panel icon has been disposed
@@ -167,7 +172,7 @@ export const ServerStatusPanel = GObject.registerClass(
         ) {
             if (!this.isDestroyed) {
                 const httpMethod = this.serverSetting.isGet ? "GET" : "HEAD";
-                this.get(
+                this.makeRequest(
                     httpMethod,
                     url,
                     this.panelIcon,
@@ -180,8 +185,7 @@ export const ServerStatusPanel = GObject.registerClass(
         }
 
         /**
-         * Execute the URL invocation asynchronously and update the panel icon
-         * appropriately then trigger the updating of the taskbar indicator icon appropriately.
+         * Execute the URL invocation asynchronously and trigger the update of the GUI.
          *
          * @param {String} httpMethod
          * @param {String} url
@@ -190,7 +194,7 @@ export const ServerStatusPanel = GObject.registerClass(
          * @param {St.Label} durationIndicator
          * @param {boolean} durationIndicatorDisposed
          */
-        get(
+        makeRequest(
             httpMethod,
             url,
             panelIcon,
@@ -224,70 +228,156 @@ export const ServerStatusPanel = GObject.registerClass(
                             return;
                         }
 
-                        // remove completed request from pending set
-                        this.pendingCancellables.delete(cancellable);
-
-                        // parse result if emoji widget hasn't been destroyed
-                        if (panelIcon && !panelIconDisposed) {
-                            let newIcon;
-                            let timedOut = false;
-
-                            // 429 Too Many Requests causes a 'bad Soup enum' error 🤨; use try-catch
-                            try {
-                                const soupStatus = message.status_code;
-
-                                // Check for timeout, Soup supposedly uses status code 1 for 
-                                // timeouts but I haven't seen it or REQUEST_TIMEOUT.
-                                // Also there's https://gitlab.gnome.org/GNOME/libsoup/-/issues/155
-                                // Use duration calc. for now.
-                                if (
-                                    soupStatus === 1 ||
-                                    soupStatus === Soup.Status.REQUEST_TIMEOUT ||
-                                    duration > (this.session.get_timeout() * 1000)
-                                ) {
-                                    // request timed out
-                                    newIcon = this.iconProvider.getIcon(
-                                        Status.Down,
-                                    );
-                                    timedOut = true;
-                                } else if (
-                                    // consider 200 through 399 success result
-                                    soupStatus >= 200 &&
-                                    soupStatus < 400
-                                ) {
-                                    // success
-                                    newIcon = this.iconProvider.getIcon(
-                                        Status.Up,
-                                    );
-                                } else {
-                                    // HTTP error
-                                    newIcon = this.iconProvider.getIcon(
-                                        Status.Down,
-                                    );
-                                }
-                            } catch {
-                                newIcon = this.iconProvider.getIcon(Status.Bad);
-                            }
-                            panelIcon.gicon = newIcon;
-
-                            // update response time label if it hasn't been destroyed
-                            if (
-                                durationIndicator &&
-                                !durationIndicatorDisposed
-                            ) {
-                                durationIndicator.text = timedOut ? `timed out @ ${this.session.get_timeout()}s` :
-                                    duration.toString() + "ms";
-                            }
-
-                            this.updateTaskbarCallback?.();
-                        }
-                    },
-                );
+                        this.processResponse(cancellable, duration, message, panelIcon, panelIconDisposed, durationIndicator, durationIndicatorDisposed);
+                    });
             } else {
                 // message was null because of malformed url
                 panelIcon.gicon = this.iconProvider.getIcon(Status.Bad);
                 this.updateTaskbarCallback?.();
             }
+        }
+
+        /**
+         * Process the provided message and update the UI accordingly.
+         * 
+         * @param {Gio.Cancellable} cancellable 
+         * @param {number} duration 
+         * @param {Soup.Message} message 
+         * @param {Gio.icon} panelIcon 
+         * @param {boolean} panelIconDisposed 
+         * @param {St.Label} durationIndicator 
+         * @param {boolean} durationIndicatorDisposed 
+         */
+        processResponse(cancellable, duration, message, panelIcon, panelIconDisposed, durationIndicator, durationIndicatorDisposed) {
+            // remove completed request from pending set
+            this.pendingCancellables.delete(cancellable);
+
+            // parse result if emoji widget hasn't been destroyed
+            if (panelIcon && !panelIconDisposed) {
+                let newIcon;
+                let timedOut = false;
+                let reason;
+
+                // 429 Too Many Requests causes a 'bad Soup enum' error 🤨; use try-catch
+                try {
+                    const soupStatus = message.status_code;
+
+                    /*
+                     * Check for timeout first. Soup supposedly uses status code 1 for 
+                     * timeouts but I haven't seen it or REQUEST_TIMEOUT.
+                     * Also there's https://gitlab.gnome.org/GNOME/libsoup/-/issues/155.
+                     * Use duration calc. for now.
+                     */
+                    if (
+                        soupStatus === 1 ||
+                        soupStatus === Soup.Status.REQUEST_TIMEOUT ||
+                        duration > (this.session.get_timeout() * 1000)
+                    ) {
+                        // request timed out
+                        newIcon = this.iconProvider.getIcon(
+                            Status.Down,
+                        );
+                        timedOut = true;
+                        reason = `This server timed out after ${duration / 1000} seconds.`;
+                    } else if (
+                        // consider 200 through 399 success result
+                        soupStatus >= 200 &&
+                        soupStatus < 400
+                    ) {
+                        // success
+                        newIcon = this.iconProvider.getIcon(
+                            Status.Up,
+                        );
+                    } else if (soupStatus === 0) {
+                        // incomplete response
+                        newIcon = this.iconProvider.getIcon(Status.Down);
+                        reason = "This server is down. No status was received.";
+                    } else {
+                        // HTTP error
+                        newIcon = this.iconProvider.getIcon(
+                            Status.Down,
+                        );
+                        reason = `This server is down: ${soupStatus} ${message.reason_phrase}.`;
+                    }
+                } catch (e) {
+                    // 429 or another status missing from the soup enum?
+                    newIcon = this.iconProvider.getIcon(Status.Down);
+                    reason = `This server is down: ${e.message}.`;
+                }
+
+                this.updateGUI(panelIcon, newIcon, durationIndicator, durationIndicatorDisposed, timedOut, duration, reason);
+            }
+        }
+
+        /**
+         * Handle the response. Update the icons, panel text and possibly notify user.
+         * 
+         * @param {Gio.icon} panelIcon 
+         * @param {Gio.icon} newIcon 
+         * @param {St.Label} durationIndicator 
+         * @param {boolean} durationIndicatorDisposed 
+         * @param {boolean} timedOut 
+         * @param {number} duration 
+         * @param {String} reason 
+         */
+        updateGUI(panelIcon, newIcon, durationIndicator, durationIndicatorDisposed, timedOut, duration, reason) {
+            // update row icon
+            panelIcon.gicon = newIcon;
+
+            // update response time label if it hasn't been destroyed
+            if (
+                durationIndicator &&
+                !durationIndicatorDisposed
+            ) {
+                durationIndicator.text = timedOut ? `timed out @ ${this.session.get_timeout()}s` :
+                    `${duration}ms`;
+            }
+
+            // notify user if we are notifying and status is down
+            if (this.serverSetting.notifies && (this.iconProvider.getStatus(newIcon) === Status.Down)) {
+                this.fireNotification(newIcon, reason);
+            }
+
+            // update main indicator icon
+            this.updateTaskbarCallback?.();
+        }
+
+        /**
+         * Show a desktop notification using the provided icon and this panel's name.
+         * 
+         * @param {Gio.icon} icon 
+         * @param {String} reason
+         */
+        fireNotification(icon, reason) {
+            const source = this.getNotificationSource();
+            const notification = new MessageTray.Notification({
+                source: source,
+                title: _(this.serverSetting.name),
+                body: _(reason),
+                gicon: icon,
+                urgency: MessageTray.Urgency.HIGH,
+            });
+            source.addNotification(notification);
+        }
+
+        /**
+         * Lazily creates and returns a notification source.
+         * 
+         * @returns {MessageTray.Source}
+         */
+        getNotificationSource() {
+            if (!notificationSource) {
+                notificationSource = new MessageTray.Source({
+                    title: _("Server Status Indicator"),
+                    iconName: "dialog-warning",
+                    policy: new MessageTray.NotificationGenericPolicy(),
+                });
+                notificationSource.connect('destroy', _source => {
+                    notificationSource = null;
+                });
+                Main.messageTray.add(notificationSource);
+            }
+            return notificationSource;
         }
 
         /**
@@ -298,5 +388,6 @@ export const ServerStatusPanel = GObject.registerClass(
         openBrowser(url) {
             Gio.AppInfo.launch_default_for_uri_async(url, null, null, null);
         }
-    },
+    }
 );
+

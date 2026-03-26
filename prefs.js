@@ -136,9 +136,9 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
         );
         // add them back reversed, same as they were created, and displayed in indicator
         const reversed = parsedSettings.toReversed();
-        for (const savedSettings of reversed) {
+        for (const saved of reversed) {
             // ServerGroup is a wrapper around a PreferenceGroup, returned by getGroup()
-            const newGroup = new ServerGroup(this, savedSettings);
+            const newGroup = new ServerGroup(this, saved);
             newGroup
                 .getGroup()
                 .insert_after(operationsGroup.parent, operationsGroup);
@@ -179,6 +179,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
                     settings.frequency = settings.frequency.toString();
                     settings.timeout = settings.timeout.toString();
                     settings.isGet = settings.isGet.toString();
+                    settings.notifies = settings.notifies.toString();
                     serverSettings.push(settings);
                 }
             }

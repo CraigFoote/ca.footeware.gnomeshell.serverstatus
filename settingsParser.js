@@ -38,7 +38,9 @@ export class SettingsParser {
                 isGet = savedSetting["isGet"] === "true";
             }
 
-            const setting = new ServerSetting(name, url, frequency, timeout, isGet);
+            const notifies = savedSetting["notifies"] !== undefined ? savedSetting["notifies"] === "true" : false; // defaults to false
+
+            const setting = new ServerSetting(name, url, frequency, timeout, isGet, notifies);
             settings.push(setting);
         }
         return settings;

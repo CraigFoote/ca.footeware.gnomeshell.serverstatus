@@ -1,6 +1,6 @@
 # serverstatus@footeware.ca
 
-A GNOME Shell extension with an indicator in the task bar displaying status of entered web server URLs using emojis:
+A GNOME Shell extension with an indicator in the panel displaying status of entered web server URLs using emojis:
 
 ![server.svg](assets/server.svg) initializing...
 
@@ -12,9 +12,11 @@ A GNOME Shell extension with an indicator in the task bar displaying status of e
 
 ---
 
-The task bar shows the worst status from the set of all server statuses in the popup menu. Server down is considered worse than bad URL.
+The panel icon shows the worst status from the set of all server statuses in the popup menu. Server down is considered worse than bad URL.
 
 There's a configurable timeout on the requests (10 second default) and HTTP response codes 2xx and 3xx are treated as success.
+
+There's a per server option to show a notification when it's down. It defaults to false but can easily be switched on.
 
 Install at [extensions.gnome.org](https://extensions.gnome.org/extension/4687/server-status-indicator/) or use [Extension Manager](https://flathub.org/en/apps/com.mattjakeman.ExtensionManager).
 
