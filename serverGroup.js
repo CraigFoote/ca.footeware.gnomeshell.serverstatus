@@ -132,10 +132,19 @@ export class ServerGroup {
         });
         const visibilityIcon = this.visible ? "view-reveal-symbolic" : "view-conceal-symbolic";
         this.visibilityButton = Gtk.Button.new_from_icon_name(visibilityIcon);
+        const visibilityTooltip = this.visible
+            ? "Hide this server in the menu"
+            : "Show this server in the menu";
+        this.visibilityButton.set_tooltip_text(visibilityTooltip);
+        this.visibilityButton.set_accessible_name("Toggle server visibility in menu");
         this.visibilityButton.connect("clicked", () => {
             this.visible = !this.visible;
             const newIcon = this.visible ? "view-reveal-symbolic" : "view-conceal-symbolic";
+            const newTooltip = this.visible
+                ? "Hide this server in the menu"
+                : "Show this server in the menu";
             this.visibilityButton.set_icon_name(newIcon);
+            this.visibilityButton.set_tooltip_text(newTooltip);
             this.update();
         });
         visibilityRow.add_suffix(this.visibilityButton);
