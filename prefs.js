@@ -180,6 +180,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
                     settings.timeout = settings.timeout.toString();
                     settings.isGet = settings.isGet.toString();
                     settings.notifies = settings.notifies.toString();
+                    settings.visible = settings.visible.toString();
                     serverSettings.push(settings);
                 }
             }

@@ -124,6 +124,23 @@ export class ServerGroup {
         moveRow.add_suffix(moveButtonBox);
         this.serverSettingGroup.add(moveRow);
 
+        // visibility row - show/hide server without deleting
+        this.visible = settings?.visible ?? true;
+        const visibilityRow = new Adw.ActionRow({
+            title: "Show in menu",
+            subtitle: "Hidden servers are not displayed and not checked",
+        });
+        const visibilityIcon = this.visible ? "view-reveal-symbolic" : "view-conceal-symbolic";
+        this.visibilityButton = Gtk.Button.new_from_icon_name(visibilityIcon);
+        this.visibilityButton.connect("clicked", () => {
+            this.visible = !this.visible;
+            const newIcon = this.visible ? "view-reveal-symbolic" : "view-conceal-symbolic";
+            this.visibilityButton.set_icon_name(newIcon);
+            this.update();
+        });
+        visibilityRow.add_suffix(this.visibilityButton);
+        this.serverSettingGroup.add(visibilityRow);
+
         // delete button
         const deleteRow = new Adw.ActionRow({
             title: "Delete this server",
@@ -309,6 +326,7 @@ export class ServerGroup {
             this.timeoutRow.text,
             this.useGetSwitchRow.active,
             this.useNotificationsSwitchRow.active,
+            this.visible,
         );
     }
 
