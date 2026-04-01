@@ -39,8 +39,9 @@ export class SettingsParser {
             }
 
             const notifies = savedSetting["notifies"] !== undefined ? savedSetting["notifies"] === "true" : false; // defaults to false
+            const visible = savedSetting["visible"] !== undefined ? savedSetting["visible"] === "true" : true; // defaults to true for backward compatibility
 
-            const setting = new ServerSetting(name, url, frequency, timeout, isGet, notifies);
+            const setting = new ServerSetting(name, url, frequency, timeout, isGet, notifies, visible);
             settings.push(setting);
         }
         return settings;

@@ -39,13 +39,15 @@ export default class ServerStatusIndicatorExtension extends Extension {
 
         // panel items, one per server setting
         for (const savedSetting of this.savedSettings) {
-            const panel = new ServerStatusPanel(
-                savedSetting,
-                () => this.updateIcon(),
-                this.iconProvider,
-            );
-            this.serversBox.add_child(panel);
-            this.indicator.addStatusPanel(panel);
+            if (savedSetting.visible) {
+                const panel = new ServerStatusPanel(
+                    savedSetting,
+                    () => this.updateIcon(),
+                    this.iconProvider,
+                );
+                this.serversBox.add_child(panel);
+                this.indicator.addStatusPanel(panel);
+            }
         }
 
         // Open Prefs button
@@ -115,13 +117,15 @@ export default class ServerStatusIndicatorExtension extends Extension {
         this.savedSettings = SettingsParser.parseGioSettings(this.rawSettings);
         // recreate panel items, one per server setting
         for (const savedSetting of this.savedSettings) {
-            const panel = new ServerStatusPanel(
-                savedSetting,
-                () => this.updateIcon(),
-                this.iconProvider,
-            );
-            this.serversBox.add_child(panel);
-            this.indicator.addStatusPanel(panel);
+            if (savedSetting.visible) {
+                const panel = new ServerStatusPanel(
+                    savedSetting,
+                    () => this.updateIcon(),
+                    this.iconProvider,
+                );
+                this.serversBox.add_child(panel);
+                this.indicator.addStatusPanel(panel);
+            }
         }
         this.updateIcon();
     }

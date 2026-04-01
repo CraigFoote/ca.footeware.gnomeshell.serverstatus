@@ -13,13 +13,15 @@ export class ServerSetting {
      * @param {Number} timeout
      * @param {boolean} isGet
      * @param {boolean} notifies
+     * @param {boolean} visible
      */
-    constructor(name, url, frequency, timeout, isGet, notifies) {
+    constructor(name, url, frequency, timeout, isGet, notifies, visible = true) {
         this.name = name;
         this.url = url;
         this.frequency = frequency;
         this.timeout = timeout;
         this.isGet = isGet;
         this.notifies = notifies;
+        this.visible = visible;
     }
 }
