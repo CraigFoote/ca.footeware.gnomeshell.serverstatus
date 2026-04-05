@@ -8,6 +8,9 @@ import { Status } from "./status.js";
  * Upon clicking, a series of `ServerStatusPanel`s displays individual server statuses.
  */
 export const Indicator = GObject.registerClass(
+    {
+        GTypeName: "ServerStatusIndicator",
+    },
     class Indicator extends PanelMenu.Button {
         _init(extensionName, iconProvider) {
             super._init(0.0, extensionName);

@@ -51,18 +51,19 @@ export default class ServerStatusIndicatorExtension extends Extension {
         }
 
         // Open Prefs button
-        const prefsButton = new St.Button({
+        this.prefsButton = new St.Button({
             icon_name: "preferences-system-symbolic",
             style_class: "prefs-button padded",
             track_hover: true,
             reactive: true,
+            accessible_name: "Preferences",
         });
-        prefsButton.connect("clicked", () => {
+        this.prefsButtonId = this.prefsButton.connect("clicked", () => {
             this.indicator.menu.close();
             this.openPreferences();
         });
 
-        this.indicator.menu.box.add_child(prefsButton);
+        this.indicator.menu.box.add_child(this.prefsButton);
 
         // listen for changes to server settings in gsettings and update display
         this.extensionListenerId = this.rawSettings.connect("changed", () => {
@@ -74,6 +75,12 @@ export default class ServerStatusIndicatorExtension extends Extension {
      * Destroys and nulls artifacts for garbage collection.
      */
     disable() {
+        // disconnect listeners for click events
+        if (this.prefsButton && this.prefsButtonId) {
+            this.prefsButton.disconnect(this.prefsButtonId);
+            this.prefsButtonId = null;
+            this.prefsButton = null;
+        }
         // disconnect listener for pref changes
         if (this.rawSettings && this.extensionListenerId) {
             this.rawSettings.disconnect(this.extensionListenerId);

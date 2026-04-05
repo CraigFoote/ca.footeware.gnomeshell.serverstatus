@@ -118,7 +118,7 @@ export const ServerStatusPanel = GObject.registerClass(
 
                 // remove id to recurring http calls
                 if (this.intervalID) {
-                    GLib.source_remove(this.intervalID);
+                    GLib.Source.remove(this.intervalID);
                     this.intervalID = null;
                 }
 
@@ -224,7 +224,7 @@ export const ServerStatusPanel = GObject.registerClass(
                         // response received, complete duration calc.
                         const duration = Date.now() - start;
 
-                        if (this.isDestroyed || !this.pendingCancellables) {
+                        if (this.isDestroyed || !this.pendingCancellables || cancellable.is_cancelled()) {
                             return;
                         }
 
@@ -386,7 +386,26 @@ export const ServerStatusPanel = GObject.registerClass(
          * @param {String} url
          */
         openBrowser(url) {
-            Gio.AppInfo.launch_default_for_uri_async(url, null, null, null);
+            if (this.isDestroyed) {
+                return;
+            }
+            const cancellable = new Gio.Cancellable();
+            this.pendingCancellables.add(cancellable);
+            Gio.AppInfo.launch_default_for_uri_async(
+                url,
+                null,
+                cancellable,
+                (appInfo, result) => {
+                    if (this.pendingCancellables) {
+                        this.pendingCancellables.delete(cancellable);
+                    }
+                    try {
+                        Gio.AppInfo.launch_default_for_uri_finish(result);
+                    } catch {
+                        // fail silently
+                    }
+                }
+            );
         }
     }
 );

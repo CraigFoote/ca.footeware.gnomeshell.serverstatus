@@ -25,6 +25,9 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
 
         // destroy on close
         window.connect("close-request", () => {
+            for (const serverGroup of this.serverGroups) {
+                serverGroup.destroy();
+            }
             this.serverGroups = null;
             this.savedSettings = null;
             this.page = null;

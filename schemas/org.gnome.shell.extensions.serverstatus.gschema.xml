@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
-
 	<schema id="org.gnome.shell.extensions.serverstatus"
 		path="/org/gnome/shell/extensions/serverstatus/">
 		<key type="aa{ss}" name="server-settings">
@@ -9,5 +8,4 @@
 			<description>A list of {name, url, frequency, timeout, isGet, notifies, visible} keys mapped to string values, one list entry per server panel.</description>
 		</key>
 	</schema>
-
 </schemalist>

@@ -21,94 +21,23 @@ export class ServerGroup {
         this.serverSettingGroup = new Adw.PreferencesGroup({});
 
         // expander
-        this.expander = new Adw.ExpanderRow();
-        // disable pango as it fails on & in url query strings
-        this.expander.set_use_markup(false);
-        const title = settings?.name ?? "";
-        this.expander.set_title(title);
-        const subtitle = settings
-            ? `${settings.isGet ? "GET" : "HEAD"} ${settings.url} @ ${settings.frequency}s with ${settings.timeout}s timeout ${settings.notifies ? "🔔" : ""}`
-            : "";
-        this.expander.set_subtitle(subtitle);
-        this.serverSettingGroup.add(this.expander);
-
-        // name text field
-        this.nameRow = new Adw.EntryRow({
-            title: "Name",
-            text: settings?.name ?? "",
-            show_apply_button: true,
-        });
-        this.nameRow.connect("apply", () => {
-            this.update();
-        });
-        this.expander.add_row(this.nameRow);
-
-        // url text field
-        this.urlRow = new Adw.EntryRow({
-            title: "URL",
-            text: settings?.url ?? "",
-            show_apply_button: true,
-        });
-        this.urlRow.connect("apply", () => {
-            this.update();
-        });
-        this.expander.add_row(this.urlRow);
-
-        // frequency spinner
-        this.frequencyRow = Adw.SpinRow.new_with_range(10, 300, 10);
-        this.frequencyRow.set_value(settings?.frequency ?? 120);
-        this.frequencyRow.set_title("Frequency (secs.)");
-        this.frequencyRow.connect("notify::value", () => {
-            this.update();
-        });
-        this.expander.add_row(this.frequencyRow);
-
-        // timeout spinner
-        this.timeoutRow = Adw.SpinRow.new_with_range(1, 300, 1);
-        this.timeoutRow.set_value(settings?.timeout ?? 10);
-        this.timeoutRow.set_title("Timeout (secs.)");
-        this.timeoutRow.connect("notify::value", () => {
-            this.update();
-        });
-        this.expander.add_row(this.timeoutRow);
-
-        // 'use GET' switch
-        this.useGetSwitchRow = new Adw.SwitchRow({
-            title: "Use GET rather than HEAD",
-        });
-        const isGet = settings?.isGet ?? false;
-        this.useGetSwitchRow.set_active(isGet);
-        this.useGetSwitchRow.connect("notify::active", () => {
-            this.update();
-        });
-        this.expander.add_row(this.useGetSwitchRow);
-
-        // 'use notifications' switch
-        this.useNotificationsSwitchRow = new Adw.SwitchRow({
-            title: "Notify when down",
-        });
-        const notifies = settings?.notifies ?? false;
-        this.useNotificationsSwitchRow.set_active(notifies);
-        this.useNotificationsSwitchRow.connect("notify::active", () => {
-            this.update();
-        });
-        this.expander.add_row(this.useNotificationsSwitchRow);
+        this.expander = this.getExpanderRow(settings);
 
         // move up/down row
         const moveRow = new Adw.ActionRow({
             title: "Move Up/Down",
         });
-        const moveUpButton = Gtk.Button.new_from_icon_name("go-up-symbolic");
-        moveUpButton.connect("clicked", () => {
+        this.moveUpButton = Gtk.Button.new_from_icon_name("go-up-symbolic");
+        this.moveUpHandlerId = this.moveUpButton.connect("clicked", () => {
             // does a move actually happen?
             if (this.moveUp(preferences.serverGroups)) {
                 preferences.reorder();
                 preferences.save();
             }
         });
-        const moveDownButton =
+        this.moveDownButton =
             Gtk.Button.new_from_icon_name("go-down-symbolic");
-        moveDownButton.connect("clicked", () => {
+        this.moveDownHandlerId = this.moveDownButton.connect("clicked", () => {
             // does a move actually happen?
             if (this.moveDown(preferences.serverGroups)) {
                 preferences.reorder();
@@ -119,8 +48,8 @@ export class ServerGroup {
             orientation: Gtk.Orientation.HORIZONTAL,
             spacing: 10,
         });
-        moveButtonBox.append(moveUpButton);
-        moveButtonBox.append(moveDownButton);
+        moveButtonBox.append(this.moveUpButton);
+        moveButtonBox.append(this.moveDownButton);
         moveRow.add_suffix(moveButtonBox);
         this.serverSettingGroup.add(moveRow);
 
@@ -132,7 +61,7 @@ export class ServerGroup {
         });
         const visibilityIcon = this.visible ? "view-reveal-symbolic" : "view-conceal-symbolic";
         this.visibilityButton = Gtk.Button.new_from_icon_name(visibilityIcon);
-        this.visibilityButton.connect("clicked", () => {
+        this.visibilityHandlerId = this.visibilityButton.connect("clicked", () => {
             this.visible = !this.visible;
             const newIcon = this.visible ? "view-reveal-symbolic" : "view-conceal-symbolic";
             this.visibilityButton.set_icon_name(newIcon);
@@ -145,13 +74,13 @@ export class ServerGroup {
         const deleteRow = new Adw.ActionRow({
             title: "Delete this server",
         });
-        const deleteButton = Gtk.Button.new_from_icon_name(
+        this.deleteButton = Gtk.Button.new_from_icon_name(
             "edit-delete-symbolic",
         );
-        deleteButton.set_css_classes(["destructive-action"]);
-        deleteRow.add_suffix(deleteButton);
+        this.deleteButton.set_css_classes(["destructive-action"]);
+        deleteRow.add_suffix(this.deleteButton);
         this.serverSettingGroup.add(deleteRow);
-        deleteButton.connect("clicked", () => {
+        this.deleteHandlerId = this.deleteButton.connect("clicked", () => {
             const messageDialog = new Adw.MessageDialog({
                 transient_for: preferences.window,
                 destroy_with_parent: true,
@@ -173,6 +102,7 @@ export class ServerGroup {
                     this.removeGroup(this.id, preferences.serverGroups);
                     preferences.page.remove(this.serverSettingGroup);
                     preferences.save();
+                    this.destroy();
                 }
                 messageDialog.destroy();
             });
@@ -185,6 +115,82 @@ export class ServerGroup {
             this.expander.set_expanded(true);
             this.nameRow.grab_focus();
         }
+    }
+
+    getExpanderRow(settings) {
+        this.expander = new Adw.ExpanderRow();
+        // disable pango as it fails on & in url query strings
+        this.expander.set_use_markup(false);
+        const title = settings?.name ?? "";
+        this.expander.set_title(title);
+        const subtitle = settings
+            ? `${settings.isGet ? "GET" : "HEAD"} ${settings.url} @ ${settings.frequency}s with ${settings.timeout}s timeout ${settings.notifies ? "🔔" : ""}`
+            : "";
+        this.expander.set_subtitle(subtitle);
+        this.serverSettingGroup.add(this.expander);
+
+        // name text field
+        this.nameRow = new Adw.EntryRow({
+            title: "Name",
+            text: settings?.name ?? "",
+            show_apply_button: true,
+        });
+        this.nameHandlerId = this.nameRow.connect("apply", () => {
+            this.update();
+        });
+        this.expander.add_row(this.nameRow);
+
+        // url text field
+        this.urlRow = new Adw.EntryRow({
+            title: "URL",
+            text: settings?.url ?? "",
+            show_apply_button: true,
+        });
+        this.urlHandlerId = this.urlRow.connect("apply", () => {
+            this.update();
+        });
+        this.expander.add_row(this.urlRow);
+
+        // frequency spinner
+        this.frequencyRow = Adw.SpinRow.new_with_range(10, 300, 10);
+        this.frequencyRow.set_value(settings?.frequency ?? 120);
+        this.frequencyRow.set_title("Frequency (secs.)");
+        this.frequencyHandlerId = this.frequencyRow.connect("notify::value", () => {
+            this.update();
+        });
+        this.expander.add_row(this.frequencyRow);
+
+        // timeout spinner
+        this.timeoutRow = Adw.SpinRow.new_with_range(1, 300, 1);
+        this.timeoutRow.set_value(settings?.timeout ?? 10);
+        this.timeoutRow.set_title("Timeout (secs.)");
+        this.timeoutHandlerId = this.timeoutRow.connect("notify::value", () => {
+            this.update();
+        });
+        this.expander.add_row(this.timeoutRow);
+
+        // 'use GET' switch
+        this.useGetSwitchRow = new Adw.SwitchRow({
+            title: "Use GET rather than HEAD",
+        });
+        const isGet = settings?.isGet ?? false;
+        this.useGetSwitchRow.set_active(isGet);
+        this.useGetHandlerId = this.useGetSwitchRow.connect("notify::active", () => {
+            this.update();
+        });
+        this.expander.add_row(this.useGetSwitchRow);
+
+        // 'use notifications' switch
+        this.useNotificationsSwitchRow = new Adw.SwitchRow({
+            title: "Notify when down",
+        });
+        const notifies = settings?.notifies ?? false;
+        this.useNotificationsSwitchRow.set_active(notifies);
+        this.useNotificationsHandlerId = this.useNotificationsSwitchRow.connect("notify::active", () => {
+            this.update();
+        });
+        this.expander.add_row(this.useNotificationsSwitchRow);
+        return this.expander;
     }
 
     /**
@@ -359,6 +365,62 @@ export class ServerGroup {
                 serverGroups.splice(i, 1);
                 break;
             }
+        }
+    }
+
+    /**
+     * Disconnect listeners.
+     */
+    destroy() {
+        if (this.moveUpButton && this.moveUpHandlerId) {
+            this.moveUpButton.disconnect(this.moveUpHandlerId);
+            this.moveUpHandlerId = null;
+            this.moveUpButton = null;
+        }
+        if (this.moveDownButton && this.moveDownHandlerId) {
+            this.moveDownButton.disconnect(this.moveDownHandlerId);
+            this.moveDownHandlerId = null;
+            this.moveDownButton = null;
+        }
+        if (this.visibilityButton && this.visibilityHandlerId) {
+            this.visibilityButton.disconnect(this.visibilityHandlerId);
+            this.visibilityHandlerId = null;
+            this.visibilityButton = null;
+        }
+        if (this.deleteButton && this.deleteHandlerId) {
+            this.deleteButton.disconnect(this.deleteHandlerId);
+            this.deleteHandlerId = null;
+            this.deleteButton = null;
+        }
+        if (this.nameRow && this.nameHandlerId) {
+            this.nameRow.disconnect(this.nameHandlerId);
+            this.nameHandlerId = null;
+            this.nameRow = null;
+        }
+        if (this.urlRow && this.urlHandlerId) {
+            this.urlRow.disconnect(this.urlHandlerId);
+            this.urlHandlerId = null;
+            this.urlRow = null;
+        }
+        if (this.frequencyHandlerId) {
+            this.frequencyRow.disconnect(this.frequencyHandlerId);
+            this.frequencyHandlerId = null;
+            this.frequencyRow = null;
+        }
+        if (this.useGetHandlerId) {
+            this.useGetSwitchRow.disconnect(this.useGetHandlerId);
+            this.useGetHandlerId = null;
+            this.useGetSwitchRow = null;
+        }
+        if (this.useNotificationsHandlerId) {
+            this.useNotificationsSwitchRow.disconnect(this.useNotificationsHandlerId);
+            this.useNotificationsHandlerId = null;
+            this.useNotificationsSwitchRow = null;
+        }
+        if (this.timeoutHandlerId) {
+            this.timeoutRow.disconnect(this.timeoutHandlerId);
+            this.timeoutHandlerId = null;
+            this.timeoutRow = null;
         }
     }
 }
