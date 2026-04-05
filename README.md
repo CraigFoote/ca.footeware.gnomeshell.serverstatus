@@ -28,6 +28,6 @@ To customize, the four **.svg** files in the **assets** folder can be swapped ou
 
 ![screenshot](assets/screenshot.png)
 
-I thought about adding a backup/restore function but I realized [DConf Editor](https://apps.gnome.org/DconfEditor/) already works well. Just copy the text to a backup file and paste to restore from a file.
+I thought about adding a backup/restore function but I realized [DConf Editor](https://apps.gnome.org/DconfEditor/) already works well. Just copy the JSON text to a backup file and paste to restore from a file.
 
 ---
