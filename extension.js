@@ -78,8 +78,9 @@ export default class ServerStatusIndicatorExtension extends Extension {
         // disconnect listeners for click events
         if (this.prefsButton && this.prefsButtonId) {
             this.prefsButton.disconnect(this.prefsButtonId);
-            this.prefsButtonId = null;
+            this.prefsButton.destroy();
             this.prefsButton = null;
+            this.prefsButtonId = null;
         }
         // disconnect listener for pref changes
         if (this.rawSettings && this.extensionListenerId) {
