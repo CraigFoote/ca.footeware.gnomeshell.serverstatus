@@ -228,7 +228,7 @@ export const ServerStatusPanel = GObject.registerClass(
                             return;
                         }
 
-                        this.processResponse(cancellable, duration, message, panelIcon, panelIconDisposed, durationIndicator, durationIndicatorDisposed);
+                        this.processResponse(cancellable, duration, message, httpMethod, url, panelIcon, panelIconDisposed, durationIndicator, durationIndicatorDisposed);
                     });
             } else {
                 // message was null because of malformed url
@@ -248,7 +248,7 @@ export const ServerStatusPanel = GObject.registerClass(
          * @param {St.Label} durationIndicator 
          * @param {boolean} durationIndicatorDisposed 
          */
-        processResponse(cancellable, duration, message, panelIcon, panelIconDisposed, durationIndicator, durationIndicatorDisposed) {
+        processResponse(cancellable, duration, message, httpMethod, url, panelIcon, panelIconDisposed, durationIndicator, durationIndicatorDisposed) {
             // remove completed request from pending set
             this.pendingCancellables.delete(cancellable);
 
@@ -264,7 +264,7 @@ export const ServerStatusPanel = GObject.registerClass(
 
                     /*
                      * Check for timeout first. Soup supposedly uses status code 1 for 
-                     * timeouts but I haven't seen it or REQUEST_TIMEOUT.
+                     * timeouts but I haven't seen it or REQUEST_TIMEOUT (408).
                      * Also there's https://gitlab.gnome.org/GNOME/libsoup/-/issues/155.
                      * Use duration calc. for now.
                      */
@@ -274,10 +274,10 @@ export const ServerStatusPanel = GObject.registerClass(
                         duration > (this.session.get_timeout() * 1000)
                     ) {
                         // request timed out
+                        timedOut = true;
                         newIcon = this.iconProvider.getIcon(
                             Status.Down,
                         );
-                        timedOut = true;
                         reason = `This server timed out after ${duration / 1000} seconds.`;
                     } else if (
                         // consider 200 through 399 success result
@@ -288,16 +288,20 @@ export const ServerStatusPanel = GObject.registerClass(
                         newIcon = this.iconProvider.getIcon(
                             Status.Up,
                         );
+                        // no error, no reason, no notification
                     } else if (soupStatus === 0) {
-                        // incomplete response
-                        newIcon = this.iconProvider.getIcon(Status.Down);
-                        reason = "This server is down. No status was received.";
-                    } else {
-                        // HTTP error
-                        newIcon = this.iconProvider.getIcon(
-                            Status.Down,
-                        );
-                        reason = `This server is down: ${soupStatus} ${message.reason_phrase}.`;
+                        // no status set, incomplete response, cert failure?
+                        const certificateErrors = message.get_tls_peer_certificate_errors();
+                        if (certificateErrors) {
+                            const errorNames = this.getErrorNames(certificateErrors);
+                            const subject = message.get_tls_peer_certificate().get_subject_name();
+                            reason = `This server is down. The certificate for ${subject} was presented with errors: ${errorNames}`;
+                            newIcon = this.iconProvider.getIcon(Status.Down);
+                        } else {
+                            // no status or cert errors set, just notify user
+                            reason = `This server is down: ${message.reason_phrase}.`;
+                            newIcon = this.iconProvider.getIcon(Status.Down);
+                        }
                     }
                 } catch (e) {
                     // 429 or another status missing from the soup enum?
@@ -355,7 +359,7 @@ export const ServerStatusPanel = GObject.registerClass(
                 title: _(this.serverSetting.name),
                 body: _(reason),
                 gicon: icon,
-                urgency: MessageTray.Urgency.HIGH,
+                urgency: MessageTray.Urgency.NORMAL,
             });
             source.addNotification(notification);
         }
@@ -407,6 +411,41 @@ export const ServerStatusPanel = GObject.registerClass(
                 }
             );
         }
+
+        /**
+         * Prompt the user with a notification asking whether to trust the server's presented certificate. 
+         * On acceptance, the provided callback is invoked to re-issue the request.
+         *
+         * @param {Soup.Message} message
+         * @param {Gio.TlsCertificateFlags} certificateErrors
+         * @param {String} url
+         * @param {Function} callback
+         */
+        handleCertificateErrors(message, certificateErrors) {
+            const subject = message.get_tls_peer_certificate().get_subject_name();
+            const errorNames = this.getErrorNames(certificateErrors);
+            return [`The server certificate for ${subject} has errors: ${errorNames}`, this.iconProvider.getIcon(Status.Down)];
+        }
+
+        /**
+         * Get the concatenated string of all the error names in the provided flags.
+         * 
+         * @param {Gio.TlsCertificateFlags} errorFlags
+         * @returns {String}
+         */
+        getErrorNames(errorFlags) {
+            if (errorFlags === 0) {
+                return "NO_FLAGS";
+            }
+            const names = [];
+            for (const [name, value] of Object.entries(Gio.TlsCertificateFlags)) {
+                // skip 0 (already handled above)
+                // bitwise &'ing to find matching values then store their names
+                if (value !== 0 && ((errorFlags & value) === value)) {
+                    names.push(name);
+                }
+            }
+            return names.join(", ");
+        }
     }
 );
-

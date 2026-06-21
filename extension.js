@@ -58,9 +58,13 @@ export default class ServerStatusIndicatorExtension extends Extension {
             reactive: true,
             accessible_name: "Preferences",
         });
-        this.prefsButtonId = this.prefsButton.connect("clicked", () => {
+        this.prefsButtonId = this.prefsButton.connect("clicked", async () => {
             this.indicator.menu.close();
-            this.openPreferences();
+            try {
+                await this.openPreferences();
+            } catch (error) {
+                // fail silently
+            }
         });
 
         this.indicator.menu.box.add_child(this.prefsButton);
