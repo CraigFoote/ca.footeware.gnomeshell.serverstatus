@@ -62,7 +62,7 @@ export default class ServerStatusIndicatorExtension extends Extension {
             this.indicator.menu.close();
             try {
                 await this.openPreferences();
-            } catch (error) {
+            } catch {
                 // fail silently
             }
         });

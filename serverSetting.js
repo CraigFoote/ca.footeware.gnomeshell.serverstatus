@@ -14,8 +14,9 @@ export class ServerSetting {
      * @param {boolean} isGet
      * @param {boolean} notifies
      * @param {boolean} visible
+     * @param {boolean} ignoreTLSErrors
      */
-    constructor(name, url, frequency, timeout, isGet, notifies, visible = true) {
+    constructor(name, url, frequency, timeout, isGet, notifies, visible = true, ignoreTLSErrors = false) {
         this.name = name;
         this.url = url;
         this.frequency = frequency;
@@ -23,5 +24,6 @@ export class ServerSetting {
         this.isGet = isGet;
         this.notifies = notifies;
         this.visible = visible;
+        this.ignoreTLSErrors = ignoreTLSErrors;
     }
 }

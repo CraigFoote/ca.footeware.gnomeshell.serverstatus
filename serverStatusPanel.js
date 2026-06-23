@@ -261,6 +261,7 @@ export const ServerStatusPanel = GObject.registerClass(
                 // 429 Too Many Requests causes a 'bad Soup enum' error 🤨; use try-catch
                 try {
                     const soupStatus = message.status_code;
+                    const soupStatusText = message.reason_phrase;
 
                     /*
                      * Check for timeout first. Soup supposedly uses status code 1 for 
@@ -293,15 +294,32 @@ export const ServerStatusPanel = GObject.registerClass(
                         // no status set, incomplete response, cert failure?
                         const certificateErrors = message.get_tls_peer_certificate_errors();
                         if (certificateErrors) {
-                            const errorNames = this.getErrorNames(certificateErrors);
-                            const subject = message.get_tls_peer_certificate().get_subject_name();
-                            reason = `This server is down. The certificate for ${subject} was presented with errors: ${errorNames}`;
-                            newIcon = this.iconProvider.getIcon(Status.Down);
+                            if (this.serverSetting.ignoreTLSErrors) {
+                                // consider this server up
+                                newIcon = this.iconProvider.getIcon(Status.Up);
+                            } else {
+                                const errorNames = this.getErrorNames(certificateErrors);
+                                const subject = message.get_tls_peer_certificate().get_subject_name();
+                                reason = `This server is down. The certificate for ${subject} was presented with errors: ${errorNames}`;
+                                newIcon = this.iconProvider.getIcon(Status.Down);
+                            }
                         } else {
                             // no status or cert errors set, just notify user
-                            reason = `This server is down: ${message.reason_phrase}.`;
+                            reason = "This server is down. No status or certificate errors were returned.";
                             newIcon = this.iconProvider.getIcon(Status.Down);
                         }
+                    } else if (soupStatus >= 400 && soupStatus < 500) {
+                        // client-side error
+                        reason = `Client-side error: ${soupStatus} ${soupStatusText}`;
+                        newIcon = this.iconProvider.getIcon(Status.Down);
+                    } else if (soupStatus >= 500) {
+                        // server-side error
+                        reason = `Server-side error: ${soupStatus} ${soupStatusText}`;
+                        newIcon = this.iconProvider.getIcon(Status.Down);
+                    } else {
+                        // wut?
+                        reason = `Unknown status: ${soupStatus} ${soupStatusText}`;
+                        newIcon = this.iconProvider.getIcon(Status.Down);
                     }
                 } catch (e) {
                     // 429 or another status missing from the soup enum?

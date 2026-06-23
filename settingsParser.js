@@ -40,8 +40,9 @@ export class SettingsParser {
 
             const notifies = savedSetting["notifies"] !== undefined ? savedSetting["notifies"] === "true" : false; // defaults to false
             const visible = savedSetting["visible"] !== undefined ? savedSetting["visible"] === "true" : true; // defaults to true for backward compatibility
+            const ignoreTLSErrors = savedSetting["ignoreTLSErrors"] !== undefined ? savedSetting["ignoreTLSErrors"] === "true" : false; // defaults to false
 
-            const setting = new ServerSetting(name, url, frequency, timeout, isGet, notifies, visible);
+            const setting = new ServerSetting(name, url, frequency, timeout, isGet, notifies, visible, ignoreTLSErrors);
             settings.push(setting);
         }
         return settings;

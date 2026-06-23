@@ -26,6 +26,7 @@ export class ServerGroup {
         // move up/down row
         const moveRow = new Adw.ActionRow({
             title: "Move Up/Down",
+            subtitle: "Move this server up or down by one in the list.",
         });
         this.moveUpButton = Gtk.Button.new_from_icon_name("go-up-symbolic");
         this.moveUpHandlerId = this.moveUpButton.connect("clicked", () => {
@@ -57,7 +58,7 @@ export class ServerGroup {
         this.visible = settings?.visible ?? true;
         const visibilityRow = new Adw.ActionRow({
             title: "Show in menu",
-            subtitle: "Hidden servers are not displayed and not checked",
+            subtitle: "Hidden servers are not displayed and not checked.",
         });
         const visibilityIcon = this.visible ? "view-reveal-symbolic" : "view-conceal-symbolic";
         this.visibilityButton = Gtk.Button.new_from_icon_name(visibilityIcon);
@@ -123,8 +124,10 @@ export class ServerGroup {
         this.expander.set_use_markup(false);
         const title = settings?.name ?? "";
         this.expander.set_title(title);
+        const notifiesIndicator = settings?.notifies ? "🔔" : "";
+        const ignoreTLSErrorsIndicator = settings?.ignoreTLSErrors ? "☢️" : "";
         const subtitle = settings
-            ? `${settings.isGet ? "GET" : "HEAD"} ${settings.url} @ ${settings.frequency}s with ${settings.timeout}s timeout ${settings.notifies ? "🔔" : ""}`
+            ? `${settings.isGet ? "GET" : "HEAD"} ${settings.url} @ ${settings.frequency}s with ${settings.timeout}s timeout ${notifiesIndicator} ${ignoreTLSErrorsIndicator}`
             : "";
         this.expander.set_subtitle(subtitle);
         this.serverSettingGroup.add(this.expander);
@@ -180,6 +183,18 @@ export class ServerGroup {
         });
         this.expander.add_row(this.useGetSwitchRow);
 
+        // 'ignoreTLSErrors' switch
+        this.ignoreTLSErrorsSwitchRow = new Adw.SwitchRow({
+            title: "Ignore TLS certificate errors",
+            subtitle: "self-signed, etc."
+        });
+        const ignoreTLSErrors = settings?.ignoreTLSErrors ?? false;
+        this.ignoreTLSErrorsSwitchRow.set_active(ignoreTLSErrors);
+        this.ignoreTLSErrorsHandlerId = this.ignoreTLSErrorsSwitchRow.connect("notify::active", () => {
+            this.update();
+        });
+        this.expander.add_row(this.ignoreTLSErrorsSwitchRow);
+
         // 'use notifications' switch
         this.useNotificationsSwitchRow = new Adw.SwitchRow({
             title: "Notify when down",
@@ -221,7 +236,9 @@ export class ServerGroup {
         const freq = this.frequencyRow.text;
         const timeout = this.timeoutRow.text;
         const httpMethod = this.useGetSwitchRow.active ? "GET" : "HEAD";
-        return `${httpMethod} ${url} @ ${freq}s with ${timeout}s timeout ${this.useNotificationsSwitchRow.active ? "🔔" : ""}`;
+        const useNotificationsIndicator = this.useNotificationsSwitchRow.active ? "🔔" : "";
+        const ignoreTLSErrorsIndicator = this.ignoreTLSErrorsSwitchRow.active ? "☢️" : "";
+        return `${httpMethod} ${url} @ ${freq}s with ${timeout}s timeout ${useNotificationsIndicator} ${ignoreTLSErrorsIndicator}`;
     }
 
     /**
@@ -333,6 +350,7 @@ export class ServerGroup {
             this.useGetSwitchRow.active,
             this.useNotificationsSwitchRow.active,
             this.visible,
+            this.ignoreTLSErrorsSwitchRow.active,
         );
     }
 
@@ -416,6 +434,11 @@ export class ServerGroup {
             this.useNotificationsSwitchRow.disconnect(this.useNotificationsHandlerId);
             this.useNotificationsHandlerId = null;
             this.useNotificationsSwitchRow = null;
+        }
+        if (this.ignoreTLSErrorsHandlerId) {
+            this.ignoreTLSErrorsSwitchRow.disconnect(this.ignoreTLSErrorsHandlerId);
+            this.ignoreTLSErrorsHandlerId = null;
+            this.ignoreTLSErrorsSwitchRow = null;
         }
         if (this.timeoutHandlerId) {
             this.timeoutRow.disconnect(this.timeoutHandlerId);
