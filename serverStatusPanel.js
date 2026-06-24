@@ -290,24 +290,6 @@ export const ServerStatusPanel = GObject.registerClass(
                             Status.Up,
                         );
                         // no error, no reason, no notification
-                    } else if (soupStatus === 0) {
-                        // no status set, incomplete response, cert failure?
-                        const certificateErrors = message.get_tls_peer_certificate_errors();
-                        if (certificateErrors) {
-                            if (this.serverSetting.ignoreTLSErrors) {
-                                // consider this server up
-                                newIcon = this.iconProvider.getIcon(Status.Up);
-                            } else {
-                                const errorNames = this.getErrorNames(certificateErrors);
-                                const subject = message.get_tls_peer_certificate().get_subject_name();
-                                reason = `This server is down. The certificate for ${subject} was presented with errors: ${errorNames}`;
-                                newIcon = this.iconProvider.getIcon(Status.Down);
-                            }
-                        } else {
-                            // no status or cert errors set, just notify user
-                            reason = "This server is down. No status or certificate errors were returned.";
-                            newIcon = this.iconProvider.getIcon(Status.Down);
-                        }
                     } else if (soupStatus >= 400 && soupStatus < 500) {
                         // client-side error
                         reason = `Client-side error: ${soupStatus} ${soupStatusText}`;
@@ -316,6 +298,9 @@ export const ServerStatusPanel = GObject.registerClass(
                         // server-side error
                         reason = `Server-side error: ${soupStatus} ${soupStatusText}`;
                         newIcon = this.iconProvider.getIcon(Status.Down);
+                    } else if (soupStatus === 0) {
+                        // no status set, incomplete response
+                        [reason, newIcon] = this.handleZeroStatus(message);
                     } else {
                         // wut?
                         reason = `Unknown status: ${soupStatus} ${soupStatusText}`;
@@ -464,6 +449,34 @@ export const ServerStatusPanel = GObject.registerClass(
                 }
             }
             return names.join(", ");
+        }
+
+        /**
+         * Determine the reason string and the new icon from the provided message.
+         * 
+         * @param {Soup.Message} message 
+         * @returns [{String}, {Gio.icon}]
+         */
+        handleZeroStatus(message) {
+            let reason, newIcon;
+            // cert failure?
+            const certificateErrors = message.get_tls_peer_certificate_errors();
+            if (certificateErrors) {
+                if (this.serverSetting.ignoreTLSErrors) {
+                    // consider this server up
+                    newIcon = this.iconProvider.getIcon(Status.Up);
+                } else {
+                    const errorNames = this.getErrorNames(certificateErrors);
+                    const subject = message.get_tls_peer_certificate().get_subject_name();
+                    reason = `This server is down. The certificate for ${subject} was presented with errors: ${errorNames}`;
+                    newIcon = this.iconProvider.getIcon(Status.Down);
+                }
+            } else {
+                // no status or cert errors set, just notify user
+                reason = "This server is down. No status or certificate errors were returned.";
+                newIcon = this.iconProvider.getIcon(Status.Down);
+            }
+            return [reason, newIcon];
         }
     }
 );
