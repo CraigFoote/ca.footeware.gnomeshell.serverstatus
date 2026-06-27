@@ -118,18 +118,21 @@ export class ServerGroup {
         }
     }
 
+    /**
+     * Create the expander row with all the controls for this server group.
+     *  
+     * @param {ServerSetting} settings 
+     * @returns {Adw.ExpanderRow}
+     */
     getExpanderRow(settings) {
         this.expander = new Adw.ExpanderRow();
         // disable pango as it fails on & in url query strings
         this.expander.set_use_markup(false);
+        // title
         const title = settings?.name ?? "";
         this.expander.set_title(title);
-        const notifiesIndicator = settings?.notifies ? "🔔" : "";
-        const ignoreTLSErrorsIndicator = settings?.ignoreTLSErrors ? "☢️" : "";
-        const subtitle = settings
-            ? `${settings.isGet ? "GET" : "HEAD"} ${settings.url} @ ${settings.frequency}s with ${settings.timeout}s timeout ${notifiesIndicator} ${ignoreTLSErrorsIndicator}`
-            : "";
-        this.expander.set_subtitle(subtitle);
+        // subtitle
+        this.expander.set_subtitle(this.initSubtitle(settings));
         this.serverSettingGroup.add(this.expander);
 
         // name text field
@@ -206,6 +209,21 @@ export class ServerGroup {
         });
         this.expander.add_row(this.useNotificationsSwitchRow);
         return this.expander;
+    }
+
+    /**
+     * Set the initial subtitle based on provided settings.
+     * 
+     * @param {ServerSetting} settings 
+     * @returns {String}
+     */
+    initSubtitle(settings) {
+        if (!settings) {
+            return "";
+        }
+        const notifiesIndicator = settings.notifies ? "🔔" : "";
+        const ignoreTLSErrorsIndicator = settings.ignoreTLSErrors ? "☢️" : "";
+        return `${settings.isGet ? "GET" : "HEAD"} ${settings.url} @ ${settings.frequency}s with ${settings.timeout}s timeout ${notifiesIndicator} ${ignoreTLSErrorsIndicator}`;
     }
 
     /**
