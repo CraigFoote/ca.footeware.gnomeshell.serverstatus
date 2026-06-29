@@ -459,24 +459,75 @@ export const ServerStatusPanel = GObject.registerClass(
          */
         handleZeroStatus(message) {
             let reason, newIcon;
-            // cert failure?
-            const certificateErrors = message.get_tls_peer_certificate_errors();
-            if (certificateErrors) {
-                if (this.serverSetting.ignoreTLSErrors) {
-                    // consider this server up
-                    newIcon = this.iconProvider.getIcon(Status.Up);
+            if (message.status_code === 0) {
+                // cert failure?
+                const certificateErrors = message.get_tls_peer_certificate_errors();
+                if (certificateErrors) {
+                    if (this.serverSetting.ignoreTLSErrors) {
+                        // consider this server up
+                        newIcon = this.iconProvider.getIcon(Status.Up);
+                    } else {
+                        const errorNames = this.getErrorNames(certificateErrors);
+                        const subject = message.get_tls_peer_certificate().get_subject_name();
+                        reason = `This server is down. The certificate for ${subject} was presented with errors: ${errorNames}`;
+                        newIcon = this.iconProvider.getIcon(Status.Down);
+                    }
                 } else {
-                    const errorNames = this.getErrorNames(certificateErrors);
-                    const subject = message.get_tls_peer_certificate().get_subject_name();
-                    reason = `This server is down. The certificate for ${subject} was presented with errors: ${errorNames}`;
+                    // no status or cert errors set, just notify user
+                    reason = "This server is down. No status or certificate errors were returned.";
                     newIcon = this.iconProvider.getIcon(Status.Down);
                 }
-            } else {
-                // no status or cert errors set, just notify user
-                reason = "This server is down. No status or certificate errors were returned.";
-                newIcon = this.iconProvider.getIcon(Status.Down);
             }
             return [reason, newIcon];
+        }
+
+        /**
+         * Stop polling and cancel in-flight requests. Resets icon to Init.
+         * Called on system sleep.
+         */
+        suspend() {
+            if (!this.isDestroyed) {
+                if (this.intervalID) {
+                    GLib.Source.remove(this.intervalID);
+                    this.intervalID = null;
+                }
+                this.pendingCancellables.forEach((c) => {
+                    if (!c.is_cancelled()) {
+                        c.cancel();
+                    }
+                });
+                this.pendingCancellables.clear();
+                if (this.panelIcon) {
+                    this.panelIcon.gicon = this.iconProvider.getIcon(Status.Init);
+                }
+            }
+        }
+
+        /**
+         * Restart polling after a resume event.
+         */
+        resume() {
+            if (!this.isDestroyed) {
+                this.update(
+                    this.serverSetting.url,
+                    this.panelIconDisposed,
+                    this.durationIndicator,
+                    this.durationIndicatorDisposed,
+                );
+                this.intervalID = GLib.timeout_add(
+                    GLib.PRIORITY_DEFAULT,
+                    this.serverSetting.frequency * 1000,
+                    () => {
+                        this.update(
+                            this.serverSetting.url,
+                            this.panelIconDisposed,
+                            this.durationIndicator,
+                            this.durationIndicatorDisposed,
+                        );
+                        return GLib.SOURCE_CONTINUE;
+                    },
+                );
+            }
         }
     }
 );

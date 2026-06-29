@@ -12,6 +12,7 @@ import { Status } from "./status.js";
 import { IconProvider } from "./iconProvider.js";
 import { Indicator } from "./indicator.js";
 import { SettingsParser } from "./settingsParser.js";
+import { ConnectivityListener } from "./connectivityListener.js";
 
 /**
  * The main extension class. Creates an `Indicator` and keeps
@@ -73,6 +74,19 @@ export default class ServerStatusIndicatorExtension extends Extension {
         this.extensionListenerId = this.rawSettings.connect("changed", () => {
             this.onPrefChanged();
         });
+
+        // listen for connectivity changes
+        this.connectivityListener = new ConnectivityListener(
+            // not globally connected
+            () => {
+                this.indicator.updatePanelIcon(Status.Init);
+                this.indicator.getStatusPanels().forEach((p) => p.suspend());
+            },
+            // globally connected
+            () => {
+                this.indicator.getStatusPanels().forEach((p) => p.resume());
+            },
+        )
     }
 
     /**
@@ -90,6 +104,11 @@ export default class ServerStatusIndicatorExtension extends Extension {
         if (this.rawSettings && this.extensionListenerId) {
             this.rawSettings.disconnect(this.extensionListenerId);
             this.extensionListenerId = null;
+        }
+        // clean up connectivity listener
+        if (this.connectivityListener) {
+            this.connectivityListener.destroy();
+            this.connectivityListener = null;
         }
         // clean up status panels through indicator
         if (this.indicator) {
