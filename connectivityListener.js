@@ -10,10 +10,10 @@ export class ConnectivityListener {
     /**
      * Constructor.
      * 
-     * @param {Function} onSuspend callback
-     * @param {Function} onResume callback
+     * @param {Function} onDisconnect callback
+     * @param {Function} onConnect callback
      */
-    constructor(onSuspend, onResume) {
+    constructor(onDisconnect, onConnect) {
         // create Promise
         const proxyPromise = new Promise((resolve, reject) => {
 
@@ -34,8 +34,9 @@ export class ConnectivityListener {
                 },
                 null,
                 Gio.DBusProxyFlags.NONE);
+
         }).catch((e) => {
-            console.error("ServerStatus extension unable to create NetworkManager proxy.", e);
+            console.log("ServerStatus extension unable to create NetworkManager proxy.", e);
         });
 
         // resolve Promise
@@ -46,16 +47,16 @@ export class ConnectivityListener {
                     this.signalId = proxy.connectSignal("StateChanged", (_, __, newState) => {
                         // call one of the callbacks based on new state
                         if (newState[0] === 70) { // TODO magic number
-                            onResume(); // 70=globally connected
+                            onConnect(); // 70=globally connected
                         } else {
-                            onSuspend(); // network/internet is unavailable
+                            onDisconnect(); // network/internet is unavailable
                         }
                     });
                 }, (e) => {
-                    console.error("ServerStatus extension unable to connect to NetworkManager's StateChanged signal.", e);
+                    console.log("ServerStatus extension unable to connect to NetworkManager's StateChanged signal.", e);
                 }
             ).catch((e) => {
-                console.error("ServerStatus extension unable to resolve NetworkManager proxy.", e);
+                console.log("ServerStatus extension unable to resolve NetworkManager proxy.", e);
             });
         }
     }
@@ -84,7 +85,7 @@ export class ConnectivityListener {
             try {
                 this.networkManagerProxy.disconnect(this.signalId);
             } catch (e) {
-                console.error("ServerStatus extension unable to disconnect from NetworkManager.", e);
+                console.log("ServerStatus extension unable to disconnect from NetworkManager.", e);
             }
             this.signalId = 0;
         }

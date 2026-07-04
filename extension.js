@@ -20,6 +20,7 @@ import { ConnectivityListener } from "./connectivityListener.js";
  */
 export default class ServerStatusIndicatorExtension extends Extension {
     enable() {
+        console.log("🤨🤨🤨🤨🤨🤨 enable");
         this.iconProvider = new IconProvider(this.path + "/assets/");
 
         this.indicator = new Indicator(
@@ -61,13 +62,10 @@ export default class ServerStatusIndicatorExtension extends Extension {
         });
         this.prefsButtonId = this.prefsButton.connect("clicked", async () => {
             this.indicator.menu.close();
-            try {
-                await this.openPreferences();
-            } catch {
+            await this.openPreferences().catch(() => {
                 // fail silently
-            }
+            }).catch(() => { });
         });
-
         this.indicator.menu.box.add_child(this.prefsButton);
 
         // listen for changes to server settings in gsettings and update display
@@ -79,15 +77,15 @@ export default class ServerStatusIndicatorExtension extends Extension {
         this.connectivityListener = new ConnectivityListener(
             // not globally connected
             () => {
-                this.indicator.updatePanelIcon(Status.Init);
-                this.indicator.getStatusPanels().forEach((p) => p.suspend());
+                this.indicator?.getStatusPanels().forEach((panel) => panel.suspend());
+                this.indicator?.updatePanelIcon(Status.Init);
             },
             // globally connected
             () => {
-                this.indicator.getStatusPanels().forEach((p) => p.resume());
+                this.indicator?.getStatusPanels().forEach((panel) => panel.resume());
             },
         )
-    }
+    };
 
     /**
      * Destroys and nulls artifacts for garbage collection.

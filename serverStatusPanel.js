@@ -40,9 +40,6 @@ export const ServerStatusPanel = GObject.registerClass(
             // track pending requests for cleanup
             this.pendingCancellables = new Set();
 
-            // flag to indicate panel is disposed and to ignore returning requests
-            this.isDestroyed = false;
-
             // click to open browser
             this.connect("button-press-event", () => {
                 this.openBrowser(serverSetting.url);
@@ -60,7 +57,9 @@ export const ServerStatusPanel = GObject.registerClass(
                 style_class: "icon-lg padded",
             });
             let panelIconDisposed = false;
-            this.panelIcon.connect("destroy", () => (panelIconDisposed = true));
+            this.panelIcon.connect("destroy", () => {
+                panelIconDisposed = true;
+            });
             this.add_child(this.panelIcon);
 
             // server name display
@@ -113,9 +112,6 @@ export const ServerStatusPanel = GObject.registerClass(
             );
 
             this.connect("destroy", () => {
-                // prevent other functions from acting on received responses
-                this.isDestroyed = true;
-
                 // remove id to recurring http calls
                 if (this.intervalID) {
                     GLib.Source.remove(this.intervalID);
@@ -127,9 +123,10 @@ export const ServerStatusPanel = GObject.registerClass(
                     this.pendingCancellables.forEach((cancellable) => {
                         if (!cancellable.is_cancelled()) {
                             cancellable.cancel();
+                            this.pendingCancellables.delete(cancellable);
+                            cancellable = null;
                         }
                     });
-                    this.pendingCancellables.clear();
                     this.pendingCancellables = null;
                 }
 
@@ -140,6 +137,7 @@ export const ServerStatusPanel = GObject.registerClass(
                 }
 
                 // Clean up instance properties
+                this.panelIcon.destroy();
                 this.panelIcon = null;
                 this.serverSetting = null;
                 this.updateTaskbarCallback = null;
@@ -149,9 +147,9 @@ export const ServerStatusPanel = GObject.registerClass(
 
         /**
          * Returns the status of the server this panel represents.
-         *
-         * @return {Status}
-         */
+        *
+        * @return {Status}
+        */
         getStatus() {
             return this.iconProvider.getStatus(this.panelIcon?.gicon);
         }
@@ -170,17 +168,15 @@ export const ServerStatusPanel = GObject.registerClass(
             durationIndicator,
             durationIndicatorDisposed,
         ) {
-            if (!this.isDestroyed) {
-                const httpMethod = this.serverSetting.isGet ? "GET" : "HEAD";
-                this.makeRequest(
-                    httpMethod,
-                    url,
-                    this.panelIcon,
-                    panelIconDisposed,
-                    durationIndicator,
-                    durationIndicatorDisposed,
-                );
-            }
+            const httpMethod = this.serverSetting.isGet ? "GET" : "HEAD";
+            this.makeRequest(
+                httpMethod,
+                url,
+                this.panelIcon,
+                panelIconDisposed,
+                durationIndicator,
+                durationIndicatorDisposed,
+            );
             return GLib.SOURCE_CONTINUE;
         }
 
@@ -202,9 +198,6 @@ export const ServerStatusPanel = GObject.registerClass(
             durationIndicator,
             durationIndicatorDisposed,
         ) {
-            if (this.isDestroyed) {
-                return;
-            }
             // create http object, `new Soup.Message()` constructor is deprecated in favor of '.new' 🤨
             const message = Soup.Message.new(httpMethod, url);
             if (message) {
@@ -220,15 +213,31 @@ export const ServerStatusPanel = GObject.registerClass(
                     message,
                     GLib.PRIORITY_DEFAULT,
                     cancellable,
-                    () => {
+                    (session, result, error) => {
                         // response received, complete duration calc.
                         const duration = Date.now() - start;
 
-                        if (this.isDestroyed || !this.pendingCancellables || cancellable.is_cancelled()) {
-                            return;
+                        // remove completed request from pending set
+                        this.pendingCancellables?.delete(cancellable);
+
+                        if (error) {
+                            panelIcon.gicon = this.iconProvider.getIcon(Status.Init);
+                            this.updateTaskbarCallback?.();
+                            return; // no notification
                         }
 
-                        this.processResponse(cancellable, duration, message, httpMethod, url, panelIcon, panelIconDisposed, durationIndicator, durationIndicatorDisposed);
+                        try {
+                            // we aren't interetsed in the result if there is one
+                            session.send_and_read_finish(result);
+                        } catch {
+                            if (panelIcon && this.iconProvider) {
+                                panelIcon.gicon = this.iconProvider.getIcon(Status.Init);
+                                this.updateTaskbarCallback?.();
+                            }
+                            return; // no notification
+                        }
+
+                        this.processResponse(duration, message, httpMethod, url, panelIcon, panelIconDisposed, durationIndicator, durationIndicatorDisposed);
                     });
             } else {
                 // message was null because of malformed url
@@ -240,7 +249,6 @@ export const ServerStatusPanel = GObject.registerClass(
         /**
          * Process the provided message and update the UI accordingly.
          * 
-         * @param {Gio.Cancellable} cancellable 
          * @param {number} duration 
          * @param {Soup.Message} message 
          * @param {Gio.icon} panelIcon 
@@ -248,12 +256,9 @@ export const ServerStatusPanel = GObject.registerClass(
          * @param {St.Label} durationIndicator 
          * @param {boolean} durationIndicatorDisposed 
          */
-        processResponse(cancellable, duration, message, httpMethod, url, panelIcon, panelIconDisposed, durationIndicator, durationIndicatorDisposed) {
-            // remove completed request from pending set
-            this.pendingCancellables.delete(cancellable);
-
+        processResponse(duration, message, httpMethod, url, panelIcon, panelIconDisposed, durationIndicator, durationIndicatorDisposed) {
             // parse result if emoji widget hasn't been destroyed
-            if (panelIcon && !panelIconDisposed) {
+            if (panelIcon && !panelIconDisposed && !this.isDestroyed) {
                 let newIcon;
                 let timedOut = false;
                 let reason;
@@ -396,16 +401,12 @@ export const ServerStatusPanel = GObject.registerClass(
             if (this.isDestroyed) {
                 return;
             }
-            const cancellable = new Gio.Cancellable();
-            this.pendingCancellables.add(cancellable);
+
             Gio.AppInfo.launch_default_for_uri_async(
                 url,
                 null,
-                cancellable,
+                null,
                 (appInfo, result) => {
-                    if (this.pendingCancellables) {
-                        this.pendingCancellables.delete(cancellable);
-                    }
                     try {
                         Gio.AppInfo.launch_default_for_uri_finish(result);
                     } catch {
@@ -425,7 +426,7 @@ export const ServerStatusPanel = GObject.registerClass(
          * @param {Function} callback
          */
         handleCertificateErrors(message, certificateErrors) {
-            const subject = message.get_tls_peer_certificate().get_subject_name();
+            const subject = message.get_tls_peer_certificate()?.get_subject_name();
             const errorNames = this.getErrorNames(certificateErrors);
             return [`The server certificate for ${subject} has errors: ${errorNames}`, this.iconProvider.getIcon(Status.Down)];
         }
@@ -459,6 +460,7 @@ export const ServerStatusPanel = GObject.registerClass(
          */
         handleZeroStatus(message) {
             let reason, newIcon;
+
             if (message.status_code === 0) {
                 // cert failure?
                 const certificateErrors = message.get_tls_peer_certificate_errors();
