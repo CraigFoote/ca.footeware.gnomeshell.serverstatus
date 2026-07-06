@@ -46,8 +46,8 @@ export class ConnectivityListener {
                     // get notified when the network connectivity changes
                     this.signalId = proxy.connectSignal("StateChanged", (_, __, newState) => {
                         // call one of the callbacks based on new state
-                        if (newState[0] === 70) { // TODO magic number
-                            onConnect(); // 70=globally connected
+                        if (newState[0] === 70) { // TODO magic number, 70=globally connected
+                            onConnect();
                         } else {
                             onDisconnect(); // network/internet is unavailable
                         }
@@ -85,9 +85,9 @@ export class ConnectivityListener {
             try {
                 this.networkManagerProxy.disconnect(this.signalId);
             } catch (e) {
-                console.log("ServerStatus extension unable to disconnect from NetworkManager.", e);
+                console.log("ServerStatus extension unable to disconnect proxy from NetworkManager.", e);
             }
-            this.signalId = 0;
+            this.signalId = null;
         }
         this.networkManagerProxy = null;
     }

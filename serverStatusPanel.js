@@ -221,28 +221,36 @@ export const ServerStatusPanel = GObject.registerClass(
                         this.pendingCancellables?.delete(cancellable);
 
                         if (error) {
-                            panelIcon.gicon = this.iconProvider.getIcon(Status.Init);
-                            this.updateTaskbarCallback?.();
-                            return; // no notification
-                        }
-
-                        try {
-                            // we aren't interetsed in the result if there is one
-                            session.send_and_read_finish(result);
-                        } catch {
-                            if (panelIcon && this.iconProvider) {
+                            // extension unable to send request
+                            if (panelIcon && !panelIconDisposed && this.iconProvider) {
                                 panelIcon.gicon = this.iconProvider.getIcon(Status.Init);
                                 this.updateTaskbarCallback?.();
                             }
                             return; // no notification
                         }
 
+                        try {
+                            // we aren't interested in the result if there is one
+                            session.send_and_read_finish(result);
+                        } catch (e) {
+                            if (panelIcon && !panelIconDisposed && this.iconProvider) {
+                                // Special case: let Gio.TlsErrors pass thru to be handled later
+                                if (!(e instanceof Gio.TlsError)) {
+                                    panelIcon.gicon = this.iconProvider.getIcon(Status.Init);
+                                    this.updateTaskbarCallback?.();
+                                    return; // no notification
+                                }
+                            }
+                        }
+
                         this.processResponse(duration, message, httpMethod, url, panelIcon, panelIconDisposed, durationIndicator, durationIndicatorDisposed);
                     });
             } else {
                 // message was null because of malformed url
-                panelIcon.gicon = this.iconProvider.getIcon(Status.Bad);
-                this.updateTaskbarCallback?.();
+                if (panelIcon && !panelIconDisposed && this.iconProvider) {
+                    panelIcon.gicon = this.iconProvider.getIcon(Status.Bad);
+                    this.updateTaskbarCallback?.();
+                }
             }
         }
 
@@ -322,7 +330,7 @@ export const ServerStatusPanel = GObject.registerClass(
         }
 
         /**
-         * Handle the response. Update the icons, panel text and possibly notify user.
+         * Reflect the response. Update the icons, panel text and possibly notify user.
          * 
          * @param {Gio.icon} panelIcon 
          * @param {Gio.icon} newIcon 
@@ -470,7 +478,7 @@ export const ServerStatusPanel = GObject.registerClass(
                         newIcon = this.iconProvider.getIcon(Status.Up);
                     } else {
                         const errorNames = this.getErrorNames(certificateErrors);
-                        const subject = message.get_tls_peer_certificate().get_subject_name();
+                        const subject = message.get_tls_peer_certificate()?.get_subject_name();
                         reason = `This server is down. The certificate for ${subject} was presented with errors: ${errorNames}`;
                         newIcon = this.iconProvider.getIcon(Status.Down);
                     }
