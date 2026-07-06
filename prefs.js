@@ -184,6 +184,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
                     settings.isGet = settings.isGet.toString();
                     settings.notifies = settings.notifies.toString();
                     settings.visible = settings.visible.toString();
+                    settings.ignoreTLSErrors = settings.ignoreTLSErrors.toString();
                     serverSettings.push(settings);
                 }
             }

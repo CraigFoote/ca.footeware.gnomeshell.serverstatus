@@ -17,6 +17,7 @@ export const Indicator = GObject.registerClass(
 
             this.iconProvider = iconProvider;
 
+            // TODO: constructor?
             this.panelIcon = new St.Icon({
                 gicon: iconProvider?.getIcon(Status.Init),
                 style_class: "system-status-icon",

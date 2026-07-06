@@ -12,6 +12,7 @@ import { Status } from "./status.js";
 import { IconProvider } from "./iconProvider.js";
 import { Indicator } from "./indicator.js";
 import { SettingsParser } from "./settingsParser.js";
+import { ConnectivityListener } from "./connectivityListener.js";
 
 /**
  * The main extension class. Creates an `Indicator` and keeps
@@ -58,18 +59,32 @@ export default class ServerStatusIndicatorExtension extends Extension {
             reactive: true,
             accessible_name: "Preferences",
         });
-        this.prefsButtonId = this.prefsButton.connect("clicked", () => {
+        this.prefsButtonId = this.prefsButton.connect("clicked", async () => {
             this.indicator.menu.close();
-            this.openPreferences();
+            await this.openPreferences().catch(() => {
+                // fail silently
+            }).catch(() => { });
         });
-
         this.indicator.menu.box.add_child(this.prefsButton);
 
         // listen for changes to server settings in gsettings and update display
         this.extensionListenerId = this.rawSettings.connect("changed", () => {
             this.onPrefChanged();
         });
-    }
+
+        // listen for connectivity changes
+        this.connectivityListener = new ConnectivityListener(
+            // not globally connected
+            () => {
+                this.indicator?.getStatusPanels().forEach((panel) => panel.suspend());
+                this.indicator?.updatePanelIcon(Status.Init);
+            },
+            // globally connected
+            () => {
+                this.indicator?.getStatusPanels().forEach((panel) => panel.resume());
+            },
+        )
+    };
 
     /**
      * Destroys and nulls artifacts for garbage collection.
@@ -86,6 +101,11 @@ export default class ServerStatusIndicatorExtension extends Extension {
         if (this.rawSettings && this.extensionListenerId) {
             this.rawSettings.disconnect(this.extensionListenerId);
             this.extensionListenerId = null;
+        }
+        // clean up connectivity listener
+        if (this.connectivityListener) {
+            this.connectivityListener.destroy();
+            this.connectivityListener = null;
         }
         // clean up status panels through indicator
         if (this.indicator) {
