@@ -122,7 +122,6 @@ export const ServerStatusPanel = GObject.registerClass(
                 if (this.pendingCancellables) {
                     this.pendingCancellables.forEach((cancellable) => {
                         if (!cancellable.is_cancelled()) {
-                            console.log(`🤨🤨🤨 cancelling`);
                             cancellable.cancel();
                             this.pendingCancellables.delete(cancellable);
                             cancellable = null;
@@ -210,14 +209,11 @@ export const ServerStatusPanel = GObject.registerClass(
                 const start = Date.now();
 
                 // do the actual http call
-                console.log(`🤨🤨🤨 request...`);
                 this.session.send_and_read_async(
                     message,
                     GLib.PRIORITY_DEFAULT,
                     cancellable,
                     (session, result, error) => {
-                        console.log(`🤨🤨🤨 response...`);
-
                         // response received, complete duration calc.
                         const duration = Date.now() - start;
 
@@ -229,7 +225,6 @@ export const ServerStatusPanel = GObject.registerClass(
                         let reason;
 
                         if (error) {
-                            console.log(`🤨🤨🤨 error=${error}`);
                             // extension unable to send request
                             if (panelIcon && !panelIconDisposed && this.iconProvider) {
                                 reason = error.toString();
@@ -243,19 +238,14 @@ export const ServerStatusPanel = GObject.registerClass(
                                 session.send_and_read_finish(result);
                             } catch (e) {
                                 if (panelIcon && !panelIconDisposed && this.iconProvider) {
-                                    console.log(`🤨🤨🤨 caught error=${e}`);
                                     if (e instanceof Gio.IOErrorEnum) {
-                                        console.log(`🤨🤨🤨 have Gio.IOErrorEnum`);
                                         if (e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED)) {
-                                            console.log(`🤨🤨🤨 cancelled!!`);
                                             newIcon = this.iconProvider.getIcon(Status.Init);
                                         } else {
-                                            console.log(`🤨🤨🤨 caught exception`);
                                             reason = e.message;
                                             newIcon = this.iconProvider.getIcon(Status.Down);
                                         }
                                     } else if (e instanceof Gio.ResolverError) {
-                                        console.log(`🤨🤨🤨 ResolverError`);
                                         newIcon = this.iconProvider.getIcon(Status.Init);
                                     } // do not check for Gio.TlsError as it's handled later
                                 }
@@ -303,8 +293,6 @@ export const ServerStatusPanel = GObject.registerClass(
                 try {
                     const soupStatus = message.status_code;
                     const soupStatusText = message.reason_phrase;
-
-                    console.log(`🤨🤨🤨 status=${soupStatus} ${soupStatusText}`);
 
                     /*
                      * Check for timeout first. Soup supposedly uses status code 1 for 

@@ -78,13 +78,11 @@ export default class ServerStatusIndicatorExtension extends Extension {
         this.connectivityListener = new ConnectivityListener(
             // not globally connected
             () => {
-                console.log(`🤨🤨🤨 suspending panel`);
                 this.indicator?.getStatusPanels().forEach((panel) => panel.suspend());
                 this.indicator?.updatePanelIcon(Status.Init);
             },
             // globally connected
             () => {
-                console.log(`🤨🤨🤨 resuming panel`);
                 this.indicator?.getStatusPanels().forEach((panel) => panel.resume());
             },
         )
