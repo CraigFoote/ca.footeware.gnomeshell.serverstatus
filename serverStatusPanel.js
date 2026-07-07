@@ -219,6 +219,9 @@ export const ServerStatusPanel = GObject.registerClass(
 
                         // remove completed request from pending set
                         this.pendingCancellables?.delete(cancellable);
+                        if (cancellable.is_cancelled()) {
+                            return;
+                        }
 
                         let newIcon;
                         let timedOut = false;
