@@ -266,7 +266,7 @@ export const ServerStatusPanel = GObject.registerClass(
          */
         processResponse(duration, message, httpMethod, url, panelIcon, panelIconDisposed, durationIndicator, durationIndicatorDisposed) {
             // parse result if emoji widget hasn't been destroyed
-            if (panelIcon && !panelIconDisposed && !this.isDestroyed) {
+            if (panelIcon && !panelIconDisposed && !this.isDestroyed && this.iconProvider) {
                 let newIcon;
                 let timedOut = false;
                 let reason;
