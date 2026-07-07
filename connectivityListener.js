@@ -36,7 +36,7 @@ export class ConnectivityListener {
                 Gio.DBusProxyFlags.NONE);
 
         }).catch((e) => {
-            console.log("ServerStatus extension unable to create NetworkManager proxy.", e);
+            console.error("ServerStatus extension unable to create NetworkManager proxy.", e);
         });
 
         // resolve Promise
@@ -53,10 +53,10 @@ export class ConnectivityListener {
                         }
                     });
                 }, (e) => {
-                    console.log("ServerStatus extension unable to connect to NetworkManager's StateChanged signal.", e);
+                    console.error("ServerStatus extension unable to connect to NetworkManager's StateChanged signal.", e);
                 }
             ).catch((e) => {
-                console.log("ServerStatus extension unable to resolve NetworkManager proxy.", e);
+                console.error("ServerStatus extension unable to resolve NetworkManager proxy.", e);
             });
         }
     }
@@ -85,7 +85,7 @@ export class ConnectivityListener {
             try {
                 this.networkManagerProxy.disconnect(this.signalId);
             } catch (e) {
-                console.log("ServerStatus extension unable to disconnect proxy from NetworkManager.", e);
+                console.error("ServerStatus extension unable to disconnect proxy from NetworkManager.", e);
             }
             this.signalId = null;
         }

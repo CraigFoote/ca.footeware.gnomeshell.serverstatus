@@ -59,12 +59,14 @@ export default class ServerStatusIndicatorExtension extends Extension {
             reactive: true,
             accessible_name: "Preferences",
         });
-        this.prefsButtonId = this.prefsButton.connect("clicked", async () => {
-            this.indicator.menu.close();
-            await this.openPreferences().catch(() => {
-                // fail silently
-            }).catch(() => { });
-        });
+        try {
+            this.prefsButtonId = this.prefsButton.connect("clicked", async () => {
+                this.indicator.menu.close();
+                await this.openPreferences();
+            });
+        } catch {
+            //fail silently
+        }
         this.indicator.menu.box.add_child(this.prefsButton);
 
         // listen for changes to server settings in gsettings and update display
@@ -76,11 +78,13 @@ export default class ServerStatusIndicatorExtension extends Extension {
         this.connectivityListener = new ConnectivityListener(
             // not globally connected
             () => {
+                console.log(`🤨🤨🤨 suspending panel`);
                 this.indicator?.getStatusPanels().forEach((panel) => panel.suspend());
                 this.indicator?.updatePanelIcon(Status.Init);
             },
             // globally connected
             () => {
+                console.log(`🤨🤨🤨 resuming panel`);
                 this.indicator?.getStatusPanels().forEach((panel) => panel.resume());
             },
         )
