@@ -13,7 +13,9 @@ export class IconProvider {
      * @param {String} assetPath path to image resources
      */
     constructor(assetPath) {
-        this.serverIcon = Gio.icon_new_for_string(assetPath + "/server.svg");
+        this.serverIcon = Gio.icon_new_for_string(
+            assetPath + "/server-init.svg",
+        );
         this.serverUpIcon = Gio.icon_new_for_string(
             assetPath + "/server-up.svg",
         );

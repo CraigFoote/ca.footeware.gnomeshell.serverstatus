@@ -222,7 +222,7 @@ export class ServerGroup {
             return "";
         }
         const notifiesIndicator = settings.notifies ? "🔔" : "";
-        const ignoreTLSErrorsIndicator = settings.ignoreTLSErrors ? "☢️" : "";
+        const ignoreTLSErrorsIndicator = settings.ignoreTLSErrors ? "⚠️" : "";
         return `${settings.isGet ? "GET" : "HEAD"} ${settings.url} @ ${settings.frequency}s with ${settings.timeout}s timeout ${notifiesIndicator} ${ignoreTLSErrorsIndicator}`;
     }
 
@@ -255,7 +255,7 @@ export class ServerGroup {
         const timeout = this.timeoutRow.text;
         const httpMethod = this.useGetSwitchRow.active ? "GET" : "HEAD";
         const useNotificationsIndicator = this.useNotificationsSwitchRow.active ? "🔔" : "";
-        const ignoreTLSErrorsIndicator = this.ignoreTLSErrorsSwitchRow.active ? "☢️" : "";
+        const ignoreTLSErrorsIndicator = this.ignoreTLSErrorsSwitchRow.active ? "⚠️" : "";
         return `${httpMethod} ${url} @ ${freq}s with ${timeout}s timeout ${useNotificationsIndicator} ${ignoreTLSErrorsIndicator}`;
     }
 

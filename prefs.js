@@ -45,7 +45,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
             spacing: 10,
         });
         const serverInitImage = new Gtk.Image({
-            file: this.path + "/assets/server.svg",
+            file: this.path + "/assets/server-init.svg",
             pixel_size: 36,
         });
         const serverInitDesc = new Gtk.Label({

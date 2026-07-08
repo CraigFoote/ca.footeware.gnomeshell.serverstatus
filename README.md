@@ -2,7 +2,7 @@
 
 A GNOME Shell extension with an indicator in the panel displaying status of entered web server URLs using emojis:
 
-![server.svg](assets/server.svg) initializing...
+![server-init.svg](assets/server-init.svg) initializing...
 
 ![server-down.svg](assets/server-down.svg) server down/unresponsive/timed out
 
@@ -28,6 +28,11 @@ To customize, the four **.svg** files in the **assets** folder can be swapped ou
 
 ![screenshot](assets/screenshot.png)
 
-I thought about adding a backup/restore function but I realized [DConf Editor](https://apps.gnome.org/DconfEditor/) already works well. Just copy the JSON text to a backup file and paste to restore from a file.
+
+## Backups
+
+Always a good idea. I thought about adding a backup/restore function but I realized [DConf Editor](https://apps.gnome.org/DconfEditor/) already works well. Just copy the JSON text to a backup file and paste to restore from a file.
+
+![dconf](assets/dconf.png)
 
 ---

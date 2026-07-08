@@ -8,4 +8,5 @@ LICENSE \
 schemas/org.gnome.shell.extensions.serverstatus.gschema.xml \
 assets/* \
 -x assets/screenshot.png \
--x assets/icon.png
+-x assets/icon.png \
+-x assets/dconf.png
