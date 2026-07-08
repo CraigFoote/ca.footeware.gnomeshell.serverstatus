@@ -96,7 +96,7 @@ export const ServerStatusPanel = GObject.registerClass(
                 durationIndicatorDisposed,
             );
 
-            // schedule recurring http calls
+            // schedule recurring http requests
             this.intervalID = GLib.timeout_add(
                 GLib.PRIORITY_DEFAULT,
                 serverSetting.frequency * 1000,
@@ -248,7 +248,6 @@ export const ServerStatusPanel = GObject.registerClass(
                                         } else if (e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.TIMED_OUT)) {
                                             // let duration calc below handle time outs; no icon or reason here
                                         } else {
-                                            console.log(` not Gio.IOErrorEnum.CANCELLED or Timed_OUT, setting status to down`);
                                             reason = e.message;
                                             newIcon = this.iconProvider.getIcon(Status.Down);
                                         }
@@ -286,7 +285,7 @@ export const ServerStatusPanel = GObject.registerClass(
          * @param {boolean} panelIconDisposed 
          * @param {St.Label} durationIndicator 
          * @param {boolean} durationIndicatorDisposed 
-         * @returns [reason, newIcon, timedOut] {String}, {Gio.Icon}, boolean
+         * @returns [reason, newIcon, timedOut] {String}, {Gio.Icon}, {boolean}
          */
         processResponse(duration, message, httpMethod, url, panelIcon, panelIconDisposed) {
             let reason;
@@ -516,7 +515,7 @@ export const ServerStatusPanel = GObject.registerClass(
 
         /**
          * Stop polling and cancel in-flight requests. Resets icon to Init.
-         * Called on system sleep.
+         * Called on system suspend.
          */
         suspend() {
             if (this.intervalID) {
