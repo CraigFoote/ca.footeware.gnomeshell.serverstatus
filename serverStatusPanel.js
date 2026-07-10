@@ -246,7 +246,8 @@ export const ServerStatusPanel = GObject.registerClass(
                                         if (e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED)) {
                                             newIcon = this.iconProvider.getIcon(Status.Init);
                                         } else if (e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.TIMED_OUT)) {
-                                            // let duration calc below handle time outs; no icon or reason here
+                                            // Let duration calc below handle time outs; no icon or reason here.
+                                            // This allows for duration display as well as notification.
                                         } else {
                                             reason = e.message;
                                             newIcon = this.iconProvider.getIcon(Status.Down);
