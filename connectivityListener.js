@@ -31,8 +31,6 @@ export class ConnectivityListener {
                 },
                 null,
                 Gio.DBusProxyFlags.NONE);
-        }).catch(() => {
-            // fail silently
         });
 
         // resolve Promise
@@ -49,9 +47,7 @@ export class ConnectivityListener {
                             onDisconnect(); // network/internet is unavailable
                     });
                 }
-            ).catch(() => {
-                // fail silently
-            });
+            );
         }
     }
 
@@ -76,11 +72,7 @@ export class ConnectivityListener {
      */
     destroy() {
         if (this.signalId) {
-            try {
-                this.networkManagerProxy.disconnect(this.signalId);
-            } catch {
-                // fail silently
-            }
+            this.networkManagerProxy.disconnect(this.signalId);
             this.signalId = null;
         }
         this.networkManagerProxy = null;

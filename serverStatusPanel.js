@@ -448,13 +448,10 @@ export const ServerStatusPanel = GObject.registerClass(
         }
 
         /**
-         * Prompt the user with a notification asking whether to trust the server's presented certificate. 
-         * On acceptance, the provided callback is invoked to re-issue the request.
+         * When there are certificate errors, determine their error names and resulting down icon.
          *
          * @param {Soup.Message} message
          * @param {Gio.TlsCertificateFlags} certificateErrors
-         * @param {String} url
-         * @param {Function} callback
          */
         handleCertificateErrors(message, certificateErrors) {
             const subject = message.get_tls_peer_certificate()?.get_subject_name();
