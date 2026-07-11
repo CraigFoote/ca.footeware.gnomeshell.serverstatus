@@ -28,7 +28,7 @@ To customize, the four **.svg** files in the **assets** folder can be swapped ou
 
 ---
 
-![screenshot](assets/screenshot.png)
+![screenshot](assets/screenshot.jpg)
 
 
 ## Backups
