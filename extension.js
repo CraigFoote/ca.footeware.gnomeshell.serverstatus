@@ -59,14 +59,11 @@ export default class ServerStatusIndicatorExtension extends Extension {
             reactive: true,
             accessible_name: "Preferences",
         });
-        try {
-            this.prefsButtonId = this.prefsButton.connect("clicked", async () => {
-                this.indicator.menu.close();
-                await this.openPreferences();
-            });
-        } catch {
-            //fail silently
-        }
+        this.prefsButtonId = this.prefsButton.connect("clicked", async () => {
+            this.indicator.menu.close();
+            await this.openPreferences();
+        });
+
         this.indicator.menu.box.add_child(this.prefsButton);
 
         // listen for changes to server settings in gsettings and update display

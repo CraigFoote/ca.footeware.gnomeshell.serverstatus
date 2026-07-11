@@ -438,11 +438,7 @@ export const ServerStatusPanel = GObject.registerClass(
                 null,
                 null,
                 (appInfo, result) => {
-                    try {
-                        Gio.AppInfo.launch_default_for_uri_finish(result);
-                    } catch {
-                        // fail silently
-                    }
+                    Gio.AppInfo.launch_default_for_uri_finish(result);
                 }
             );
         }
