@@ -13,7 +13,7 @@ import {ConnectivityListener} from './connectivityListener.js';
 
 /**
  * The main extension class. Creates an `Indicator` and keeps
- * it updated based on status of specified servers settings.
+ * it updated based on status of specified servers' settings.
  */
 export default class ServerStatusIndicatorExtension extends Extension {
     enable() {
