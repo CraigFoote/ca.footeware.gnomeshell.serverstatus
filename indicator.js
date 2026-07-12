@@ -1,7 +1,7 @@
-import GObject from "gi://GObject";
-import St from "gi://St";
-import * as PanelMenu from "resource:///org/gnome/shell/ui/panelMenu.js";
-import { Status } from "./status.js";
+import GObject from 'gi://GObject';
+import St from 'gi://St';
+import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
+import {Status} from './status.js';
 
 /**
  * A GNOME panel indicator with an icon showing worst status of all server statuses.
@@ -9,7 +9,7 @@ import { Status } from "./status.js";
  */
 export const Indicator = GObject.registerClass(
     {
-        GTypeName: "ServerStatusIndicator",
+        GTypeName: 'ServerStatusIndicator',
     },
     class Indicator extends PanelMenu.Button {
         _init(extensionName, iconProvider) {
@@ -19,7 +19,7 @@ export const Indicator = GObject.registerClass(
 
             this.panelIcon = new St.Icon({
                 gicon: iconProvider?.getIcon(Status.Init),
-                style_class: "system-status-icon",
+                style_class: 'system-status-icon',
             });
             this.add_child(this.panelIcon);
 
@@ -28,6 +28,7 @@ export const Indicator = GObject.registerClass(
 
         /**
          * Gets the panel's leading icon widget.
+         *
          * @returns {St.Icon}
          */
         getPanelIcon() {
@@ -36,6 +37,7 @@ export const Indicator = GObject.registerClass(
 
         /**
          * Gets the set of `ServerStatusPanel`s, one per server setting.
+         *
          * @returns {ServerStatusPanel} array
          */
         getStatusPanels() {
@@ -44,6 +46,7 @@ export const Indicator = GObject.registerClass(
 
         /**
          * Add a `ServerStatusPanel` to the set of #statusPanels.
+         *
          * @param {ServerStatusPanel} panel
          */
         addStatusPanel(panel) {
@@ -55,7 +58,7 @@ export const Indicator = GObject.registerClass(
          */
         clearStatusPanels() {
             if (this.statusPanels) {
-                this.statusPanels.forEach((panel) => {
+                this.statusPanels.forEach(panel => {
                     panel.destroy();
                 });
                 this.statusPanels = [];
@@ -64,12 +67,12 @@ export const Indicator = GObject.registerClass(
 
         /**
          * Replace the current icon with the one appropriate for the provided status.
+         *
          * @param {Status} status
          */
         updatePanelIcon(status) {
-            if (this.panelIcon && this.iconProvider) {
+            if (this.panelIcon && this.iconProvider)
                 this.panelIcon.gicon = this.iconProvider.getIcon(status);
-            }
         }
-    },
+    }
 );

@@ -1,14 +1,14 @@
-"use strict";
+'use strict';
 
-import Clutter from "gi://Clutter";
-import GLib from "gi://GLib";
-import St from "gi://St";
-import Gio from "gi://Gio";
-import GObject from "gi://GObject";
-import Soup from "gi://Soup";
-import * as Main from "resource:///org/gnome/shell/ui/main.js";
+import Clutter from 'gi://Clutter';
+import GLib from 'gi://GLib';
+import St from 'gi://St';
+import Gio from 'gi://Gio';
+import GObject from 'gi://GObject';
+import Soup from 'gi://Soup';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as MessageTray from 'resource:///org/gnome/shell/ui/messageTray.js';
-import { Status } from "./status.js";
+import {Status} from './status.js';
 
 let notificationSource;
 
@@ -18,7 +18,7 @@ let notificationSource;
  */
 export const ServerStatusPanel = GObject.registerClass(
     {
-        GTypeName: "ServerStatusPanel",
+        GTypeName: 'ServerStatusPanel',
     },
     class ServerStatusPanel extends St.BoxLayout {
         constructor(
@@ -35,13 +35,13 @@ export const ServerStatusPanel = GObject.registerClass(
             // mouse rollover
             this.track_hover = true;
             this.reactive = true;
-            this.style_class = "server-panel";
+            this.style_class = 'server-panel';
 
             // track pending requests for cleanup
             this.pendingCancellables = new Set();
 
             // click to open browser
-            this.connect("button-press-event", () => {
+            this.connect('button-press-event', () => {
                 this.openBrowser(serverSetting.url);
                 return Clutter.EVENT_PROPAGATE;
             });
@@ -54,10 +54,10 @@ export const ServerStatusPanel = GObject.registerClass(
             // icon displaying status by emoji icon
             this.panelIcon = new St.Icon({
                 gicon: this.iconProvider.getIcon(Status.Init),
-                style_class: "icon-lg padded",
+                style_class: 'icon-lg padded',
             });
             let panelIconDisposed = false;
-            this.panelIcon.connect("destroy", () => {
+            this.panelIcon.connect('destroy', () => {
                 panelIconDisposed = true;
             });
             this.add_child(this.panelIcon);
@@ -65,23 +65,23 @@ export const ServerStatusPanel = GObject.registerClass(
             // server name display
             const nameLabel = new St.Label({
                 text: serverSetting.name,
-                style_class: "padded",
+                style_class: 'padded',
                 y_align: Clutter.ActorAlign.CENTER,
             });
             this.add_child(nameLabel);
 
             // duration indicator
             const durationIndicator = new St.Label({
-                text: "",
-                style_class: "duration",
+                text: '',
+                style_class: 'duration',
             });
             let durationIndicatorDisposed = false;
             durationIndicator.connect(
-                "destroy",
-                () => (durationIndicatorDisposed = true),
+                'destroy',
+                () => (durationIndicatorDisposed = true)
             );
             const durationIndicatorContainer = new St.Bin({
-                style_class: "bin",
+                style_class: 'bin',
                 x_expand: true,
                 x_align: Clutter.ActorAlign.END,
                 child: durationIndicator,
@@ -93,7 +93,7 @@ export const ServerStatusPanel = GObject.registerClass(
                 serverSetting.url,
                 panelIconDisposed,
                 durationIndicator,
-                durationIndicatorDisposed,
+                durationIndicatorDisposed
             );
 
             // schedule recurring http requests
@@ -105,13 +105,13 @@ export const ServerStatusPanel = GObject.registerClass(
                         serverSetting.url,
                         panelIconDisposed,
                         durationIndicator,
-                        durationIndicatorDisposed,
+                        durationIndicatorDisposed
                     );
                     return GLib.SOURCE_CONTINUE;
-                },
+                }
             );
 
-            this.connect("destroy", () => {
+            this.connect('destroy', () => {
                 // remove id to recurring http calls
                 if (this.intervalID) {
                     GLib.Source.remove(this.intervalID);
@@ -120,7 +120,7 @@ export const ServerStatusPanel = GObject.registerClass(
 
                 // clear all pending requests
                 if (this.pendingCancellables) {
-                    this.pendingCancellables.forEach((cancellable) => {
+                    this.pendingCancellables.forEach(cancellable => {
                         if (!cancellable.is_cancelled()) {
                             cancellable.cancel();
                             this.pendingCancellables.delete(cancellable);
@@ -147,9 +147,9 @@ export const ServerStatusPanel = GObject.registerClass(
 
         /**
          * Returns the status of the server this panel represents.
-        *
-        * @return {Status}
-        */
+         *
+         * @returns {Status}
+         */
         getStatus() {
             return this.iconProvider.getStatus(this.panelIcon?.gicon);
         }
@@ -157,7 +157,7 @@ export const ServerStatusPanel = GObject.registerClass(
         /**
          * Invoked on a schedule, make request with provided URL.
          *
-         * @param {String} url
+         * @param {string} url
          * @param {boolean} panelIconDisposed whether the panel icon has been disposed
          * @param {St.Label} durationIndicator
          * @param {boolean} durationIndicatorDisposed
@@ -166,16 +166,16 @@ export const ServerStatusPanel = GObject.registerClass(
             url,
             panelIconDisposed,
             durationIndicator,
-            durationIndicatorDisposed,
+            durationIndicatorDisposed
         ) {
-            const httpMethod = this.serverSetting.isGet ? "GET" : "HEAD";
+            const httpMethod = this.serverSetting.isGet ? 'GET' : 'HEAD';
             this.makeRequest(
                 httpMethod,
                 url,
                 this.panelIcon,
                 panelIconDisposed,
                 durationIndicator,
-                durationIndicatorDisposed,
+                durationIndicatorDisposed
             );
             return GLib.SOURCE_CONTINUE;
         }
@@ -183,8 +183,8 @@ export const ServerStatusPanel = GObject.registerClass(
         /**
          * Execute the URL invocation asynchronously and trigger the update of the GUI.
          *
-         * @param {String} httpMethod
-         * @param {String} url
+         * @param {string} httpMethod
+         * @param {string} url
          * @param {St.Icon} panelIcon
          * @param {boolean} panelIconDisposed
          * @param {St.Label} durationIndicator
@@ -196,7 +196,7 @@ export const ServerStatusPanel = GObject.registerClass(
             panelIcon,
             panelIconDisposed,
             durationIndicator,
-            durationIndicatorDisposed,
+            durationIndicatorDisposed
         ) {
             // create http object, `new Soup.Message()` constructor is deprecated in favor of '.new' 🤨
             const message = Soup.Message.new(httpMethod, url);
@@ -219,9 +219,8 @@ export const ServerStatusPanel = GObject.registerClass(
 
                         // remove completed request from pending set
                         this.pendingCancellables?.delete(cancellable);
-                        if (cancellable.is_cancelled()) {
+                        if (cancellable.is_cancelled())
                             return;
-                        }
 
                         let newIcon;
                         let timedOut = false;
@@ -267,26 +266,24 @@ export const ServerStatusPanel = GObject.registerClass(
                         // update UI
                         this.updateGUI(reason, newIcon, timedOut, duration, panelIcon, panelIconDisposed, durationIndicator, durationIndicatorDisposed);
                     });
-            } else {
+            } else if (panelIcon && !panelIconDisposed && this.iconProvider) {
                 // message was null because of malformed url
-                if (panelIcon && !panelIconDisposed && this.iconProvider) {
-                    panelIcon.gicon = this.iconProvider.getIcon(Status.Bad);
-                    this.updateTaskbarCallback?.();
-                }
+                panelIcon.gicon = this.iconProvider.getIcon(Status.Bad);
+                this.updateTaskbarCallback?.();
             }
         }
 
         /**
-         * Process the provided message; determine new icon and, if failure, reason and 
+         * Process the provided message; determine new icon and, if failure, reason and
          * whether or not the request exceeded set timeout.
-         * 
-         * @param {number} duration 
-         * @param {Soup.Message} message 
-         * @param {Gio.icon} panelIcon 
-         * @param {boolean} panelIconDisposed 
-         * @param {St.Label} durationIndicator 
-         * @param {boolean} durationIndicatorDisposed 
-         * @returns [reason, newIcon, timedOut] {String}, {Gio.Icon}, {boolean}
+         *
+         * @param {number} duration
+         * @param {Soup.Message} message
+         * @param {string} httpMethod
+         * @param {string} url
+         * @param {Gio.icon} panelIcon
+         * @param {boolean} panelIconDisposed
+         * @returns [reason, newIcon, timedOut] [{String}, {Gio.Icon}, {boolean}]
          */
         processResponse(duration, message, httpMethod, url, panelIcon, panelIconDisposed) {
             let reason;
@@ -295,14 +292,13 @@ export const ServerStatusPanel = GObject.registerClass(
 
             // parse result if emoji widget hasn't been destroyed
             if (panelIcon && !panelIconDisposed && this.iconProvider) {
-
                 // 429 Too Many Requests causes a 'bad Soup enum' error 🤨; use try-catch
                 try {
                     const soupStatus = message.status_code;
                     const soupStatusText = message.reason_phrase;
 
                     /*
-                     * Check for timeout first. Soup supposedly uses status code 1 for 
+                     * Check for timeout first. Soup supposedly uses status code 1 for
                      * timeouts but I haven't seen it or REQUEST_TIMEOUT (408).
                      * Also there's https://gitlab.gnome.org/GNOME/libsoup/-/issues/155.
                      * Use duration calc. for now.
@@ -316,7 +312,7 @@ export const ServerStatusPanel = GObject.registerClass(
                         timedOut = true;
                         reason = `This server timed out after ${duration / 1000} seconds.`;
                         newIcon = this.iconProvider.getIcon(
-                            Status.Down,
+                            Status.Down
                         );
                     } else if (
                         // consider 200 through 399 success result
@@ -325,7 +321,7 @@ export const ServerStatusPanel = GObject.registerClass(
                     ) {
                         // success
                         newIcon = this.iconProvider.getIcon(
-                            Status.Up,
+                            Status.Up
                         );
                         // no error, no reason, no notification
                     } else if (soupStatus >= 400 && soupStatus < 500) {
@@ -355,15 +351,15 @@ export const ServerStatusPanel = GObject.registerClass(
 
         /**
          * Reflect the response. Update the icons, panel text and possibly notify user.
-         * 
-         * @param {String} reason 
-         * @param {Gio.icon} newIcon 
-         * @param {boolean} timedOut 
-         * @param {number} duration 
+         *
+         * @param {string} reason
+         * @param {Gio.icon} newIcon
+         * @param {boolean} timedOut
+         * @param {number} duration
          * @param {Gio.icon} panelIcon
          * @param {boolean}  panelIconDisposed
-         * @param {St.Label} durationIndicator 
-         * @param {boolean} durationIndicatorDisposed 
+         * @param {St.Label} durationIndicator
+         * @param {boolean} durationIndicatorDisposed
          */
         updateGUI(reason, newIcon, timedOut, duration, panelIcon, panelIconDisposed, durationIndicator, durationIndicatorDisposed) {
             if (panelIcon && !panelIconDisposed && this.iconProvider) {
@@ -375,14 +371,13 @@ export const ServerStatusPanel = GObject.registerClass(
                     durationIndicator &&
                     !durationIndicatorDisposed
                 ) {
-                    durationIndicator.text = timedOut ? `timed out @ ${this.session.get_timeout()}s` :
-                        `${duration}ms`;
+                    durationIndicator.text = timedOut ? `timed out @ ${this.session.get_timeout()}s`
+                        : `${duration}ms`;
                 }
 
                 // notify user if we are notifying and status is down
-                if (this.serverSetting.notifies && (this.iconProvider.getStatus(newIcon) === Status.Down)) {
+                if (this.serverSetting.notifies && (this.iconProvider.getStatus(newIcon) === Status.Down))
                     this.fireNotification(newIcon, reason);
-                }
             }
 
             // update main indicator icon
@@ -391,16 +386,16 @@ export const ServerStatusPanel = GObject.registerClass(
 
         /**
          * Show a desktop notification using the provided icon and this panel's name.
-         * 
-         * @param {Gio.icon} icon 
-         * @param {String} reason
+         *
+         * @param {Gio.icon} icon
+         * @param {string} reason
          */
         fireNotification(icon, reason) {
             const source = this.getNotificationSource();
             const notification = new MessageTray.Notification({
-                source: source,
-                title: _(this.serverSetting.name),
-                body: _(reason),
+                source,
+                title: this.serverSetting.name,
+                body: reason,
                 gicon: icon,
                 urgency: MessageTray.Urgency.NORMAL,
             });
@@ -409,14 +404,14 @@ export const ServerStatusPanel = GObject.registerClass(
 
         /**
          * Lazily creates and returns a notification source.
-         * 
+         *
          * @returns {MessageTray.Source}
          */
         getNotificationSource() {
             if (!notificationSource) {
                 notificationSource = new MessageTray.Source({
-                    title: _("Server Status Indicator"),
-                    iconName: "dialog-warning",
+                    title: 'Server Status Indicator',
+                    iconName: 'dialog-warning',
                     policy: new MessageTray.NotificationGenericPolicy(),
                 });
                 notificationSource.connect('destroy', _source => {
@@ -430,7 +425,7 @@ export const ServerStatusPanel = GObject.registerClass(
         /**
          * Open a web browser at supplied URL.
          *
-         * @param {String} url
+         * @param {string} url
          */
         openBrowser(url) {
             Gio.AppInfo.launch_default_for_uri_async(
@@ -457,29 +452,29 @@ export const ServerStatusPanel = GObject.registerClass(
 
         /**
          * Get the concatenated string of all the error names in the provided flags.
-         * 
+         *
          * @param {Gio.TlsCertificateFlags} errorFlags
-         * @returns {String}
+         * @returns {string}
          */
         getErrorNames(errorFlags) {
-            if (errorFlags === 0) {
-                return "NO_FLAGS";
-            }
+            if (errorFlags === 0)
+                return 'NO_FLAGS';
+
             const names = [];
             for (const [name, value] of Object.entries(Gio.TlsCertificateFlags)) {
                 // skip 0 (already handled above)
                 // bitwise &'ing to find matching values then store their names
-                if (value !== 0 && ((errorFlags & value) === value)) {
+                // TODO simplify
+                if (value !== 0 && ((errorFlags & value) === value))
                     names.push(name);
-                }
             }
-            return names.join(", ");
+            return names.join(', ');
         }
 
         /**
          * Determine the reason string and the new icon from the provided message.
-         * 
-         * @param {Soup.Message} message 
+         *
+         * @param {Soup.Message} message
          * @returns [{String}, {Gio.icon}]
          */
         handleZeroStatus(message) {
@@ -500,7 +495,7 @@ export const ServerStatusPanel = GObject.registerClass(
                     }
                 } else {
                     // no status or cert errors set, just notify user
-                    reason = "This server is down. No status or certificate errors were returned.";
+                    reason = 'This server is down. No status or certificate errors were returned.';
                     newIcon = this.iconProvider.getIcon(Status.Down);
                 }
             }
@@ -516,15 +511,13 @@ export const ServerStatusPanel = GObject.registerClass(
                 GLib.Source.remove(this.intervalID);
                 this.intervalID = null;
             }
-            this.pendingCancellables.forEach((c) => {
-                if (!c.is_cancelled()) {
+            this.pendingCancellables.forEach(c => {
+                if (!c.is_cancelled())
                     c.cancel();
-                }
             });
             this.pendingCancellables.clear();
-            if (this.panelIcon) {
+            if (this.panelIcon)
                 this.panelIcon.gicon = this.iconProvider.getIcon(Status.Init);
-            }
         }
 
         /**
@@ -535,7 +528,7 @@ export const ServerStatusPanel = GObject.registerClass(
                 this.serverSetting.url,
                 this.panelIconDisposed,
                 this.durationIndicator,
-                this.durationIndicatorDisposed,
+                this.durationIndicatorDisposed
             );
             this.intervalID = GLib.timeout_add(
                 GLib.PRIORITY_DEFAULT,
@@ -545,10 +538,10 @@ export const ServerStatusPanel = GObject.registerClass(
                         this.serverSetting.url,
                         this.panelIconDisposed,
                         this.durationIndicator,
-                        this.durationIndicatorDisposed,
+                        this.durationIndicatorDisposed
                     );
                     return GLib.SOURCE_CONTINUE;
-                },
+                }
             );
         }
     }

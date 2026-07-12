@@ -1,12 +1,12 @@
-"use strict";
+'use strict';
 
-import Adw from "gi://Adw";
-import Gio from "gi://Gio";
-import GLib from "gi://GLib";
-import Gtk from "gi://Gtk";
-import { ExtensionPreferences } from "resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js";
-import { ServerGroup } from "./serverGroup.js";
-import { SettingsParser } from "./settingsParser.js";
+import Adw from 'gi://Adw';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import Gtk from 'gi://Gtk';
+import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
+import {ServerGroup} from './serverGroup.js';
+import {SettingsParser} from './settingsParser.js';
 
 /**
  * The main preferences class that creates server groups and saves to gsettings.
@@ -24,10 +24,10 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
         this.serverGroups = [];
 
         // destroy on close
-        window.connect("close-request", () => {
-            for (const serverGroup of this.serverGroups) {
+        window.connect('close-request', () => {
+            for (const serverGroup of this.serverGroups)
                 serverGroup.destroy();
-            }
+
             this.serverGroups = null;
             this.savedSettings = null;
             this.page = null;
@@ -45,11 +45,11 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
             spacing: 10,
         });
         const serverInitImage = new Gtk.Image({
-            file: this.path + "/assets/server-init.svg",
+            file: `${this.path}/assets/server-init.svg`,
             pixel_size: 36,
         });
         const serverInitDesc = new Gtk.Label({
-            label: "Initializing...",
+            label: 'Initializing...',
         });
         serverInitBox.append(serverInitImage);
         serverInitBox.append(serverInitDesc);
@@ -61,11 +61,11 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
             spacing: 10,
         });
         const serverDownImage = new Gtk.Image({
-            file: this.path + "/assets/server-down.svg",
+            file: `${this.path}/assets/server-down.svg`,
             pixel_size: 36,
         });
         const serverDownDesc = new Gtk.Label({
-            label: "If you get a server-down indicator, try switching to GET.\nHTTP HEAD is faster but not always supported.",
+            label: 'If you get a server-down indicator, try switching to GET.\nHTTP HEAD is faster but not always supported.',
         });
         serverDownBox.append(serverDownImage);
         serverDownBox.append(serverDownDesc);
@@ -77,7 +77,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
             spacing: 10,
         });
         const serverBadImage = new Gtk.Image({
-            file: this.path + "/assets/server-bad.svg",
+            file: `${this.path}/assets/server-bad.svg`,
             pixel_size: 36,
         });
         const serverBadDesc = new Gtk.Label({
@@ -93,11 +93,11 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
             spacing: 10,
         });
         const serverUpImage = new Gtk.Image({
-            file: this.path + "/assets/server-up.svg",
+            file: `${this.path}/assets/server-up.svg`,
             pixel_size: 36,
         });
         const serverUpDesc = new Gtk.Label({
-            label: "The desired server-up indicator.",
+            label: 'The desired server-up indicator.',
         });
         serverUpBox.append(serverUpImage);
         serverUpBox.append(serverUpDesc);
@@ -113,12 +113,12 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
 
         // add
         const addRow = new Adw.ActionRow({
-            title: "Add a new server",
+            title: 'Add a new server',
         });
-        const addButton = Gtk.Button.new_from_icon_name("list-add-symbolic");
-        addButton.set_css_classes(["suggested-action"]);
+        const addButton = Gtk.Button.new_from_icon_name('list-add-symbolic');
+        addButton.set_css_classes(['suggested-action']);
         addRow.add_suffix(addButton);
-        addButton.connect("clicked", () => {
+        addButton.connect('clicked', () => {
             // ServerGroup is a wrapper around a PreferenceGroup, returned by getGroup()
             const newGroup = new ServerGroup(this, null); // widgets will not be initialized but group will be expanded
             newGroup
@@ -135,7 +135,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
 
         // create one server group per discovered settings
         const parsedSettings = SettingsParser.parseGioSettings(
-            this.savedSettings,
+            this.savedSettings
         );
         // add them back reversed, same as they were created, and displayed in indicator
         const reversed = parsedSettings.toReversed();
@@ -190,8 +190,8 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
             }
         }
         this.savedSettings.set_value(
-            "server-settings",
-            new GLib.Variant("aa{ss}", serverSettings),
+            'server-settings',
+            new GLib.Variant('aa{ss}', serverSettings)
         );
         // persist
         Gio.Settings.sync();
