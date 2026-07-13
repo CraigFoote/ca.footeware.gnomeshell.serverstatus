@@ -17,7 +17,7 @@ import {ConnectivityListener} from './connectivityListener.js';
  */
 export default class ServerStatusIndicatorExtension extends Extension {
     enable() {
-        this.iconProvider = new IconProvider(`${this.path} /assets/`);
+        this.iconProvider = new IconProvider(`${this.path}/assets/`);
 
         this.indicator = new Indicator(
             _(this.metadata.name),
