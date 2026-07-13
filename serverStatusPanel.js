@@ -464,7 +464,7 @@ export const ServerStatusPanel = GObject.registerClass(
             for (const [name, value] of Object.entries(Gio.TlsCertificateFlags)) {
                 // skip 0 (already handled above)
                 // bitwise &'ing to find matching values then store their names
-                // TODO simplify
+                // TODO simplify & clarify
                 if (value !== 0 && ((errorFlags & value) === value))
                     names.push(name);
             }
