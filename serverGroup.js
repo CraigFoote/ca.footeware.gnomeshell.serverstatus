@@ -1,8 +1,8 @@
-"use strict";
+'use strict';
 
-import Gtk from "gi://Gtk";
-import Adw from "gi://Adw";
-import { ServerSetting } from "./serverSetting.js";
+import Gtk from 'gi://Gtk';
+import Adw from 'gi://Adw';
+import {ServerSetting} from './serverSetting.js';
 
 /**
  * A new group is displayed when _Add_ is clicked in the preferences dialog.
@@ -13,7 +13,8 @@ export class ServerGroup {
      * Constructor.
      *
      * @param {ServerStatusPreferences} preferences
-     * @param {ServerSetting} settings, may be null in which case the fields remain empty, expander is automatically opened and name field focused.
+     * @param {ServerSetting} settings may be null in which case the fields remain empty,
+     *          expander is automatically opened and name field focused.
      */
     constructor(preferences, settings) {
         this.id = this.createUID();
@@ -25,11 +26,11 @@ export class ServerGroup {
 
         // move up/down row
         const moveRow = new Adw.ActionRow({
-            title: "Move Up/Down",
-            subtitle: "Move this server up or down by one in the list.",
+            title: 'Move Up/Down',
+            subtitle: 'Move this server up or down by one in the list.',
         });
-        this.moveUpButton = Gtk.Button.new_from_icon_name("go-up-symbolic");
-        this.moveUpHandlerId = this.moveUpButton.connect("clicked", () => {
+        this.moveUpButton = Gtk.Button.new_from_icon_name('go-up-symbolic');
+        this.moveUpHandlerId = this.moveUpButton.connect('clicked', () => {
             // does a move actually happen?
             if (this.moveUp(preferences.serverGroups)) {
                 preferences.reorder();
@@ -37,8 +38,8 @@ export class ServerGroup {
             }
         });
         this.moveDownButton =
-            Gtk.Button.new_from_icon_name("go-down-symbolic");
-        this.moveDownHandlerId = this.moveDownButton.connect("clicked", () => {
+            Gtk.Button.new_from_icon_name('go-down-symbolic');
+        this.moveDownHandlerId = this.moveDownButton.connect('clicked', () => {
             // does a move actually happen?
             if (this.moveDown(preferences.serverGroups)) {
                 preferences.reorder();
@@ -57,14 +58,14 @@ export class ServerGroup {
         // visibility row - show/hide server without deleting
         this.visible = settings?.visible ?? true;
         const visibilityRow = new Adw.ActionRow({
-            title: "Show in menu",
-            subtitle: "Hidden servers are not displayed and not checked.",
+            title: 'Show in menu',
+            subtitle: 'Hidden servers are not displayed and not checked.',
         });
-        const visibilityIcon = this.visible ? "view-reveal-symbolic" : "view-conceal-symbolic";
+        const visibilityIcon = this.visible ? 'view-reveal-symbolic' : 'view-conceal-symbolic';
         this.visibilityButton = Gtk.Button.new_from_icon_name(visibilityIcon);
-        this.visibilityHandlerId = this.visibilityButton.connect("clicked", () => {
+        this.visibilityHandlerId = this.visibilityButton.connect('clicked', () => {
             this.visible = !this.visible;
-            const newIcon = this.visible ? "view-reveal-symbolic" : "view-conceal-symbolic";
+            const newIcon = this.visible ? 'view-reveal-symbolic' : 'view-conceal-symbolic';
             this.visibilityButton.set_icon_name(newIcon);
             this.update();
         });
@@ -73,32 +74,32 @@ export class ServerGroup {
 
         // delete button
         const deleteRow = new Adw.ActionRow({
-            title: "Delete this server",
+            title: 'Delete this server',
         });
         this.deleteButton = Gtk.Button.new_from_icon_name(
-            "edit-delete-symbolic",
+            'edit-delete-symbolic'
         );
-        this.deleteButton.set_css_classes(["destructive-action"]);
+        this.deleteButton.set_css_classes(['destructive-action']);
         deleteRow.add_suffix(this.deleteButton);
         this.serverSettingGroup.add(deleteRow);
-        this.deleteHandlerId = this.deleteButton.connect("clicked", () => {
+        this.deleteHandlerId = this.deleteButton.connect('clicked', () => {
             const messageDialog = new Adw.MessageDialog({
                 transient_for: preferences.window,
                 destroy_with_parent: true,
                 modal: true,
-                heading: "Confirm Delete",
-                body: "Are you sure you want to delete this server?",
+                heading: 'Confirm Delete',
+                body: 'Are you sure you want to delete this server?',
             });
-            messageDialog.add_response("cancel", "_Cancel");
-            messageDialog.add_response("delete", "_Delete");
+            messageDialog.add_response('cancel', '_Cancel');
+            messageDialog.add_response('delete', '_Delete');
             messageDialog.set_response_appearance(
-                "delete",
-                Adw.ResponseAppearance.ADW_RESPONSE_DESTRUCTIVE,
+                'delete',
+                Adw.ResponseAppearance.ADW_RESPONSE_DESTRUCTIVE
             );
-            messageDialog.set_default_response("cancel");
-            messageDialog.set_close_response("cancel");
-            messageDialog.connect("response", (_, response) => {
-                if (response === "delete") {
+            messageDialog.set_default_response('cancel');
+            messageDialog.set_close_response('cancel');
+            messageDialog.connect('response', (_, response) => {
+                if (response === 'delete') {
                     this.createServerSettings();
                     this.removeGroup(this.id, preferences.serverGroups);
                     preferences.page.remove(this.serverSettingGroup);
@@ -120,8 +121,8 @@ export class ServerGroup {
 
     /**
      * Create the expander row with all the controls for this server group.
-     *  
-     * @param {ServerSetting} settings 
+     *
+     * @param {ServerSetting} settings
      * @returns {Adw.ExpanderRow}
      */
     getExpanderRow(settings) {
@@ -129,7 +130,7 @@ export class ServerGroup {
         // disable pango as it fails on & in url query strings
         this.expander.set_use_markup(false);
         // title
-        const title = settings?.name ?? "";
+        const title = settings?.name ?? '';
         this.expander.set_title(title);
         // subtitle
         this.expander.set_subtitle(this.initSubtitle(settings));
@@ -137,22 +138,22 @@ export class ServerGroup {
 
         // name text field
         this.nameRow = new Adw.EntryRow({
-            title: "Name",
-            text: settings?.name ?? "",
+            title: 'Name',
+            text: settings?.name ?? '',
             show_apply_button: true,
         });
-        this.nameHandlerId = this.nameRow.connect("apply", () => {
+        this.nameHandlerId = this.nameRow.connect('apply', () => {
             this.update();
         });
         this.expander.add_row(this.nameRow);
 
         // url text field
         this.urlRow = new Adw.EntryRow({
-            title: "URL",
-            text: settings?.url ?? "",
+            title: 'URL',
+            text: settings?.url ?? '',
             show_apply_button: true,
         });
-        this.urlHandlerId = this.urlRow.connect("apply", () => {
+        this.urlHandlerId = this.urlRow.connect('apply', () => {
             this.update();
         });
         this.expander.add_row(this.urlRow);
@@ -160,8 +161,8 @@ export class ServerGroup {
         // frequency spinner
         this.frequencyRow = Adw.SpinRow.new_with_range(10, 300, 10);
         this.frequencyRow.set_value(settings?.frequency ?? 120);
-        this.frequencyRow.set_title("Frequency (secs.)");
-        this.frequencyHandlerId = this.frequencyRow.connect("notify::value", () => {
+        this.frequencyRow.set_title('Frequency (secs.)');
+        this.frequencyHandlerId = this.frequencyRow.connect('notify::value', () => {
             this.update();
         });
         this.expander.add_row(this.frequencyRow);
@@ -169,42 +170,42 @@ export class ServerGroup {
         // timeout spinner
         this.timeoutRow = Adw.SpinRow.new_with_range(1, 300, 1);
         this.timeoutRow.set_value(settings?.timeout ?? 10);
-        this.timeoutRow.set_title("Timeout (secs.)");
-        this.timeoutHandlerId = this.timeoutRow.connect("notify::value", () => {
+        this.timeoutRow.set_title('Timeout (secs.)');
+        this.timeoutHandlerId = this.timeoutRow.connect('notify::value', () => {
             this.update();
         });
         this.expander.add_row(this.timeoutRow);
 
         // 'use GET' switch
         this.useGetSwitchRow = new Adw.SwitchRow({
-            title: "Use GET rather than HEAD",
+            title: 'Use GET rather than HEAD',
         });
         const isGet = settings?.isGet ?? false;
         this.useGetSwitchRow.set_active(isGet);
-        this.useGetHandlerId = this.useGetSwitchRow.connect("notify::active", () => {
+        this.useGetHandlerId = this.useGetSwitchRow.connect('notify::active', () => {
             this.update();
         });
         this.expander.add_row(this.useGetSwitchRow);
 
         // 'ignoreTLSErrors' switch
         this.ignoreTLSErrorsSwitchRow = new Adw.SwitchRow({
-            title: "Ignore TLS certificate errors",
-            subtitle: "self-signed, etc."
+            title: 'Ignore TLS certificate errors',
+            subtitle: 'self-signed, etc.',
         });
         const ignoreTLSErrors = settings?.ignoreTLSErrors ?? false;
         this.ignoreTLSErrorsSwitchRow.set_active(ignoreTLSErrors);
-        this.ignoreTLSErrorsHandlerId = this.ignoreTLSErrorsSwitchRow.connect("notify::active", () => {
+        this.ignoreTLSErrorsHandlerId = this.ignoreTLSErrorsSwitchRow.connect('notify::active', () => {
             this.update();
         });
         this.expander.add_row(this.ignoreTLSErrorsSwitchRow);
 
         // 'use notifications' switch
         this.useNotificationsSwitchRow = new Adw.SwitchRow({
-            title: "Notify when down",
+            title: 'Notify when down',
         });
         const notifies = settings?.notifies ?? false;
         this.useNotificationsSwitchRow.set_active(notifies);
-        this.useNotificationsHandlerId = this.useNotificationsSwitchRow.connect("notify::active", () => {
+        this.useNotificationsHandlerId = this.useNotificationsSwitchRow.connect('notify::active', () => {
             this.update();
         });
         this.expander.add_row(this.useNotificationsSwitchRow);
@@ -213,17 +214,17 @@ export class ServerGroup {
 
     /**
      * Set the initial subtitle based on provided settings.
-     * 
-     * @param {ServerSetting} settings 
-     * @returns {String}
+     *
+     * @param {ServerSetting} settings
+     * @returns {string}
      */
     initSubtitle(settings) {
-        if (!settings) {
-            return "";
-        }
-        const notifiesIndicator = settings.notifies ? "🔔" : "";
-        const ignoreTLSErrorsIndicator = settings.ignoreTLSErrors ? "⚠️" : "";
-        return `${settings.isGet ? "GET" : "HEAD"} ${settings.url} @ ${settings.frequency}s with ${settings.timeout}s timeout ${notifiesIndicator} ${ignoreTLSErrorsIndicator}`;
+        if (!settings)
+            return '';
+
+        const notifiesIndicator = settings.notifies ? '🔔' : '';
+        const ignoreTLSErrorsIndicator = settings.ignoreTLSErrors ? '⚠️' : '';
+        return `${settings.isGet ? 'GET' : 'HEAD'} ${settings.url} @ ${settings.frequency}s with ${settings.timeout}s timeout ${notifiesIndicator} ${ignoreTLSErrorsIndicator}`;
     }
 
     /**
@@ -238,7 +239,7 @@ export class ServerGroup {
     /**
      * Get the title based on user input.
      *
-     * @returns {String}
+     * @returns {string}
      */
     getTitle() {
         return this.nameRow.text;
@@ -247,15 +248,15 @@ export class ServerGroup {
     /**
      * Get the subtitle based on user input.
      *
-     * @returns {String}
+     * @returns {string}
      */
     getSubtitle() {
         const url = this.urlRow.text;
         const freq = this.frequencyRow.text;
         const timeout = this.timeoutRow.text;
-        const httpMethod = this.useGetSwitchRow.active ? "GET" : "HEAD";
-        const useNotificationsIndicator = this.useNotificationsSwitchRow.active ? "🔔" : "";
-        const ignoreTLSErrorsIndicator = this.ignoreTLSErrorsSwitchRow.active ? "⚠️" : "";
+        const httpMethod = this.useGetSwitchRow.active ? 'GET' : 'HEAD';
+        const useNotificationsIndicator = this.useNotificationsSwitchRow.active ? '🔔' : '';
+        const ignoreTLSErrorsIndicator = this.ignoreTLSErrorsSwitchRow.active ? '⚠️' : '';
         return `${httpMethod} ${url} @ ${freq}s with ${timeout}s timeout ${useNotificationsIndicator} ${ignoreTLSErrorsIndicator}`;
     }
 
@@ -270,7 +271,7 @@ export class ServerGroup {
     /**
      * Move this `Adw.PreferenceGroup` down by one in the list.
      *
-     * @param {ServerGroup} array of `ServerGroup`s
+     * @param {[]} serverGroups array of {ServerGroup}s
      * @returns true if a move occurred.
      */
     moveDown(serverGroups) {
@@ -285,7 +286,7 @@ export class ServerGroup {
     /**
      * Move this `Adw.PreferenceGroup` up by one in the list.
      *
-     * @param {ServerGroup} array of `ServerGroup`s
+     * @param {[]} serverGroups array of `ServerGroup`s
      * @returns true if a move occurred.
      */
     moveUp(serverGroups) {
@@ -300,15 +301,14 @@ export class ServerGroup {
     /**
      * Find the index of `this` in the provided array.
      *
-     * @param {ServerGroup} array of `ServerGroup`s
+     * @param {[]} serverGroups array of `ServerGroup`s
      * @returns int index of `this` in provided array, -1 if not found
      */
     getPosition(serverGroups) {
         for (let i = 0; i < serverGroups.length; i++) {
             const serverGroup = serverGroups[i];
-            if (serverGroup.id === this.id) {
+            if (serverGroup.id === this.id)
                 return i;
-            }
         }
         return -1;
     }
@@ -318,7 +318,7 @@ export class ServerGroup {
      *
      * @param {int} fromIndex the position being moved from
      * @param {int} toIndex the move destination
-     * @param {ServerGroup} array of `ServerGroup`s
+     * @param {[]} serverGroups array of `ServerGroup`s
      */
     move(fromIndex, toIndex, serverGroups) {
         const serverGroup = serverGroups[fromIndex];
@@ -332,9 +332,9 @@ export class ServerGroup {
      * @returns {ServerSetting}
      */
     getSettings() {
-        if (!this.settings) {
+        if (!this.settings)
             this.createServerSettings();
-        }
+
         return this.settings;
     }
 
@@ -368,31 +368,31 @@ export class ServerGroup {
             this.useGetSwitchRow.active,
             this.useNotificationsSwitchRow.active,
             this.visible,
-            this.ignoreTLSErrorsSwitchRow.active,
+            this.ignoreTLSErrorsSwitchRow.active
         );
     }
 
     /**
      * Create a unique ID for this group.
      *
-     * @returns {String}
+     * @returns {string}
      */
     createUID() {
         const buffer = [];
         const chars =
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         const charlen = chars.length;
-        for (let i = 0; i < 32; i++) {
+        for (let i = 0; i < 32; i++)
             buffer[i] = chars.charAt(Math.floor(Math.random() * charlen));
-        }
-        return buffer.join("");
+
+        return buffer.join('');
     }
 
     /**
      * Remove the group with supplied id from the provided set of groups.
      *
-     * @param {String} id the id of the group to remove
-     * @param {ServerGroup} array of `ServerGroup`s without group with supplied id
+     * @param {string} id the id of the group to remove
+     * @param {[]} serverGroups array of `ServerGroup`s without group with supplied id
      */
     removeGroup(id, serverGroups) {
         for (let i = 0; i < serverGroups.length; i++) {

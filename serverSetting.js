@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 /**
  * Encapsulates the settings for a {ServerGroup}.
@@ -7,10 +7,10 @@ export class ServerSetting {
     /**
      * Constructor.
      *
-     * @param {String} name
-     * @param {String} url
-     * @param {Number} frequency
-     * @param {Number} timeout
+     * @param {string} name
+     * @param {string} url
+     * @param {number} frequency
+     * @param {number} timeout
      * @param {boolean} isGet
      * @param {boolean} notifies
      * @param {boolean} visible
