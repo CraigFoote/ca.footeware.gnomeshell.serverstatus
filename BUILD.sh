@@ -8,6 +8,6 @@ LICENSE \
 schemas/org.gnome.shell.extensions.serverstatus.gschema.xml \
 assets/* \
 -x eslint.config.js \
--x assets/screenshot.png \
+-x assets/screenshot.jpg \
 -x assets/icon.png \
 -x assets/dconf.png
