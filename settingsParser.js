@@ -37,43 +37,13 @@ export class SettingsParser {
             else if (savedSetting['isGet'] !== undefined)
                 isGet = savedSetting['isGet'] === 'true';
 
-            const notifies = this.getNotifies(savedSetting);
-            const visible = this.getVisible(savedSetting);
-            const ignoreTLSErrors = this.getIgnoreTLSErrors(savedSetting);
+            const notifies = savedSetting['notifies'] !== undefined ? savedSetting['notifies'] === 'true' : false; // defaults to false
+            const visible = savedSetting['visible'] !== undefined ? savedSetting['visible'] === 'true' : false; // defaults to false
+            const ignoreTLSErrors = savedSetting['ignoreTLSErrors'] !== undefined ? savedSetting['ignoreTLSErrors'] === 'true' : false; // defaults to false
 
             const setting = new ServerSetting(name, url, frequency, timeout, isGet, notifies, visible, ignoreTLSErrors);
             settings.push(setting);
         }
         return settings;
-    }
-
-    /**
-     * Get the value of the 'notifies' property from the provided setting.
-     *
-     * @param {ServerSetting} setting
-     * @returns {string}
-     */
-    getNotifies(setting) {
-        return setting['notifies'] !== undefined ? setting['notifies'] === 'true' : false; // defaults to false
-    }
-
-    /**
-     * Get the value of the 'visible' property from the provided setting.
-     *
-     * @param {ServerSetting} setting
-     * @returns {string}
-     */
-    getVisible(setting) {
-        return setting['visible'] !== undefined ? setting['visible'] === 'true' : true; // defaults to true for backward compatibility
-    }
-
-    /**
-     * Get the value of the 'ignoreTLSErrors' property from the provided setting.
-     *
-     * @param {ServerSetting} setting
-     * @returns {string}
-     */
-    getIgnoreTLSErrors(setting) {
-        return setting['ignoreTLSErrors'] !== undefined ? setting['ignoreTLSErrors'] === 'true' : false; // defaults to false
     }
 }
