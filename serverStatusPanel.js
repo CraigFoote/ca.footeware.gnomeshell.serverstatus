@@ -222,9 +222,9 @@ export const ServerStatusPanel = GObject.registerClass(
                         if (cancellable.is_cancelled())
                             return;
 
+                        let reason;
                         let newIcon;
                         let timedOut = false;
-                        let reason;
 
                         if (error) {
                             // extension unable to send request
@@ -245,7 +245,7 @@ export const ServerStatusPanel = GObject.registerClass(
                         }
 
                         if (!newIcon) {
-                            // process response to get it
+                            // process response to get the icon and possibly a reason
                             [reason, newIcon, timedOut] = this.processResponse(duration, message, httpMethod, url, panelIcon, panelIconDisposed);
                         }
 
