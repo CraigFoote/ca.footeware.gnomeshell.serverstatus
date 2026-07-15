@@ -134,9 +134,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
         this.page.add(operationsGroup);
 
         // create one server group per discovered settings
-        const parsedSettings = SettingsParser.parseGioSettings(
-            this.savedSettings
-        );
+        const parsedSettings = SettingsParser.parse(this.savedSettings);
         // add them back reversed, same as they were created, and displayed in indicator
         const reversed = parsedSettings.toReversed();
         for (const saved of reversed) {

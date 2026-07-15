@@ -33,7 +33,7 @@ export default class ServerStatusIndicatorExtension extends Extension {
 
         // get settings stored in gsettings
         this.rawSettings = this.getSettings();
-        this.savedSettings = SettingsParser.parseGioSettings(this.rawSettings);
+        this.savedSettings = SettingsParser.parse(this.rawSettings);
 
         // panel items, one per server setting
         for (const savedSetting of this.savedSettings) {
@@ -138,7 +138,7 @@ export default class ServerStatusIndicatorExtension extends Extension {
         // clear servers' box and repopulate
         this.indicator.clearStatusPanels();
         this.serversBox.destroy_all_children();
-        this.savedSettings = SettingsParser.parseGioSettings(this.rawSettings);
+        this.savedSettings = SettingsParser.parse(this.rawSettings);
         // recreate panel items, one per server setting
         for (const savedSetting of this.savedSettings) {
             if (savedSetting.visible) {

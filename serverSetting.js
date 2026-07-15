@@ -16,7 +16,7 @@ export class ServerSetting {
      * @param {boolean} visible
      * @param {boolean} ignoreTLSErrors
      */
-    constructor(name, url, frequency, timeout, isGet, notifies, visible = true, ignoreTLSErrors = false) {
+    constructor(name, url, frequency, timeout, isGet, notifies, visible, ignoreTLSErrors) {
         this.name = name;
         this.url = url;
         this.frequency = frequency;
