@@ -14,9 +14,9 @@ export class SettingsParser {
      */
     static parse(gioSettings) {
         const variant = gioSettings.get_value('server-settings');
-        this.savedSettings = variant.deep_unpack();
+        const savedSettings = variant.deep_unpack();
         const settings = [];
-        for (const savedSetting of this.savedSettings) {
+        for (const savedSetting of savedSettings) {
             const name = this.#getName(savedSetting);
             const url = this.#getURL(savedSetting);
             const frequency = this.#getFrequency(savedSetting);
