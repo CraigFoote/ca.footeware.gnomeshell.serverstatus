@@ -16,7 +16,7 @@ export class ConnectivityListener {
         // create Promise
         const proxyPromise = new Promise((resolve, reject) => {
             // the class definition
-            const NetworkManagerProxy = Gio.DBusProxy.makeProxyWrapper(this.getInterfaceXml());
+            const NetworkManagerProxy = Gio.DBusProxy.makeProxyWrapper(this.#getInterfaceXml());
 
             // the proxy instance
             this.networkManagerProxy = new NetworkManagerProxy(
@@ -33,22 +33,23 @@ export class ConnectivityListener {
                 Gio.DBusProxyFlags.NONE);
         });
 
-        // resolve Promise
-        if (proxyPromise) {
-            proxyPromise.then(
-                proxy => {
-                    // get notified when the network connectivity changes
-                    this.signalId = proxy.connectSignal('StateChanged', (_, __, newState) => {
-                        // call one of the callbacks based on new state
-                        // TODO magic number, 70=NMState.NM_STATE_CONNECTED_GLOBAL but how to reference?
-                        if (newState[0] === 70)
-                            onConnect();
-                        else
-                            onDisconnect(); // network/internet is unavailable
-                    });
-                }
-            );
-        }
+        this.#resolvePromise(proxyPromise, onDisconnect, onConnect);
+    }
+
+    #resolvePromise(proxyPromise, onDisconnect, onConnect) {
+        proxyPromise.then(
+            proxy => {
+                // get notified when the network connectivity changes
+                this.signalId = proxy.connectSignal('StateChanged', (_, __, newState) => {
+                    // call one of the callbacks based on new state
+                    // TODO magic number, 70=NMState.NM_STATE_CONNECTED_GLOBAL but how to reference?
+                    if (newState[0] === 70)
+                        onConnect();
+                    else
+                        onDisconnect(); // network/internet is unavailable
+                });
+            }
+        );
     }
 
     /**
@@ -56,7 +57,7 @@ export class ConnectivityListener {
      *
      * @returns {string}
      */
-    getInterfaceXml() {
+    #getInterfaceXml() {
         return `
             <node>
                 <interface name='org.freedesktop.NetworkManager'>
