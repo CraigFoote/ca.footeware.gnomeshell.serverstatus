@@ -236,25 +236,11 @@ export const ServerStatusPanel = GObject.registerClass(
 
                         if (!newIcon) {
                             try {
-                                // we aren't interested in the result if there is one, make this call to get exception
+                                // we aren't interested in the result if there is one,
+                                // make this call to get exception if exists
                                 session.send_and_read_finish(result);
                             } catch (e) {
-                                if (panelIcon && !panelIconDisposed && this.iconProvider) {
-                                    // do not check for Gio.TlsError as it's handled later
-                                    if (e instanceof Gio.IOErrorEnum) {
-                                        if (e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED)) {
-                                            newIcon = this.iconProvider.getIcon(Status.Init);
-                                        } else if (e.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.TIMED_OUT)) {
-                                            // Let duration calc below handle time outs; no icon or reason here.
-                                            // This allows for duration display as well as notification.
-                                        } else {
-                                            reason = e.message;
-                                            newIcon = this.iconProvider.getIcon(Status.Down);
-                                        }
-                                    } else if (e instanceof Gio.ResolverError) {
-                                        newIcon = this.iconProvider.getIcon(Status.Init);
-                                    }
-                                }
+                                [reason, newIcon] = this.handleReadFinishErrors(e, panelIcon, panelIconDisposed);
                             }
                         }
 
@@ -271,6 +257,36 @@ export const ServerStatusPanel = GObject.registerClass(
                 panelIcon.gicon = this.iconProvider.getIcon(Status.Bad);
                 this.updateTaskbarCallback?.();
             }
+        }
+
+        /**
+         * Create a reason and appropriate icon from the provided error.
+         *
+         * @param {Gio.Error} error
+         * @param {St.Icon} panelIcon
+         * @param {boolean} panelIconDisposed
+         * @returns [{String}, {St.Icon}]
+         */
+        handleReadFinishErrors(error, panelIcon, panelIconDisposed) {
+            let newIcon;
+            let reason;
+            if (panelIcon && !panelIconDisposed && this.iconProvider) {
+                // do not check for Gio.TlsError as it's handled later
+                if (error instanceof Gio.IOErrorEnum) {
+                    if (error.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED)) {
+                        newIcon = this.iconProvider.getIcon(Status.Init);
+                    } else if (error.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.TIMED_OUT)) {
+                        // Let upcoming duration calc handle time outs; no icon or reason here.
+                        // This allows for duration display as well as notification.
+                    } else {
+                        reason = error.message;
+                        newIcon = this.iconProvider.getIcon(Status.Down);
+                    }
+                } else if (error instanceof Gio.ResolverError) {
+                    newIcon = this.iconProvider.getIcon(Status.Init);
+                }
+            }
+            return [reason, newIcon];
         }
 
         /**
