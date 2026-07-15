@@ -262,7 +262,7 @@ export const ServerStatusPanel = GObject.registerClass(
         /**
          * Create a reason and appropriate icon from the provided error.
          *
-         * @param {Gio.Error} error
+         * @param {Gio.*} error
          * @param {St.Icon} panelIcon
          * @param {boolean} panelIconDisposed
          * @returns [{String}, {St.Icon}]
@@ -274,6 +274,7 @@ export const ServerStatusPanel = GObject.registerClass(
                 // do not check for Gio.TlsError as it's handled later
                 if (error instanceof Gio.IOErrorEnum) {
                     if (error.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED)) {
+                        // probably cancelled due to OS suspend
                         newIcon = this.iconProvider.getIcon(Status.Init);
                     } else if (error.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.TIMED_OUT)) {
                         // Let upcoming duration calc handle time outs; no icon or reason here.
@@ -490,7 +491,7 @@ export const ServerStatusPanel = GObject.registerClass(
          * Determine the reason string and the new icon from the provided message.
          *
          * @param {Soup.Message} message
-         * @returns [{String}, {Gio.icon}]
+         * @returns [reason, newIcon] [{String}, {Gio.icon}]
          */
         handleZeroStatus(message) {
             let reason, newIcon;
