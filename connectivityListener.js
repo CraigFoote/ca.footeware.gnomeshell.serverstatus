@@ -1,6 +1,7 @@
 'use strict';
 
 import Gio from 'gi://Gio';
+import NM from 'gi://NM';
 
 /**
  * Listens for suspend and resume events from NetworkManager.
@@ -42,8 +43,7 @@ export class ConnectivityListener {
                 // get notified when the network connectivity changes
                 this.signalId = proxy.connectSignal('StateChanged', (_, __, newState) => {
                     // call one of the callbacks based on new state
-                    // TODO magic number, 70=NMState.NM_STATE_CONNECTED_GLOBAL but how to reference?
-                    if (newState[0] === 70)
+                    if (newState[0] === NM.State.CONNECTED_GLOBAL)
                         onConnect();
                     else
                         onDisconnect(); // network/internet is unavailable
