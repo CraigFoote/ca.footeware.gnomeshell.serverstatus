@@ -40,7 +40,7 @@ export default class ServerStatusIndicatorExtension extends Extension {
             if (savedSetting.visible) {
                 const panel = new ServerStatusPanel(
                     savedSetting,
-                    () => this.updateIcon(),
+                    () => this.updateIcon(), // callback
                     this.iconProvider
                 );
                 this.serversBox.add_child(panel);
