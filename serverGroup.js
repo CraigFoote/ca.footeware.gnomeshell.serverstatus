@@ -83,32 +83,7 @@ export class ServerGroup {
         deleteRow.add_suffix(this.deleteButton);
         this.serverSettingGroup.add(deleteRow);
         this.deleteHandlerId = this.deleteButton.connect('clicked', () => {
-            const messageDialog = new Adw.MessageDialog({
-                transient_for: preferences.window,
-                destroy_with_parent: true,
-                modal: true,
-                heading: 'Confirm Delete',
-                body: 'Are you sure you want to delete this server?',
-            });
-            messageDialog.add_response('cancel', '_Cancel');
-            messageDialog.add_response('delete', '_Delete');
-            messageDialog.set_response_appearance(
-                'delete',
-                Adw.ResponseAppearance.ADW_RESPONSE_DESTRUCTIVE
-            );
-            messageDialog.set_default_response('cancel');
-            messageDialog.set_close_response('cancel');
-            messageDialog.connect('response', (_, response) => {
-                if (response === 'delete') {
-                    this.createServerSettings();
-                    this.removeGroup(this.id, preferences.serverGroups);
-                    preferences.page.remove(this.serverSettingGroup);
-                    preferences.save();
-                    this.destroy();
-                }
-                messageDialog.destroy();
-            });
-            messageDialog.present();
+            this.doDelete(preferences);
         });
 
         this.createServerSettings();
@@ -117,6 +92,40 @@ export class ServerGroup {
             this.expander.set_expanded(true);
             this.nameRow.grab_focus();
         }
+    }
+
+    /**
+     * Handle clicking the delete button on a status panel.
+     *
+     * @param {ServerStatusPreferences} preferences
+     */
+    doDelete(preferences) {
+        const messageDialog = new Adw.MessageDialog({
+            transient_for: preferences.window,
+            destroy_with_parent: true,
+            modal: true,
+            heading: 'Confirm Delete',
+            body: 'Are you sure you want to delete this server?',
+        });
+        messageDialog.add_response('cancel', '_Cancel');
+        messageDialog.add_response('delete', '_Delete');
+        messageDialog.set_response_appearance(
+            'delete',
+            Adw.ResponseAppearance.ADW_RESPONSE_DESTRUCTIVE
+        );
+        messageDialog.set_default_response('cancel');
+        messageDialog.set_close_response('cancel');
+        messageDialog.connect('response', (_, response) => {
+            if (response === 'delete') {
+                this.createServerSettings();
+                this.removeGroup(this.id, preferences.serverGroups);
+                preferences.page.remove(this.serverSettingGroup);
+                preferences.save();
+                this.destroy();
+            }
+            messageDialog.destroy();
+        });
+        messageDialog.present();
     }
 
     /**

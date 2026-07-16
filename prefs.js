@@ -25,12 +25,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
 
         // destroy on close
         window.connect('close-request', () => {
-            for (const serverGroup of this.serverGroups)
-                serverGroup.destroy();
-
-            this.serverGroups = null;
-            this.savedSettings = null;
-            this.page = null;
+            this.destroy();
         });
 
         // instructions/help
@@ -119,34 +114,68 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
         addButton.set_css_classes(['suggested-action']);
         addRow.add_suffix(addButton);
         addButton.connect('clicked', () => {
-            // ServerGroup is a wrapper around a PreferenceGroup, returned by getGroup()
-            const newGroup = new ServerGroup(this, null); // widgets will not be initialized but group will be expanded
-            newGroup
-                .getGroup()
-                .insert_after(operationsGroup.parent, operationsGroup); // add group to top of groups
-            this.serverGroups.unshift(newGroup); // add to beginning of array
-            this.save();
-
-            // make name field focused
-            newGroup.getNameInput().grab_focus();
+            this.doAdd(operationsGroup);
         });
         operationsGroup.add(addRow);
         this.page.add(operationsGroup);
 
+        // servers group
+        const serversGroup = new Adw.PreferencesGroup({});
         // create one server group per discovered settings
         const parsedSettings = SettingsParser.parse(this.savedSettings);
         // add them back reversed, same as they were created, and displayed in indicator
         const reversed = parsedSettings.toReversed();
-        for (const saved of reversed) {
+        this.page.add(serversGroup);
+        this.createServerGroups(reversed, serversGroup);
+
+        window.add(this.page);
+    }
+
+    /**
+     * Add a new `ServerGroup` to the top of the list.
+     *
+     * @param {Adw.PreferencesGroup} group
+     */
+    doAdd(group) {
+        // ServerGroup is a wrapper around a PreferenceGroup, returned by getGroup()
+        const newGroup = new ServerGroup(this, null); // widgets will not be initialized but group will be expanded
+        newGroup
+            .getGroup()
+            .insert_after(group.parent, group); // add group to top of groups
+        this.serverGroups.unshift(newGroup); // add to beginning of array
+        this.save();
+
+        // make name field focused
+        newGroup.getNameInput().grab_focus();
+    }
+
+    /**
+     * Create `ServerGroup`s per provided settings and add them to the provided group.
+     *
+     * @param {ServerSetting} settings
+     * @param {Adw.PreferencesGroup} group
+     */
+    createServerGroups(settings, group) {
+        for (const saved of settings) {
             // ServerGroup is a wrapper around a PreferenceGroup, returned by getGroup()
             const newGroup = new ServerGroup(this, saved);
             newGroup
                 .getGroup()
-                .insert_after(operationsGroup.parent, operationsGroup);
+                .insert_after(group.parent, group);
             this.serverGroups.unshift(newGroup); // add to beginning of array
         }
+    }
 
-        window.add(this.page);
+    /**
+     * Destroy all the `ServerGroup`s and null allocated variables.
+     */
+    destroy() {
+        for (const serverGroup of this.serverGroups)
+            serverGroup.destroy();
+
+        this.serverGroups = null;
+        this.savedSettings = null;
+        this.page = null;
     }
 
     /**

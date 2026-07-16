@@ -4,8 +4,8 @@ import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import {Status} from './status.js';
 
 /**
- * A GNOME panel indicator with an icon showing worst status of all server statuses.
- * Upon clicking, a series of `ServerStatusPanel`s displays individual server statuses.
+ * A GNOME panel indicator with an icon showing worst status of all server statuses. Upon clicking,
+ * a menu is shown with a series of `ServerStatusPanel`s displaying individual server statuses.
  */
 export const Indicator = GObject.registerClass(
     {
