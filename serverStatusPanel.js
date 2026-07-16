@@ -274,7 +274,7 @@ export const ServerStatusPanel = GObject.registerClass(
                 // do not check for Gio.TlsError as it's handled later
                 if (error instanceof Gio.IOErrorEnum) {
                     if (error.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED) ||
-                        error.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.HOST_UNREACHABLE)) {
+                        error.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.NETWORK_UNREACHABLE)) {
                         // Cancelled due to OS suspend & unreachable due to network outage.
                         // Neither should notify user when it returns - use init status
                         newIcon = this.iconProvider.getIcon(Status.Init);
