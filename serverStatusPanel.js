@@ -217,7 +217,7 @@ export const ServerStatusPanel = GObject.registerClass(
                         // response received, complete duration calc.
                         const duration = Date.now() - start;
 
-                        // remove completed request from pending set
+                        // remove completed cancellable from pending set
                         this.pendingCancellables?.delete(cancellable);
                         if (cancellable.is_cancelled())
                             return;
@@ -273,14 +273,16 @@ export const ServerStatusPanel = GObject.registerClass(
             if (panelIcon && !panelIconDisposed && this.iconProvider) {
                 // do not check for Gio.TlsError as it's handled later
                 if (error instanceof Gio.IOErrorEnum) {
-                    if (error.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED)) {
-                        // probably cancelled due to OS suspend
+                    if (error.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED) ||
+                        error.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.HOST_UNREACHABLE)) {
+                        // Cancelled due to OS suspend & unreachable due to network outage.
+                        // Neither should notify user when it returns - use init status
                         newIcon = this.iconProvider.getIcon(Status.Init);
                     } else if (error.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.TIMED_OUT)) {
                         // Let upcoming duration calc handle time outs; no icon or reason here.
                         // This allows for duration display as well as notification.
                     } else {
-                        reason = error.message;
+                        reason = `An error occurred: ${error.message}`;
                         newIcon = this.iconProvider.getIcon(Status.Down);
                     }
                 } else if (error instanceof Gio.ResolverError) {
@@ -328,18 +330,10 @@ export const ServerStatusPanel = GObject.registerClass(
                         // request timed out
                         timedOut = true;
                         reason = `This server timed out after ${duration / 1000} seconds.`;
-                        newIcon = this.iconProvider.getIcon(
-                            Status.Down
-                        );
-                    } else if (
+                        newIcon = this.iconProvider.getIcon(Status.Down);
+                    } else if (soupStatus >= 200 && soupStatus < 400) {
                         // consider 200 through 399 success result
-                        soupStatus >= 200 &&
-                        soupStatus < 400
-                    ) {
-                        // success
-                        newIcon = this.iconProvider.getIcon(
-                            Status.Up
-                        );
+                        newIcon = this.iconProvider.getIcon(Status.Up); // success
                         // no error, no reason, no notification
                     } else if (soupStatus >= 400 && soupStatus < 500) {
                         // client-side error
@@ -384,13 +378,8 @@ export const ServerStatusPanel = GObject.registerClass(
                 panelIcon.gicon = newIcon;
 
                 // update response time label if it hasn't been destroyed
-                if (
-                    durationIndicator &&
-                    !durationIndicatorDisposed
-                ) {
-                    durationIndicator.text = timedOut ? `timed out @ ${this.session.get_timeout()}s`
-                        : `${duration}ms`;
-                }
+                if (durationIndicator && !durationIndicatorDisposed)
+                    durationIndicator.text = timedOut ? `timed out @ ${this.session.get_timeout()}s` : `${duration}ms`;
 
                 // notify user if we are notifying and status is down
                 if (this.serverSetting.notifies && (this.iconProvider.getStatus(newIcon) === Status.Down))
