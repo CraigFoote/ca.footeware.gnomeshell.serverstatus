@@ -48,7 +48,7 @@ export class SettingsParser {
     }
 
     static #getIsGet(setting) {
-        let isGet = false; // defaults to 'false
+        let isGet = false; // defaults to false
         // migrate old key
         if (setting['is_get'] !== undefined)
             isGet = setting['is_get'] === 'true';

@@ -401,7 +401,7 @@ export class ServerGroup {
      * Remove the group with supplied id from the provided set of groups.
      *
      * @param {string} id the id of the group to remove
-     * @param {[]} serverGroups array of `ServerGroup`s without group with supplied id
+     * @param {[ServerGroup]} serverGroups array of `ServerGroup`s
      */
     removeGroup(id, serverGroups) {
         for (let i = 0; i < serverGroups.length; i++) {
@@ -414,63 +414,33 @@ export class ServerGroup {
     }
 
     /**
-     * Disconnect listeners.
+     * Disconnect listeners and dispose of boxed lists.
      */
     destroy() {
-        if (this.moveUpButton && this.moveUpHandlerId) {
-            this.moveUpButton.disconnect(this.moveUpHandlerId);
-            this.moveUpHandlerId = null;
-            this.moveUpButton = null;
-        }
-        if (this.moveDownButton && this.moveDownHandlerId) {
-            this.moveDownButton.disconnect(this.moveDownHandlerId);
-            this.moveDownHandlerId = null;
-            this.moveDownButton = null;
-        }
-        if (this.visibilityButton && this.visibilityHandlerId) {
-            this.visibilityButton.disconnect(this.visibilityHandlerId);
-            this.visibilityHandlerId = null;
-            this.visibilityButton = null;
-        }
-        if (this.deleteButton && this.deleteHandlerId) {
-            this.deleteButton.disconnect(this.deleteHandlerId);
-            this.deleteHandlerId = null;
-            this.deleteButton = null;
-        }
-        if (this.nameRow && this.nameHandlerId) {
-            this.nameRow.disconnect(this.nameHandlerId);
-            this.nameHandlerId = null;
-            this.nameRow = null;
-        }
-        if (this.urlRow && this.urlHandlerId) {
-            this.urlRow.disconnect(this.urlHandlerId);
-            this.urlHandlerId = null;
-            this.urlRow = null;
-        }
-        if (this.frequencyHandlerId) {
-            this.frequencyRow.disconnect(this.frequencyHandlerId);
-            this.frequencyHandlerId = null;
-            this.frequencyRow = null;
-        }
-        if (this.useGetHandlerId) {
-            this.useGetSwitchRow.disconnect(this.useGetHandlerId);
-            this.useGetHandlerId = null;
-            this.useGetSwitchRow = null;
-        }
-        if (this.useNotificationsHandlerId) {
-            this.useNotificationsSwitchRow.disconnect(this.useNotificationsHandlerId);
-            this.useNotificationsHandlerId = null;
-            this.useNotificationsSwitchRow = null;
-        }
-        if (this.ignoreTLSErrorsHandlerId) {
-            this.ignoreTLSErrorsSwitchRow.disconnect(this.ignoreTLSErrorsHandlerId);
-            this.ignoreTLSErrorsHandlerId = null;
-            this.ignoreTLSErrorsSwitchRow = null;
-        }
-        if (this.timeoutHandlerId) {
-            this.timeoutRow.disconnect(this.timeoutHandlerId);
-            this.timeoutHandlerId = null;
-            this.timeoutRow = null;
+        this.#unplug(this.moveUpButton, this.moveUpHandlerId);
+        this.#unplug(this.moveDownButton, this.moveDownHandlerId);
+        this.#unplug(this.visibilityButton, this.visibilityHandlerId);
+        this.#unplug(this.deleteButton, this.deleteHandlerId);
+        this.#unplug(this.nameRow, this.nameHandlerId);
+        this.#unplug(this.urlRow, this.urlHandlerId);
+        this.#unplug(this.frequencyRow, this.frequencyHandlerId);
+        this.#unplug(this.timeoutRow, this.timeoutHandlerId);
+        this.#unplug(this.useGetSwitchRow, this.useGetHandlerId);
+        this.#unplug(this.ignoreTLSErrorsSwitchRow, this.ignoreTLSErrorsHandlerId);
+        this.#unplug(this.useNotificationsSwitchRow, this.useNotificationsHandlerId);
+    }
+
+    /**
+     * Disconnect the handlerId from the control and set both to null.
+     *
+     * @param {Adw.*} control
+     * @param {string} handlerId
+     */
+    #unplug(control, handlerId) {
+        if (control && handlerId) {
+            control.disconnect(handlerId);
+            handlerId = null;
+            control = null;
         }
     }
 }
