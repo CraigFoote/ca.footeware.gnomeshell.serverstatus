@@ -6,7 +6,7 @@ import Gtk from 'gi://Gtk';
 import GObject from 'gi://GObject';
 
 export class DragDropSupport {
-    static addSupport(gtkListBox, onSuccess) {
+    static addSupport(gtkListBox, afterDrop) {
         const dropTarget = Gtk.DropTarget.new(Gtk.ListBoxRow, Gdk.DragAction.MOVE);
         gtkListBox.add_controller(dropTarget);
 
@@ -44,11 +44,11 @@ export class DragDropSupport {
                 dragWidget.add_css_class('boxed-list');
 
                 // add title
-                // listBox > listBoxRow > adwPreferencesGroup > expanderRow
+                // listBox > listBoxRow > adwPreferencesGroup > adwPreferencesRow
                 const preferenceGroup = gtkListBoxRow.get_child();
-                const expanderRow = preferenceGroup.get_row(0);
+                const firstRow = preferenceGroup.get_row(0);
                 const dragRow = new Adw.ActionRow({
-                    title: expanderRow.title,
+                    title: firstRow.title,
                 });
 
                 // add icon
@@ -91,7 +91,7 @@ export class DragDropSupport {
                 targetRow.set_state_flags(Gtk.StateFlags.NORMAL, true);
 
                 // callback
-                onSuccess();
+                afterDrop();
 
                 // If everything is successful, return true to accept the drop
                 return true;

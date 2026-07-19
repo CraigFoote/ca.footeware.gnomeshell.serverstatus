@@ -146,7 +146,6 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
 
     addDragDrop() {
         DragDropSupport.addSupport(this.listBox, () => {
-            // callback
             this.reorder(); // reset serverGroups[]
             this.save();
         });
@@ -169,7 +168,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
     }
 
     /**
-     * Handle clicking the delete button on a status panel.
+     * Handle clicking the delete button on a server group.
      *
      * @param {ServerGroup} serverGroup
      */
