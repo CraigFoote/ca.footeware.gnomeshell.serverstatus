@@ -15,45 +15,16 @@ export class ServerGroup {
      * @param {ServerStatusPreferences} preferences
      * @param {ServerSetting} settings may be null in which case the fields remain empty,
      *          expander is automatically opened and name field focused.
+     * @param {Gtk.ListBox} listBox
      */
-    constructor(preferences, settings) {
+    constructor(preferences, settings, listBox) {
         this.id = this.createUID();
+        this.listBox = listBox;
         this.preferences = preferences;
-        this.serverSettingGroup = new Adw.PreferencesGroup({});
+        this.serverSettingGroup = new Adw.PreferencesGroup();
 
         // expander
         this.expander = this.getExpanderRow(settings);
-
-        // move up/down row
-        const moveRow = new Adw.ActionRow({
-            title: 'Move Up/Down',
-            subtitle: 'Move this server up or down by one in the list.',
-        });
-        this.moveUpButton = Gtk.Button.new_from_icon_name('go-up-symbolic');
-        this.moveUpHandlerId = this.moveUpButton.connect('clicked', () => {
-            // does a move actually happen?
-            if (this.moveUp(preferences.serverGroups)) {
-                preferences.reorder();
-                preferences.save();
-            }
-        });
-        this.moveDownButton =
-            Gtk.Button.new_from_icon_name('go-down-symbolic');
-        this.moveDownHandlerId = this.moveDownButton.connect('clicked', () => {
-            // does a move actually happen?
-            if (this.moveDown(preferences.serverGroups)) {
-                preferences.reorder();
-                preferences.save();
-            }
-        });
-        const moveButtonBox = new Gtk.Box({
-            orientation: Gtk.Orientation.HORIZONTAL,
-            spacing: 10,
-        });
-        moveButtonBox.append(this.moveUpButton);
-        moveButtonBox.append(this.moveDownButton);
-        moveRow.add_suffix(moveButtonBox);
-        this.serverSettingGroup.add(moveRow);
 
         // visibility row - show/hide server without deleting
         this.visible = settings?.visible ?? true;
@@ -83,7 +54,7 @@ export class ServerGroup {
         deleteRow.add_suffix(this.deleteButton);
         this.serverSettingGroup.add(deleteRow);
         this.deleteHandlerId = this.deleteButton.connect('clicked', () => {
-            this.doDelete(preferences);
+            preferences.doDelete(this);
         });
 
         this.createServerSettings();
@@ -92,40 +63,6 @@ export class ServerGroup {
             this.expander.set_expanded(true);
             this.nameRow.grab_focus();
         }
-    }
-
-    /**
-     * Handle clicking the delete button on a status panel.
-     *
-     * @param {ServerStatusPreferences} preferences
-     */
-    doDelete(preferences) {
-        const messageDialog = new Adw.MessageDialog({
-            transient_for: preferences.window,
-            destroy_with_parent: true,
-            modal: true,
-            heading: 'Confirm Delete',
-            body: 'Are you sure you want to delete this server?',
-        });
-        messageDialog.add_response('cancel', '_Cancel');
-        messageDialog.add_response('delete', '_Delete');
-        messageDialog.set_response_appearance(
-            'delete',
-            Adw.ResponseAppearance.ADW_RESPONSE_DESTRUCTIVE
-        );
-        messageDialog.set_default_response('cancel');
-        messageDialog.set_close_response('cancel');
-        messageDialog.connect('response', (_, response) => {
-            if (response === 'delete') {
-                this.createServerSettings();
-                this.removeGroup(this.id, preferences.serverGroups);
-                preferences.page.remove(this.serverSettingGroup);
-                preferences.save();
-                this.destroy();
-            }
-            messageDialog.destroy();
-        });
-        messageDialog.present();
     }
 
     /**
@@ -144,6 +81,10 @@ export class ServerGroup {
         // subtitle
         this.expander.set_subtitle(this.initSubtitle(settings));
         this.serverSettingGroup.add(this.expander);
+
+        this.expander.add_prefix(new Gtk.Image({
+            icon_name: 'list-drag-handle-symbolic',
+        }));
 
         // name text field
         this.nameRow = new Adw.EntryRow({
@@ -398,27 +339,9 @@ export class ServerGroup {
     }
 
     /**
-     * Remove the group with supplied id from the provided set of groups.
-     *
-     * @param {string} id the id of the group to remove
-     * @param {[ServerGroup]} serverGroups array of `ServerGroup`s
-     */
-    removeGroup(id, serverGroups) {
-        for (let i = 0; i < serverGroups.length; i++) {
-            const candidate = serverGroups[i];
-            if (candidate.id === id) {
-                serverGroups.splice(i, 1);
-                break;
-            }
-        }
-    }
-
-    /**
      * Disconnect listeners and dispose of boxed lists.
      */
     destroy() {
-        this.#unplug(this.moveUpButton, this.moveUpHandlerId);
-        this.#unplug(this.moveDownButton, this.moveDownHandlerId);
         this.#unplug(this.visibilityButton, this.visibilityHandlerId);
         this.#unplug(this.deleteButton, this.deleteHandlerId);
         this.#unplug(this.nameRow, this.nameHandlerId);
@@ -428,6 +351,8 @@ export class ServerGroup {
         this.#unplug(this.useGetSwitchRow, this.useGetHandlerId);
         this.#unplug(this.ignoreTLSErrorsSwitchRow, this.ignoreTLSErrorsHandlerId);
         this.#unplug(this.useNotificationsSwitchRow, this.useNotificationsHandlerId);
+
+        this.listBox = null;
     }
 
     /**

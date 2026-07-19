@@ -4,9 +4,12 @@ import Adw from 'gi://Adw';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import Gtk from 'gi://Gtk';
+
 import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
+
 import {ServerGroup} from './serverGroup.js';
 import {SettingsParser} from './settingsParser.js';
+import {DragDropSupport} from './dragDropSupport.js';
 
 /**
  * The main preferences class that creates server groups and saves to gsettings.
@@ -114,55 +117,119 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
         addButton.set_css_classes(['suggested-action']);
         addRow.add_suffix(addButton);
         addButton.connect('clicked', () => {
-            this.doAdd(operationsGroup);
+            this.doAdd();
         });
         operationsGroup.add(addRow);
         this.page.add(operationsGroup);
 
         // servers group
-        const serversGroup = new Adw.PreferencesGroup({});
+        const serversGroup = new Adw.PreferencesGroup({
+            title: 'Your Servers',
+            description: 'Drag and drop to reorder.',
+        }
+        );
         // create one server group per discovered settings
         const parsedSettings = SettingsParser.parse(this.savedSettings);
-        // add them back reversed, same as they were created, and displayed in indicator
-        const reversed = parsedSettings.toReversed();
         this.page.add(serversGroup);
-        this.createServerGroups(reversed, serversGroup);
+        // add a Gtk.ListBox intermediate to facilitate drag and drop
+        this.listBox = new Gtk.ListBox({
+            css_classes: ['boxed-list'],
+        });
+        serversGroup.add(this.listBox);
+        // create the actual `ServerGroup`s
+        this.createServerGroups(parsedSettings);
+
+        this.addDragDrop();
 
         window.add(this.page);
     }
 
+    addDragDrop() {
+        DragDropSupport.addSupport(this.listBox, () => {
+            // callback
+            this.reorder(); // reset serverGroups[]
+            this.save();
+        });
+    }
+
     /**
      * Add a new `ServerGroup` to the top of the list.
-     *
-     * @param {Adw.PreferencesGroup} group
      */
-    doAdd(group) {
+    doAdd() {
         // ServerGroup is a wrapper around a PreferenceGroup, returned by getGroup()
         const newGroup = new ServerGroup(this, null); // widgets will not be initialized but group will be expanded
-        newGroup
-            .getGroup()
-            .insert_after(group.parent, group); // add group to top of groups
+        this.listBox.prepend(newGroup.getGroup());
         this.serverGroups.unshift(newGroup); // add to beginning of array
         this.save();
+
+        this.addDragDrop();
 
         // make name field focused
         newGroup.getNameInput().grab_focus();
     }
 
     /**
+     * Handle clicking the delete button on a status panel.
+     *
+     * @param {ServerGroup} serverGroup
+     */
+    doDelete(serverGroup) {
+        const messageDialog = new Adw.MessageDialog({
+            transient_for: this.window,
+            destroy_with_parent: true,
+            modal: true,
+            heading: 'Confirm Delete',
+            body: 'Are you sure you want to delete this server?',
+        });
+        messageDialog.add_response('cancel', '_Cancel');
+        messageDialog.add_response('delete', '_Delete');
+        messageDialog.set_response_appearance(
+            'delete',
+            Adw.ResponseAppearance.ADW_RESPONSE_DESTRUCTIVE
+        );
+        messageDialog.set_default_response('cancel');
+        messageDialog.set_close_response('cancel');
+        messageDialog.connect('response', (_, response) => {
+            if (response === 'delete') {
+                this.removeGroup(serverGroup);
+                this.save();
+            }
+            messageDialog.destroy();
+        });
+        messageDialog.present();
+    }
+
+    /**
+     * Remove the group with supplied id from the provided set of groups.
+     *
+     * @param {ServerGroup} serverGroup
+     */
+    removeGroup(serverGroup) {
+        // remove ServerGroup (model) by id
+        for (let i = 0; i < this.serverGroups.length; i++) {
+            const candidate = this.serverGroups[i];
+            if (candidate.id === serverGroup.id) {
+                this.serverGroups.splice(i, 1); // remove i'th group
+                break;
+            }
+        }
+        // remove widget
+        this.listBox.remove(serverGroup.getGroup().parent);
+        serverGroup.destroy();
+        serverGroup = null;
+    }
+
+    /**
      * Create `ServerGroup`s per provided settings and add them to the provided group.
      *
      * @param {ServerSetting} settings
-     * @param {Adw.PreferencesGroup} group
      */
-    createServerGroups(settings, group) {
+    createServerGroups(settings) {
         for (const saved of settings) {
-            // ServerGroup is a wrapper around a PreferenceGroup, returned by getGroup()
-            const newGroup = new ServerGroup(this, saved);
-            newGroup
-                .getGroup()
-                .insert_after(group.parent, group);
-            this.serverGroups.unshift(newGroup); // add to beginning of array
+            // ServerGroup is a wrapper around an AdwPreferenceGroup, returned by getGroup()
+            const newGroup = new ServerGroup(this, saved, this.listBox);
+            this.listBox.append(newGroup.getGroup());
+            this.serverGroups.push(newGroup);
         }
     }
 
@@ -175,6 +242,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
 
         this.serverGroups = null;
         this.savedSettings = null;
+        this.listBox = null;
         this.page = null;
     }
 
@@ -182,17 +250,17 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
      * Render the displayed groups in their new order.
      */
     reorder() {
-        // remove all Adw.PreferenceGroups related to ServerGroups and...
-        for (const serverGroup of this.serverGroups) {
-            // remove it from whatever position it's in
-            this.page.remove(serverGroup.getGroup());
+        const newOrder = [];
+        for (const listBoxRow of this.listBox) {
+            const preferencesGroup = listBoxRow.get_child();
+            for (const serverGroup of this.serverGroups) {
+                if (serverGroup.getGroup() === preferencesGroup) {
+                    newOrder.push(serverGroup);
+                    break;
+                }
+            }
         }
-
-        // ...add them back in new order
-        for (const serverGroup of this.serverGroups) {
-            // add sequentially
-            this.page.add(serverGroup.getGroup());
-        }
+        this.serverGroups = newOrder;
     }
 
     /**
