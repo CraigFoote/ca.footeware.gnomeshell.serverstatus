@@ -2,6 +2,7 @@
 
 import Gtk from 'gi://Gtk';
 import Adw from 'gi://Adw';
+
 import {ServerSetting} from './serverSetting.js';
 
 /**
@@ -15,11 +16,9 @@ export class ServerGroup {
      * @param {ServerStatusPreferences} preferences
      * @param {ServerSetting} settings may be null in which case the fields remain empty,
      *          expander is automatically opened and name field focused.
-     * @param {Gtk.ListBox} listBox
      */
-    constructor(preferences, settings, listBox) {
+    constructor(preferences, settings) {
         this.id = this.createUID();
-        this.listBox = listBox;
         this.preferences = preferences;
         this.serverSettingGroup = new Adw.PreferencesGroup();
 
@@ -351,8 +350,6 @@ export class ServerGroup {
         this.#unplug(this.useGetSwitchRow, this.useGetHandlerId);
         this.#unplug(this.ignoreTLSErrorsSwitchRow, this.ignoreTLSErrorsHandlerId);
         this.#unplug(this.useNotificationsSwitchRow, this.useNotificationsHandlerId);
-
-        this.listBox = null;
     }
 
     /**

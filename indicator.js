@@ -1,6 +1,8 @@
 import GObject from 'gi://GObject';
 import St from 'gi://St';
+
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
+
 import {Status} from './status.js';
 
 /**

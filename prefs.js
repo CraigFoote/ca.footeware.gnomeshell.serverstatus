@@ -138,17 +138,18 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
         serversGroup.add(this.listBox);
         // create the actual `ServerGroup`s
         this.createServerGroups(parsedSettings);
-
-        this.addDragDrop();
+        // add drag&drop
+        this.dragDropSupport = new DragDropSupport(this.listBox);
+        for (const listBoxRow of this.listBox) {
+            // use title of expander row, pass row to get fresh value at drag-begin
+            const titleRow = listBoxRow.get_child().get_row(0);
+            this.dragDropSupport.add(listBoxRow, titleRow, () => {
+                this.updateModel(); // reset serverGroups[] after drop
+                this.save();
+            });
+        }
 
         window.add(this.page);
-    }
-
-    addDragDrop() {
-        DragDropSupport.addSupport(this.listBox, () => {
-            this.reorder(); // reset serverGroups[]
-            this.save();
-        });
     }
 
     /**
@@ -157,11 +158,17 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
     doAdd() {
         // ServerGroup is a wrapper around a PreferenceGroup, returned by getGroup()
         const newGroup = new ServerGroup(this, null); // widgets will not be initialized but group will be expanded
-        this.listBox.prepend(newGroup.getGroup());
+        this.listBox.prepend(newGroup.getGroup()); // add to _beginning_ of PreferencesGroup
         this.serverGroups.unshift(newGroup); // add to beginning of array
         this.save();
 
-        this.addDragDrop();
+        const listBoxRow = newGroup.getGroup().parent;
+        const titleRow = listBoxRow.get_child().get_row(0);
+
+        this.dragDropSupport.add(listBoxRow, titleRow, () => {
+            this.updateModel(); // reset serverGroups[] after drop
+            this.save();
+        });
 
         // make name field focused
         newGroup.getNameInput().grab_focus();
@@ -224,9 +231,9 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
      * @param {ServerSetting} settings
      */
     createServerGroups(settings) {
-        for (const saved of settings) {
+        for (const savedSetting of settings) {
             // ServerGroup is a wrapper around an AdwPreferenceGroup, returned by getGroup()
-            const newGroup = new ServerGroup(this, saved, this.listBox);
+            const newGroup = new ServerGroup(this, savedSetting);
             this.listBox.append(newGroup.getGroup());
             this.serverGroups.push(newGroup);
         }
@@ -246,9 +253,9 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
     }
 
     /**
-     * Render the displayed groups in their new order.
+     * Sort the `ServerGroup`s in their new order.
      */
-    reorder() {
+    updateModel() {
         const newOrder = [];
         for (const listBoxRow of this.listBox) {
             const preferencesGroup = listBoxRow.get_child();

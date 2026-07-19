@@ -1,6 +1,7 @@
 'use strict';
 
 import Gio from 'gi://Gio';
+
 import {Status} from './status.js';
 
 /**

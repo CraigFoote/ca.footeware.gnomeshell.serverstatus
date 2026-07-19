@@ -6,8 +6,10 @@ import St from 'gi://St';
 import Gio from 'gi://Gio';
 import GObject from 'gi://GObject';
 import Soup from 'gi://Soup';
+
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as MessageTray from 'resource:///org/gnome/shell/ui/messageTray.js';
+
 import {Status} from './status.js';
 
 let notificationSource;
