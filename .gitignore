@@ -1,4 +1,5 @@
 /.project
 /.settings/
 /node_modules/
+/venv/
 *.zip

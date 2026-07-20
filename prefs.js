@@ -123,6 +123,8 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
         this.page.add(operationsGroup);
 
         // servers group
+        // Adw.PreferencesGroup > Gtk.ListBox > Gtk.ListBoxRow > Adw.PreferencesRow
+        // @see Workbench application's d&d example
         const serversGroup = new Adw.PreferencesGroup({
             title: 'Your Servers',
             description: 'Drag and drop to reorder.',
@@ -136,10 +138,13 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
             css_classes: ['boxed-list'],
         });
         serversGroup.add(this.listBox);
-        // create the actual `ServerGroup`s
+
+        // create the actual `ServerGroup`s and their widgets
         this.createServerGroups(parsedSettings);
-        // add drag&drop
+
+        // add drag & drop to `this.listBox` items
         this.dragDropSupport = new DragDropSupport(this.listBox);
+        // add drag & drop to the listBoxRows of the listBox
         for (const listBoxRow of this.listBox) {
             // use title of expander row, pass row to get fresh value at drag-begin
             const titleRow = listBoxRow.get_child().get_row(0);
@@ -162,9 +167,13 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
         this.serverGroups.unshift(newGroup); // add to beginning of array
         this.save();
 
+        // find the `Gtk.ListBoxRow` for drag & drop
+        // `ServerGroup`.getGroup() > Adw.PreferencesGroup.parent
         const listBoxRow = newGroup.getGroup().parent;
-        const titleRow = listBoxRow.get_child().get_row(0);
 
+        // use title of expander row, pass row to get fresh value at drag-begin
+        // Gtk.ListBox.get_row(0) > Gtk.ListBoxRow (the row with getTitle())
+        const titleRow = listBoxRow.get_child().get_row(0);
         this.dragDropSupport.add(listBoxRow, titleRow, () => {
             this.updateModel(); // reset serverGroups[] after drop
             this.save();
@@ -226,7 +235,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
     }
 
     /**
-     * Create `ServerGroup`s per provided settings and add them to the provided group.
+     * Create `ServerGroup`s per provided settings.
      *
      * @param {ServerSetting} settings
      */
@@ -243,6 +252,8 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
      * Destroy all the `ServerGroup`s and null allocated variables.
      */
     destroy() {
+        this.dragDropSupport = null;
+
         for (const serverGroup of this.serverGroups)
             serverGroup.destroy();
 
