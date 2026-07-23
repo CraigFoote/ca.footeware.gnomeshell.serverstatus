@@ -6,7 +6,25 @@ import Gtk from 'gi://Gtk';
 import GObject from 'gi://GObject';
 
 /**
- * Provide drag and drop (move/reorder) functionality to `Adw.PreferencesRow`s in a `Gtk.ListBox`.
+ * Provide drag and drop (move/reorder) functionality to `Gtk.ListBoxRow`s in a `Gtk.ListBox`.
+ *
+ * The structure of the list in `prefs.js` is:
+ * ```
+ * Adw.PreferencesPage > Adw.PreferencesGroup > Gtk.ListBox > Adw.PreferencesGroup > Adw.PreferencesRow
+ * ```
+ *
+ * It automatically produces a series of `Gtk.ListBoxRow` intermediaries. That is, the actual structure is:
+ * ```
+ * Adw.PreferencesPage > Adw.PreferencesGroup > Gtk.ListBox > GtkListBoxRow > Adw.PreferencesGroup > Adw.PreferencesRow
+ * ```
+ *
+ * To illustrate:
+ * ```
+ * for (const x of this.gtkListBox) { // x is a Gtk.ListBoxRow, not an Adw.PreferencesGroup
+ * ```
+ *
+ * This comes in handy when trying to parse parent/child relationships, e.g labelling the #dragRow
+ * the same as the row being moved, etc.
  *
  * @see [Workbench](https://flathub.org/en/apps/re.sonny.Workbench) application's Drag & Drop example
  */
@@ -26,7 +44,7 @@ export class DragDropSupport {
      * Add drag and drop support to the provided `Gtk.ListBoxRow`.
      *
      * @param {Gtk.ListBoxRow} gtkListBoxRow the row to be dragged
-     * @param {Adw.PreferencesRow} titleRow whose title is used at runtime while dragging, must have get_title()
+     * @param {Adw.PreferencesRow} titleRow whose title is used at runtime while dragging, must have #get_title()
      * @param {Function} afterDrop callback to run after drop is complete
      */
     add(gtkListBoxRow, titleRow, afterDrop) {
@@ -135,18 +153,22 @@ export class DragDropSupport {
      */
     #createBeginListener(gtkListBoxRow, titleRow, dragSource, dragX, dragY) {
         return dragSource.connect('drag-begin', (_source, drag) => {
+            // The dragWidget is a translucent representation of what's being moved.
+            // It's the actual widget that gets dragged around.
             const dragWidget = new Gtk.ListBox();
             dragWidget.set_size_request(gtkListBoxRow.get_width(), gtkListBoxRow.get_height());
             dragWidget.add_css_class('boxed-list');
 
-            // add title
+            // the child of the dragWidget
             const dragRow = new Adw.ActionRow();
+
+            // add title to the dragRow
             dragRow.set_title(titleRow.get_title());
 
-            // add icon
+            // add icon to the dragRow
             dragRow.add_prefix(
                 new Gtk.Image({
-                    icon_name: 'list-drag-handle-symbolic',
+                    icon_name: 'list-drag-handle-symbolic', // six dots
                 })
             );
 

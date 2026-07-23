@@ -122,9 +122,22 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
         operationsGroup.add(addRow);
         this.page.add(operationsGroup);
 
-        // servers group
-        // Adw.PreferencesGroup > Gtk.ListBox > Gtk.ListBoxRow > Adw.PreferencesRow
-        // @see Workbench application's d&d example
+        /*
+         * serversGroup - contains a list of Adw.PreferencesGroups, one per server
+         * and each a list of Adw.PreferencesRows.
+         *
+         * The whole structure is:
+         *   Adw.PreferencesPage
+         *    Adw.PreferencesGroup (helpGroup)
+         *    Adw.PreferencesGroup (operationsGroup)
+         *    Adw.PreferencesGroup (serversGroup)
+         *     Gtk.ListBox (this.listBox)
+         *      n * Gtk.ListBoxRow (this.listBox#get_child) (automatically injected)
+         *       Adw.PreferencesGroup (serverGroup#getGroup)
+         *        n * Adw.PreferencesRow (serverGroup#getGroup#get_row)
+         *
+         * @see DragDropSupport jsdoc
+         */
         const serversGroup = new Adw.PreferencesGroup({
             title: 'Your Servers',
             description: 'Drag and drop to reorder.',
@@ -146,7 +159,8 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
         this.dragDropSupport = new DragDropSupport(this.listBox);
         // add drag & drop to the listBoxRows of the listBox
         for (const listBoxRow of this.listBox) {
-            // use title of expander row, pass row to get fresh value at drag-begin
+            // use title of expander row
+            // pass row to get fresh value at time of 'drag-begin'
             const titleRow = listBoxRow.get_child().get_row(0);
             this.dragDropSupport.add(listBoxRow, titleRow, () => {
                 this.updateModel(); // reset serverGroups[] after drop
@@ -167,14 +181,14 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
         this.serverGroups.unshift(newGroup); // add to beginning of array
         this.save();
 
-        // find the `Gtk.ListBoxRow` for drag & drop
-        // `ServerGroup`.getGroup() > Adw.PreferencesGroup.parent
-        const listBoxRow = newGroup.getGroup().parent;
+        // find the Gtk.ListBoxRow for drag & drop
+        // serverGroup.getGroup() > Adw.PreferencesGroup.parent
+        const listBoxRow = newGroup.getGroup();
 
-        // use title of expander row, pass row to get fresh value at drag-begin
-        // Gtk.ListBox.get_row(0) > Gtk.ListBoxRow (the row with getTitle())
-        const titleRow = listBoxRow.get_child().get_row(0);
-        this.dragDropSupport.add(listBoxRow, titleRow, () => {
+        // Use title of expander row, a Adw.PreferencesRow.
+        // Pass row to get fresh value at time of 'drag-begin'
+        const preferencesGroup = listBoxRow.parent;
+        this.dragDropSupport.add(listBoxRow, preferencesGroup, () => {
             this.updateModel(); // reset serverGroups[] after drop
             this.save();
         });
