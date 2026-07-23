@@ -8,12 +8,12 @@ import GObject from 'gi://GObject';
 /**
  * Provide drag and drop (move/reorder) functionality to `Gtk.ListBoxRow`s in a `Gtk.ListBox`.
  *
- * The structure of the list in `prefs.js` is:
+ * The structure of the list in `prefs.js` is written as:
  * ```
  * Adw.PreferencesPage > Adw.PreferencesGroup > Gtk.ListBox > Adw.PreferencesGroup > Adw.PreferencesRow
  * ```
  *
- * It automatically produces a series of `Gtk.ListBoxRow` intermediaries. That is, the actual structure is:
+ * But it automatically produces a series of `Gtk.ListBoxRow` intermediaries. That is, the actual structure is:
  * ```
  * Adw.PreferencesPage > Adw.PreferencesGroup > Gtk.ListBox > GtkListBoxRow > Adw.PreferencesGroup > Adw.PreferencesRow
  * ```
@@ -23,7 +23,7 @@ import GObject from 'gi://GObject';
  * for (const x of this.gtkListBox) { // x is a Gtk.ListBoxRow, not an Adw.PreferencesGroup
  * ```
  *
- * This comes in handy when trying to parse parent/child relationships, e.g labelling the #dragRow
+ * This comes in handy when trying to parse parent/child relationships, e.g. labelling the #dragRow
  * the same as the row being moved, etc.
  *
  * @see [Workbench](https://flathub.org/en/apps/re.sonny.Workbench) application's Drag & Drop example
@@ -159,10 +159,10 @@ export class DragDropSupport {
             dragWidget.set_size_request(gtkListBoxRow.get_width(), gtkListBoxRow.get_height());
             dragWidget.add_css_class('boxed-list');
 
-            // the child of the dragWidget
+            // the child widget of the dragWidget
             const dragRow = new Adw.ActionRow();
 
-            // add title to the dragRow
+            // add title to the dragRow to match row being moved
             dragRow.set_title(titleRow.get_title());
 
             // add icon to the dragRow
