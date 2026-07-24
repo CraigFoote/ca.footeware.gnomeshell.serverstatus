@@ -218,64 +218,6 @@ export class ServerGroup {
     }
 
     /**
-     * Move this `Adw.PreferenceGroup` down by one in the list.
-     *
-     * @param {[]} serverGroups array of {ServerGroup}s
-     * @returns true if a move occurred.
-     */
-    moveDown(serverGroups) {
-        const index = this.getPosition(serverGroups);
-        if (index !== -1 && index < serverGroups.length - 1) {
-            this.move(index, index + 1, serverGroups);
-            return true;
-        }
-        return false; // no move was made
-    }
-
-    /**
-     * Move this `Adw.PreferenceGroup` up by one in the list.
-     *
-     * @param {[]} serverGroups array of `ServerGroup`s
-     * @returns true if a move occurred.
-     */
-    moveUp(serverGroups) {
-        const index = this.getPosition(serverGroups);
-        if (index > 0) {
-            this.move(index, index - 1, serverGroups);
-            return true;
-        }
-        return false; // no move was made
-    }
-
-    /**
-     * Find the index of `this` in the provided array.
-     *
-     * @param {[]} serverGroups array of `ServerGroup`s
-     * @returns int index of `this` in provided array, -1 if not found
-     */
-    getPosition(serverGroups) {
-        for (let i = 0; i < serverGroups.length; i++) {
-            const serverGroup = serverGroups[i];
-            if (serverGroup.id === this.id)
-                return i;
-        }
-        return -1;
-    }
-
-    /**
-     * Move `this` in provided array using provided 'from' index and 'to' index.
-     *
-     * @param {int} fromIndex the position being moved from
-     * @param {int} toIndex the move destination
-     * @param {[]} serverGroups array of `ServerGroup`s
-     */
-    move(fromIndex, toIndex, serverGroups) {
-        const serverGroup = serverGroups[fromIndex];
-        serverGroups.splice(fromIndex, 1);
-        serverGroups.splice(toIndex, 0, serverGroup);
-    }
-
-    /**
      * Return this group's server settings, creating it if null.
      *
      * @returns {ServerSetting}

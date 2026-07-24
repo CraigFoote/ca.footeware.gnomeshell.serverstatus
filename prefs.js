@@ -102,7 +102,9 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
         helpBox.append(serverUpBox);
 
         // help group
-        const helpGroup = new Adw.PreferencesGroup({});
+        const helpGroup = new Adw.PreferencesGroup({
+            title: 'Legend',
+        });
         helpGroup.add(helpBox);
         this.page.add(helpGroup);
 
@@ -287,7 +289,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
         messageDialog.add_response('delete', '_Delete');
         messageDialog.set_response_appearance(
             'delete',
-            Adw.ResponseAppearance.ADW_RESPONSE_DESTRUCTIVE
+            Adw.ResponseAppearance.DESTRUCTIVE
         );
         messageDialog.set_default_response('cancel');
         messageDialog.set_close_response('cancel');
