@@ -181,7 +181,7 @@ export class ServerGroup {
      */
     update() {
         this.createServerSettings();
-        this.preferences.save();
+        this.preferences.doSave();
         this.updateExpander();
     }
 

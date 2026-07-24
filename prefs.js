@@ -7,9 +7,9 @@ import Gtk from 'gi://Gtk';
 
 import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
+import {DragDropSupport} from './dragDropSupport.js';
 import {ServerGroup} from './serverGroup.js';
 import {SettingsParser} from './settingsParser.js';
-import {DragDropSupport} from './dragDropSupport.js';
 
 /**
  * The main preferences class that creates server groups and saves to gsettings.
@@ -117,84 +117,157 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
         addButton.set_css_classes(['suggested-action']);
         addRow.add_suffix(addButton);
         addButton.connect('clicked', () => {
-            this.doAdd();
+            this.#doAdd();
         });
         operationsGroup.add(addRow);
         this.page.add(operationsGroup);
 
-        /*
-         * serversGroup - contains a list of Adw.PreferencesGroups, one per server
-         * and each a list of Adw.PreferencesRows.
-         *
-         * The whole structure is:
-         *   Adw.PreferencesPage
-         *    Adw.PreferencesGroup (helpGroup)
-         *    Adw.PreferencesGroup (operationsGroup)
-         *    Adw.PreferencesGroup (serversGroup)
-         *     Gtk.ListBox (this.listBox)
-         *      n * Gtk.ListBoxRow (this.listBox#get_child) (automatically injected)
-         *       Adw.PreferencesGroup (serverGroup#getGroup)
-         *        n * Adw.PreferencesRow (serverGroup#getGroup#get_row)
-         *
-         * @see DragDropSupport jsdoc
-         */
-        const serversGroup = new Adw.PreferencesGroup({
+        // yourServersGroup - an Adw.PreferencesGroup that contains a list of Adw.PreferencesGroups,
+        // one per server and each itself a list of Adw.PreferencesRows
+        const yourServersGroup = new Adw.PreferencesGroup({
             title: 'Your Servers',
             description: 'Drag and drop to reorder.',
-        }
-        );
-        // create one server group per discovered settings
-        const parsedSettings = SettingsParser.parse(this.savedSettings);
-        this.page.add(serversGroup);
+        });
+        this.page.add(yourServersGroup);
+
         // add a Gtk.ListBox intermediate to facilitate drag and drop
-        this.listBox = new Gtk.ListBox({
+        // @see DragDropSupport jsdoc
+        this.gtkListBox = new Gtk.ListBox({
             css_classes: ['boxed-list'],
         });
-        serversGroup.add(this.listBox);
+        yourServersGroup.add(this.gtkListBox);
 
-        // create the actual `ServerGroup`s and their widgets
-        this.createServerGroups(parsedSettings);
+        // create one server group per discovered settings
+        const parsedSettings = SettingsParser.parse(this.savedSettings);
+        this.#createServerGroups(parsedSettings);
 
-        // add drag & drop to `this.listBox` items
-        this.dragDropSupport = new DragDropSupport(this.listBox);
-        // add drag & drop to the listBoxRows of the listBox
-        for (const listBoxRow of this.listBox) {
-            // use title of expander row
-            // pass row to get fresh value at time of 'drag-begin'
-            const titleRow = listBoxRow.get_child().get_row(0);
-            this.dragDropSupport.add(listBoxRow, titleRow, () => {
-                this.updateModel(); // reset serverGroups[] after drop
-                this.save();
-            });
-        }
+        // add drag & drop to the listBox
+        this.dragDropSupport = new DragDropSupport(this.gtkListBox);
+
+        // add drag & drop to the listBoxRow children of the listBox
+        for (const gtkListBoxRow of this.gtkListBox)
+            this.#addDragDropSupportToRow(gtkListBoxRow);
 
         window.add(this.page);
     }
 
     /**
+     * Add drag and drop functions to provided row.
+     *
+     * @param {Gtk.ListBoxRow} gtkListBoxRow
+     */
+    #addDragDropSupportToRow(gtkListBoxRow) {
+        // child of #gtkListBoxRow is an Adw.PreferencesGroup
+        const adwPreferencesGroup = gtkListBoxRow.get_child();
+
+        // first row of #adwPreferencesGroup is an Adw.PreferencesRow, use its
+        // title in drags but pass row to get fresh value at time of 'drag-begin'
+        const firstRow = adwPreferencesGroup.get_row(0); // has a get_title()
+        this.dragDropSupport.add(gtkListBoxRow, firstRow, () => {
+            this.#updateModel(); // reset serverGroups[] after drop
+            this.doSave();
+        });
+    }
+
+    /**
      * Add a new `ServerGroup` to the top of the list.
      */
-    doAdd() {
-        // ServerGroup is a wrapper around a PreferenceGroup, returned by getGroup()
-        const newGroup = new ServerGroup(this, null); // widgets will not be initialized but group will be expanded
-        this.listBox.prepend(newGroup.getGroup()); // add to _beginning_ of PreferencesGroup
+    #doAdd() {
+        // ServerGroup is a wrapper around an Adw.PreferencesGroup, returned by getGroup()
+        const newGroup = new ServerGroup(this, null); // widgets will not be initialized but expander will be expanded
+        this.gtkListBox.prepend(newGroup.getGroup()); // add to _beginning_ of PreferencesGroup
         this.serverGroups.unshift(newGroup); // add to beginning of array
-        this.save();
+        this.doSave();
 
         // find the Gtk.ListBoxRow for drag & drop
-        // serverGroup.getGroup() > Adw.PreferencesGroup.parent
-        const listBoxRow = newGroup.getGroup();
+        // serverGroup.getGroup() > Adw.PreferencesGroup.get_parent()
+        const adwPreferencesGroup = newGroup.getGroup();
+        const gtkListBoxRow = adwPreferencesGroup.get_parent();
 
-        // Use title of expander row, a Adw.PreferencesRow.
-        // Pass row to get fresh value at time of 'drag-begin'
-        const preferencesGroup = listBoxRow.parent;
-        this.dragDropSupport.add(listBoxRow, preferencesGroup, () => {
-            this.updateModel(); // reset serverGroups[] after drop
-            this.save();
-        });
+        this.#addDragDropSupportToRow(gtkListBoxRow);
 
         // make name field focused
         newGroup.getNameInput().grab_focus();
+    }
+
+    /**
+     * Remove the group with supplied id from the provided set of groups.
+     *
+     * @param {ServerGroup} serverGroup
+     */
+    #removeGroup(serverGroup) {
+        // remove ServerGroup (model) by id
+        for (let i = 0; i < this.serverGroups.length; i++) {
+            const candidate = this.serverGroups[i];
+            if (candidate.id === serverGroup.id) {
+                this.serverGroups.splice(i, 1); // remove i'th group
+                break;
+            }
+        }
+        // remove widget
+        this.gtkListBox.remove(serverGroup.getGroup().parent);
+        serverGroup.destroy();
+        serverGroup = null;
+    }
+
+    /**
+     * Create `ServerGroup`s per provided settings.
+     *
+     * @param {ServerSetting} settings
+     */
+    #createServerGroups(settings) {
+        for (const savedSetting of settings) {
+            // ServerGroup is a wrapper around an AdwPreferenceGroup, returned by getGroup()
+            const newGroup = new ServerGroup(this, savedSetting);
+            this.gtkListBox.append(newGroup.getGroup());
+            this.serverGroups.push(newGroup);
+        }
+    }
+
+    /**
+     * Sort the `ServerGroup`s in their new order.
+     */
+    #updateModel() {
+        const newOrder = [];
+        for (const listBoxRow of this.gtkListBox) {
+            const preferencesGroup = listBoxRow.get_child();
+            for (const serverGroup of this.serverGroups) {
+                if (serverGroup.getGroup() === preferencesGroup) {
+                    newOrder.push(serverGroup);
+                    break;
+                }
+            }
+        }
+        this.serverGroups = newOrder;
+    }
+
+    /**
+     * Save current server settings to gsettings.
+     */
+    doSave() {
+        const serverSettings = [];
+        if (this.serverGroups !== null) {
+            for (const serverGroup of this.serverGroups) {
+                const settings = serverGroup.settings;
+                if (settings) {
+                    settings.name = settings.name.trim();
+                    settings.url = settings.url.trim();
+                    settings.frequency = settings.frequency.toString();
+                    settings.timeout = settings.timeout.toString();
+                    settings.isGet = settings.isGet.toString();
+                    settings.notifies = settings.notifies.toString();
+                    settings.visible = settings.visible.toString();
+                    settings.ignoreTLSErrors = settings.ignoreTLSErrors.toString();
+                    serverSettings.push(settings);
+                }
+            }
+        }
+        this.savedSettings.set_value(
+            'server-settings',
+            new GLib.Variant('aa{ss}', serverSettings)
+        );
+        // persist
+        Gio.Settings.sync();
     }
 
     /**
@@ -220,46 +293,12 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
         messageDialog.set_close_response('cancel');
         messageDialog.connect('response', (_, response) => {
             if (response === 'delete') {
-                this.removeGroup(serverGroup);
-                this.save();
+                this.#removeGroup(serverGroup);
+                this.doSave();
             }
             messageDialog.destroy();
         });
         messageDialog.present();
-    }
-
-    /**
-     * Remove the group with supplied id from the provided set of groups.
-     *
-     * @param {ServerGroup} serverGroup
-     */
-    removeGroup(serverGroup) {
-        // remove ServerGroup (model) by id
-        for (let i = 0; i < this.serverGroups.length; i++) {
-            const candidate = this.serverGroups[i];
-            if (candidate.id === serverGroup.id) {
-                this.serverGroups.splice(i, 1); // remove i'th group
-                break;
-            }
-        }
-        // remove widget
-        this.listBox.remove(serverGroup.getGroup().parent);
-        serverGroup.destroy();
-        serverGroup = null;
-    }
-
-    /**
-     * Create `ServerGroup`s per provided settings.
-     *
-     * @param {ServerSetting} settings
-     */
-    createServerGroups(settings) {
-        for (const savedSetting of settings) {
-            // ServerGroup is a wrapper around an AdwPreferenceGroup, returned by getGroup()
-            const newGroup = new ServerGroup(this, savedSetting);
-            this.listBox.append(newGroup.getGroup());
-            this.serverGroups.push(newGroup);
-        }
     }
 
     /**
@@ -273,53 +312,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
 
         this.serverGroups = null;
         this.savedSettings = null;
-        this.listBox = null;
+        this.gtkListBox = null;
         this.page = null;
-    }
-
-    /**
-     * Sort the `ServerGroup`s in their new order.
-     */
-    updateModel() {
-        const newOrder = [];
-        for (const listBoxRow of this.listBox) {
-            const preferencesGroup = listBoxRow.get_child();
-            for (const serverGroup of this.serverGroups) {
-                if (serverGroup.getGroup() === preferencesGroup) {
-                    newOrder.push(serverGroup);
-                    break;
-                }
-            }
-        }
-        this.serverGroups = newOrder;
-    }
-
-    /**
-     * Save current server settings to gsettings.
-     */
-    save() {
-        const serverSettings = [];
-        if (this.serverGroups !== null) {
-            for (const serverGroup of this.serverGroups) {
-                const settings = serverGroup.settings;
-                if (settings) {
-                    settings.name = settings.name.trim();
-                    settings.url = settings.url.trim();
-                    settings.frequency = settings.frequency.toString();
-                    settings.timeout = settings.timeout.toString();
-                    settings.isGet = settings.isGet.toString();
-                    settings.notifies = settings.notifies.toString();
-                    settings.visible = settings.visible.toString();
-                    settings.ignoreTLSErrors = settings.ignoreTLSErrors.toString();
-                    serverSettings.push(settings);
-                }
-            }
-        }
-        this.savedSettings.set_value(
-            'server-settings',
-            new GLib.Variant('aa{ss}', serverSettings)
-        );
-        // persist
-        Gio.Settings.sync();
     }
 }

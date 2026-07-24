@@ -8,29 +8,11 @@ import GObject from 'gi://GObject';
 /**
  * Provide drag and drop (move/reorder) functionality to `Gtk.ListBoxRow`s in a `Gtk.ListBox`.
  *
- * The structure of the list in `prefs.js` is written as:
- * ```
- * Adw.PreferencesPage > Adw.PreferencesGroup > Gtk.ListBox > Adw.PreferencesGroup > Adw.PreferencesRow
- * ```
- *
- * But it automatically produces a series of `Gtk.ListBoxRow` intermediaries. That is, the actual structure is:
- * ```
- * Adw.PreferencesPage > Adw.PreferencesGroup > Gtk.ListBox > GtkListBoxRow > Adw.PreferencesGroup > Adw.PreferencesRow
- * ```
- *
- * To illustrate:
- * ```
- * for (const x of this.gtkListBox) { // x is a Gtk.ListBoxRow, not an Adw.PreferencesGroup
- * ```
- *
- * This comes in handy when trying to parse parent/child relationships, e.g. labelling the #dragRow
- * the same as the row being moved, etc.
- *
  * @see [Workbench](https://flathub.org/en/apps/re.sonny.Workbench) application's Drag & Drop example
  */
 export class DragDropSupport {
     /**
-     * Constructor.
+     * Class constructor.
      *
      * @param {Gtk.ListBox} gtkListBox the containing box of rows
      */
@@ -44,10 +26,10 @@ export class DragDropSupport {
      * Add drag and drop support to the provided `Gtk.ListBoxRow`.
      *
      * @param {Gtk.ListBoxRow} gtkListBoxRow the row to be dragged
-     * @param {Adw.PreferencesRow} titleRow whose title is used at runtime while dragging, must have #get_title()
+     * @param {Adw.PreferencesRow} titleProvider whose get_title() is used at runtime while dragging
      * @param {Function} afterDrop callback to run after drop is complete
      */
-    add(gtkListBoxRow, titleRow, afterDrop) {
+    add(gtkListBoxRow, titleProvider, afterDrop) {
         let dragX;
         let dragY;
         let prepareSignalId = null;
@@ -69,7 +51,7 @@ export class DragDropSupport {
         prepareSignalId = this.#createPrepareListener(gtkListBoxRow, dragSource, dragX, dragY);
 
         // begin
-        beginSignalId = this.#createBeginListener(gtkListBoxRow, titleRow, dragSource, dragX, dragY);
+        beginSignalId = this.#createBeginListener(gtkListBoxRow, titleProvider, dragSource, dragX, dragY);
 
         // enter
         enterSignalId = dropController.connect('enter', () => {
@@ -145,27 +127,27 @@ export class DragDropSupport {
      * Create the drag's `drag-begin` listener.
      *
      * @param {Gtk.ListBoxRow} gtkListBoxRow
-     * @param {Adw.PreferencesRow} titleRow requires a .get_title() method
+     * @param {Adw.PreferencesRow} titleProvider requires a .get_title() method
      * @param {Gtk.DragSource} dragSource
      * @param {number} dragX
      * @param {number} dragY
      * @returns {number} connection id
      */
-    #createBeginListener(gtkListBoxRow, titleRow, dragSource, dragX, dragY) {
+    #createBeginListener(gtkListBoxRow, titleProvider, dragSource, dragX, dragY) {
         return dragSource.connect('drag-begin', (_source, drag) => {
-            // The dragWidget is a translucent representation of what's being moved.
+            // The #dragWidget is a translucent representation of what's being moved.
             // It's the actual widget that gets dragged around.
             const dragWidget = new Gtk.ListBox();
             dragWidget.set_size_request(gtkListBoxRow.get_width(), gtkListBoxRow.get_height());
             dragWidget.add_css_class('boxed-list');
 
-            // the child widget of the dragWidget
+            // the child widget of the dragWidget, to match row being moved
             const dragRow = new Adw.ActionRow();
 
             // add title to the dragRow to match row being moved
-            dragRow.set_title(titleRow.get_title());
+            dragRow.set_title(titleProvider.get_title());
 
-            // add icon to the dragRow
+            // add icon to the dragRow to match row being moved
             dragRow.add_prefix(
                 new Gtk.Image({
                     icon_name: 'list-drag-handle-symbolic', // six dots
