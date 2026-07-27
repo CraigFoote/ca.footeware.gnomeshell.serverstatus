@@ -16,7 +16,7 @@ A GNOME Shell extension with an indicator in the panel displaying status of ente
 
 - The panel icon shows the worst status from the set of all server statuses in the popup menu. Server down is considered worse than bad URL.
 
-- There's a configurable timeout on the requests (10 second default) and HTTP response codes 2xx and 3xx are treated as success.
+- There's a configurable timeout on the requests (10 second default) and HTTP response codes 2xx and 3xx are treated as success. Unless the 3xx status is one that's missing the required 'Location' response header. There's a per-server option to not follow redirects if you just want to verify the forwarding server.
 
 - There's a per server option to show a notification when it's down. It defaults to false but can easily be switched on.
 

@@ -25,7 +25,9 @@ export class SettingsParser {
             const notifies = this.#getNotifies(savedSetting);
             const visible = this.#getVisible(savedSetting);
             const ignoreTLSErrors = this.#getIgnoreTLSErrors(savedSetting);
-            const setting = new ServerSetting(name, url, frequency, timeout, isGet, notifies, visible, ignoreTLSErrors);
+            const ignoreRedirects = this.#getIgnoreRedirects(savedSetting);
+
+            const setting = new ServerSetting(name, url, frequency, timeout, isGet, notifies, visible, ignoreTLSErrors, ignoreRedirects);
             settings.push(setting);
         }
         return settings;
@@ -67,5 +69,9 @@ export class SettingsParser {
 
     static #getIgnoreTLSErrors(setting) {
         return setting['ignoreTLSErrors'] !== undefined ? setting['ignoreTLSErrors'] === 'true' : false; // defaults to false
+    }
+
+    static #getIgnoreRedirects(setting) {
+        return setting['ignoreRedirects'] !== undefined ? setting['ignoreRedirects'] === 'true' : false; // defaults to false
     }
 }

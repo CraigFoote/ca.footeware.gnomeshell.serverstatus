@@ -15,8 +15,9 @@ export class ServerSetting {
      * @param {boolean} notifies
      * @param {boolean} visible
      * @param {boolean} ignoreTLSErrors
+     * @param {boolean} ignoreRedirects http status 3xx
      */
-    constructor(name, url, frequency, timeout, isGet, notifies, visible, ignoreTLSErrors) {
+    constructor(name, url, frequency, timeout, isGet, notifies, visible, ignoreTLSErrors, ignoreRedirects) {
         this.name = name;
         this.url = url;
         this.frequency = frequency;
@@ -25,5 +26,6 @@ export class ServerSetting {
         this.notifies = notifies;
         this.visible = visible;
         this.ignoreTLSErrors = ignoreTLSErrors;
+        this.ignoreRedirects = ignoreRedirects;
     }
 }

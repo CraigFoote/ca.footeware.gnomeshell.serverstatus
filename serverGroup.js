@@ -148,6 +148,18 @@ export class ServerGroup {
         });
         this.expander.add_row(this.ignoreTLSErrorsSwitchRow);
 
+        // 'ignoreRedirects' switch
+        this.ignoreRedirectsSwitchRow = new Adw.SwitchRow({
+            title: 'Do not follow redirects',
+            subtitle: 'Treat 3xx status codes as success.',
+        });
+        const ignoreRedirects = settings?.ignoreRedirects ?? false;
+        this.ignoreRedirectsSwitchRow.set_active(ignoreRedirects);
+        this.ignoreRedirectsHandlerId = this.ignoreRedirectsSwitchRow.connect('notify::active', () => {
+            this.update();
+        });
+        this.expander.add_row(this.ignoreRedirectsSwitchRow);
+
         // 'use notifications' switch
         this.useNotificationsSwitchRow = new Adw.SwitchRow({
             title: 'Notify when down',
@@ -173,7 +185,11 @@ export class ServerGroup {
 
         const notifiesIndicator = settings.notifies ? '🔔' : '';
         const ignoreTLSErrorsIndicator = settings.ignoreTLSErrors ? '⚠️' : '';
-        return `${settings.isGet ? 'GET' : 'HEAD'} ${settings.url} @ ${settings.frequency}s with ${settings.timeout}s timeout ${notifiesIndicator} ${ignoreTLSErrorsIndicator}`;
+        const ignoreRedirectsIndicator = settings.ignoreRedirects ? '⛔' : '';
+
+        return `${settings.isGet ? 'GET' : 'HEAD'}\
+ ${settings.url} @ ${settings.frequency}s with ${settings.timeout}s timeout\
+ ${notifiesIndicator} ${ignoreTLSErrorsIndicator} ${ignoreRedirectsIndicator}`;
     }
 
     /**
@@ -206,7 +222,10 @@ export class ServerGroup {
         const httpMethod = this.useGetSwitchRow.active ? 'GET' : 'HEAD';
         const useNotificationsIndicator = this.useNotificationsSwitchRow.active ? '🔔' : '';
         const ignoreTLSErrorsIndicator = this.ignoreTLSErrorsSwitchRow.active ? '⚠️' : '';
-        return `${httpMethod} ${url} @ ${freq}s with ${timeout}s timeout ${useNotificationsIndicator} ${ignoreTLSErrorsIndicator}`;
+        const ignoreRedirectsIndicator = this.ignoreRedirectsSwitchRow.active ? '⛔' : '';
+
+        return `${httpMethod} ${url} @ ${freq}s with ${timeout}s timeout\
+ ${useNotificationsIndicator} ${ignoreTLSErrorsIndicator} ${ignoreRedirectsIndicator}`;
     }
 
     /**
@@ -259,7 +278,8 @@ export class ServerGroup {
             this.useGetSwitchRow.active,
             this.useNotificationsSwitchRow.active,
             this.visible,
-            this.ignoreTLSErrorsSwitchRow.active
+            this.ignoreTLSErrorsSwitchRow.active,
+            this.ignoreRedirectsSwitchRow.active
         );
     }
 
@@ -291,6 +311,7 @@ export class ServerGroup {
         this.#unplug(this.timeoutRow, this.timeoutHandlerId);
         this.#unplug(this.useGetSwitchRow, this.useGetHandlerId);
         this.#unplug(this.ignoreTLSErrorsSwitchRow, this.ignoreTLSErrorsHandlerId);
+        this.#unplug(this.ignoreRedirectsSwitchRow, this.ignoreRedirectsHandlerId);
         this.#unplug(this.useNotificationsSwitchRow, this.useNotificationsHandlerId);
     }
 

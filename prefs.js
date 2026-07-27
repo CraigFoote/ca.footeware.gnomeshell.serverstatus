@@ -260,6 +260,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
                     settings.notifies = settings.notifies.toString();
                     settings.visible = settings.visible.toString();
                     settings.ignoreTLSErrors = settings.ignoreTLSErrors.toString();
+                    settings.ignoreRedirects = settings.ignoreRedirects.toString();
                     serverSettings.push(settings);
                 }
             }
