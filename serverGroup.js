@@ -23,7 +23,7 @@ export class ServerGroup {
         this.serverSettingGroup = new Adw.PreferencesGroup();
 
         // expander
-        this.expander = this.getExpanderRow(settings);
+        this.expander = this.#getExpanderRow(settings);
 
         // visibility row - show/hide server without deleting
         this.visible = settings?.visible ?? true;
@@ -67,10 +67,10 @@ export class ServerGroup {
     /**
      * Create the expander row with all the controls for this server group.
      *
-     * @param {ServerSetting} settings
+     * @param {ServerSetting} settings may be null
      * @returns {Adw.ExpanderRow}
      */
-    getExpanderRow(settings) {
+    #getExpanderRow(settings) {
         this.expander = new Adw.ExpanderRow();
         // disable pango as it fails on & in url query strings
         this.expander.set_use_markup(false);
@@ -78,12 +78,22 @@ export class ServerGroup {
         const title = settings?.name ?? '';
         this.expander.set_title(title);
         // subtitle
-        this.expander.set_subtitle(this.initSubtitle(settings));
+        this.expander.set_subtitle(this.#initSubtitle(settings));
         this.serverSettingGroup.add(this.expander);
 
         this.expander.add_prefix(new Gtk.Image({
             icon_name: 'list-drag-handle-symbolic',
         }));
+
+        this.indicatorsBox = new Gtk.Box({
+            orientation: Gtk.Orientation.HORIZONTAL,
+            spacing: 2,
+        });
+
+        this.expander.add_suffix(this.indicatorsBox);
+
+        // assemble and add indicators
+        this.#addIndicators(settings);
 
         // name text field
         this.nameRow = new Adw.EntryRow({
@@ -163,6 +173,7 @@ export class ServerGroup {
         // 'use notifications' switch
         this.useNotificationsSwitchRow = new Adw.SwitchRow({
             title: 'Notify when down',
+            subtitle: 'Displays a desktop notification.',
         });
         const notifies = settings?.notifies ?? false;
         this.useNotificationsSwitchRow.set_active(notifies);
@@ -176,20 +187,47 @@ export class ServerGroup {
     /**
      * Set the initial subtitle based on provided settings.
      *
-     * @param {ServerSetting} settings
+     * @param {ServerSetting} settings may be null
      * @returns {string}
      */
-    initSubtitle(settings) {
+    #initSubtitle(settings) {
         if (!settings)
             return '';
 
-        const notifiesIndicator = settings.notifies ? '🔔' : '';
-        const ignoreTLSErrorsIndicator = settings.ignoreTLSErrors ? '⚠️' : '';
-        const ignoreRedirectsIndicator = settings.ignoreRedirects ? '⛔' : '';
+        return `${settings.isGet ? 'GET' : 'HEAD'} ${settings.url} @ ${settings.frequency}s with ${settings.timeout}s timeout`;
+    }
 
-        return `${settings.isGet ? 'GET' : 'HEAD'}\
- ${settings.url} @ ${settings.frequency}s with ${settings.timeout}s timeout\
- ${notifiesIndicator} ${ignoreTLSErrorsIndicator} ${ignoreRedirectsIndicator}`;
+    /**
+     * Assemble the indicators in a suffix box.
+     *
+     * @param {ServerSetting} settings may be null
+     */
+    #addIndicators(settings) {
+        this.ignoreTLSErrorsImage = Gtk.Image.new_from_file(`${this.preferences.path}/assets/warning-outline-symbolic.svg`);
+        this.ignoreTLSErrorsImage.set_tooltip_text('Ignore TLS certificate errors');
+
+        this.ignoreRedirectsImage = Gtk.Image.new_from_file(`${this.preferences.path}/assets/stop-sign-outline-symbolic.svg`);
+        this.ignoreRedirectsImage.set_tooltip_text('Do not follow redirects');
+
+        this.notifiesImage = Gtk.Image.new_from_file(`${this.preferences.path}/assets/bell-outline-symbolic.svg`);
+        this.notifiesImage.set_tooltip_text('Notify when down');
+
+        this.indicatorsBox.append(this.ignoreTLSErrorsImage);
+        this.indicatorsBox.append(this.ignoreRedirectsImage);
+        this.indicatorsBox.append(this.notifiesImage);
+
+        this.#updateIndicators(settings);
+    }
+
+    /**
+     * Update the icons indicating 'Ignore TLS errors', 'Do not follow redirects' and 'Notify when down'.
+     *
+     * @param {ServerSetting} settings may be null
+     */
+    #updateIndicators(settings) {
+        this.ignoreTLSErrorsImage.set_visible(settings?.ignoreTLSErrors ?? false);
+        this.ignoreRedirectsImage.set_visible(settings?.ignoreRedirects ?? false);
+        this.notifiesImage.set_visible(settings?.notifies ?? false);
     }
 
     /**
@@ -198,7 +236,7 @@ export class ServerGroup {
     update() {
         this.createServerSettings();
         this.preferences.doSave();
-        this.updateExpander();
+        this.updateExpander(this.settings);
     }
 
     /**
@@ -216,24 +254,23 @@ export class ServerGroup {
      * @returns {string}
      */
     getSubtitle() {
+        const httpMethod = this.useGetSwitchRow.active ? 'GET' : 'HEAD';
         const url = this.urlRow.text;
         const freq = this.frequencyRow.text;
         const timeout = this.timeoutRow.text;
-        const httpMethod = this.useGetSwitchRow.active ? 'GET' : 'HEAD';
-        const useNotificationsIndicator = this.useNotificationsSwitchRow.active ? '🔔' : '';
-        const ignoreTLSErrorsIndicator = this.ignoreTLSErrorsSwitchRow.active ? '⚠️' : '';
-        const ignoreRedirectsIndicator = this.ignoreRedirectsSwitchRow.active ? '⛔' : '';
 
-        return `${httpMethod} ${url} @ ${freq}s with ${timeout}s timeout\
- ${useNotificationsIndicator} ${ignoreTLSErrorsIndicator} ${ignoreRedirectsIndicator}`;
+        return `${httpMethod} ${url} @ ${freq}s with ${timeout}s timeout`;
     }
 
     /**
      * Update the expander title & subtitle.
+     *
+     * @param {ServerSetting} settings may be null
      */
-    updateExpander() {
+    updateExpander(settings) {
         this.expander.set_title(this.getTitle());
         this.expander.set_subtitle(this.getSubtitle());
+        this.#updateIndicators(settings);
     }
 
     /**
@@ -313,6 +350,10 @@ export class ServerGroup {
         this.#unplug(this.ignoreTLSErrorsSwitchRow, this.ignoreTLSErrorsHandlerId);
         this.#unplug(this.ignoreRedirectsSwitchRow, this.ignoreRedirectsHandlerId);
         this.#unplug(this.useNotificationsSwitchRow, this.useNotificationsHandlerId);
+
+        this.ignoreTLSErrorsImage = null;
+        this.ignoreRedirectsImage = null;
+        this.notifiesImage = null;
     }
 
     /**
