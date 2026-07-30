@@ -32,6 +32,46 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
         });
 
         // instructions/help
+        this.page.add(this.#getHelpGroup());
+
+        // operations group
+        this.page.add(this.#getOperationsGroup());
+
+        // yourServersGroup - an Adw.PreferencesGroup that contains a list of Adw.PreferencesGroups,
+        // one per server and each itself a list of Adw.PreferencesRows
+        const yourServersGroup = new Adw.PreferencesGroup({
+            title: 'Your Servers',
+            description: 'Drag and drop to reorder.',
+        });
+        this.page.add(yourServersGroup);
+
+        // add a Gtk.ListBox intermediate to facilitate drag and drop
+        // @see DragDropSupport jsdoc
+        this.gtkListBox = new Gtk.ListBox({
+            css_classes: ['boxed-list'],
+        });
+        yourServersGroup.add(this.gtkListBox);
+
+        // create one server group per discovered settings
+        const parsedSettings = SettingsParser.parse(this.savedSettings);
+        this.#createServerGroups(parsedSettings);
+
+        // add drag & drop to the listBox
+        this.dragDropSupport = new DragDropSupport(this.gtkListBox);
+
+        // add drag & drop to the listBoxRow children of the listBox
+        for (const gtkListBoxRow of this.gtkListBox)
+            this.#addDragDropSupportToRow(gtkListBoxRow);
+
+        window.add(this.page);
+    }
+
+    /**
+     * Get the preferences group holding the legend and help instructions.
+     *
+     * @returns {Adw.PreferencesGroup}
+     */
+    #getHelpGroup() {
         const helpBox = new Gtk.Box({
             orientation: Gtk.Orientation.VERTICAL,
             spacing: 10,
@@ -106,9 +146,16 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
             title: 'Legend',
         });
         helpGroup.add(helpBox);
-        this.page.add(helpGroup);
 
-        // operations group
+        return helpGroup;
+    }
+
+    /**
+     * Get the preference group containing the 'operataions', currently just 'add server'.
+     *
+     * @returns {Adw.PreferencesGroup}
+     */
+    #getOperationsGroup() {
         const operationsGroup = new Adw.PreferencesGroup({});
 
         // add
@@ -122,35 +169,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
             this.#doAdd();
         });
         operationsGroup.add(addRow);
-        this.page.add(operationsGroup);
-
-        // yourServersGroup - an Adw.PreferencesGroup that contains a list of Adw.PreferencesGroups,
-        // one per server and each itself a list of Adw.PreferencesRows
-        const yourServersGroup = new Adw.PreferencesGroup({
-            title: 'Your Servers',
-            description: 'Drag and drop to reorder.',
-        });
-        this.page.add(yourServersGroup);
-
-        // add a Gtk.ListBox intermediate to facilitate drag and drop
-        // @see DragDropSupport jsdoc
-        this.gtkListBox = new Gtk.ListBox({
-            css_classes: ['boxed-list'],
-        });
-        yourServersGroup.add(this.gtkListBox);
-
-        // create one server group per discovered settings
-        const parsedSettings = SettingsParser.parse(this.savedSettings);
-        this.#createServerGroups(parsedSettings);
-
-        // add drag & drop to the listBox
-        this.dragDropSupport = new DragDropSupport(this.gtkListBox);
-
-        // add drag & drop to the listBoxRow children of the listBox
-        for (const gtkListBoxRow of this.gtkListBox)
-            this.#addDragDropSupportToRow(gtkListBoxRow);
-
-        window.add(this.page);
+        return operationsGroup;
     }
 
     /**
@@ -252,15 +271,17 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
             for (const serverGroup of this.serverGroups) {
                 const settings = serverGroup.settings;
                 if (settings) {
-                    settings.name = settings.name.trim();
-                    settings.url = settings.url.trim();
-                    settings.frequency = settings.frequency.toString();
-                    settings.timeout = settings.timeout.toString();
-                    settings.isGet = settings.isGet.toString();
-                    settings.notifies = settings.notifies.toString();
-                    settings.visible = settings.visible.toString();
-                    settings.ignoreTLSErrors = settings.ignoreTLSErrors.toString();
-                    serverSettings.push(settings);
+                    const gSettings = {};
+                    gSettings.name = settings.name.trim();
+                    gSettings.url = settings.url.trim();
+                    gSettings.frequency = settings.frequency.toString();
+                    gSettings.timeout = settings.timeout.toString();
+                    gSettings.isGet = settings.isGet.toString();
+                    gSettings.notifies = settings.notifies.toString();
+                    gSettings.visible = settings.visible.toString();
+                    gSettings.ignoreTLSErrors = settings.ignoreTLSErrors.toString();
+                    gSettings.ignoreRedirects = settings.ignoreRedirects.toString();
+                    serverSettings.push(gSettings);
                 }
             }
         }

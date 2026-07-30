@@ -14,23 +14,162 @@ export class ServerGroup {
      * Constructor.
      *
      * @param {ServerStatusPreferences} preferences
-     * @param {ServerSetting} settings may be null in which case the fields remain empty,
+     * @param {ServerSetting} settings will be null for new configs in which case the fields remain empty,
      *          expander is automatically opened and name field focused.
      */
     constructor(preferences, settings) {
-        this.id = this.createUID();
+        this.id = this.#createUID();
         this.preferences = preferences;
         this.serverSettingGroup = new Adw.PreferencesGroup();
-
-        // expander
-        this.expander = this.getExpanderRow(settings);
-
-        // visibility row - show/hide server without deleting
         this.visible = settings?.visible ?? true;
-        const visibilityRow = new Adw.ActionRow({
-            title: 'Show in menu',
-            subtitle: 'Hidden servers are not displayed and not checked.',
+
+        const expanderRow = this.#getExpanderRow(settings);
+        this.serverSettingGroup.add(expanderRow);
+
+        this.#createServerSettings();
+
+        if (settings === null) {
+            this.expanderRow.set_expanded(true);
+            this.nameRow.grab_focus();
+        }
+    }
+
+    /**
+     * Create a unique ID for this group.
+     *
+     * @returns {string}
+     */
+    #createUID() {
+        const buffer = [];
+        const chars =
+            'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        const charlen = chars.length;
+        for (let i = 0; i < 32; i++)
+            buffer[i] = chars.charAt(Math.floor(Math.random() * charlen));
+
+        return buffer.join('');
+    }
+
+    /**
+     * Create the expander row with all the controls for this server group.
+     *
+     * @param {ServerSetting} settings may be null
+     * @returns {Adw.ExpanderRow}
+     */
+    #getExpanderRow(settings) {
+        this.expanderRow = new Adw.ExpanderRow();
+        // disable pango as it fails on & in url query strings
+        this.expanderRow.set_use_markup(false);
+
+        // title
+        const title = settings?.name ?? '';
+        this.expanderRow.set_title(title);
+        // subtitle
+        this.expanderRow.set_subtitle(this.#initSubtitle(settings));
+
+        // handle icon for drag & drop as prefix
+        this.expanderRow.add_prefix(new Gtk.Image({
+            icon_name: 'list-drag-handle-symbolic',
+        }));
+
+        // suffix: indicator icons and buttons
+        const suffixBox = this.#getSuffixBox(settings, this.preferences);
+        this.expanderRow.add_suffix(suffixBox);
+
+        const nameRow = this.#getNameRow(settings);
+        this.expanderRow.add_row(nameRow);
+
+        const urlRow = this.#getUrlRow(settings);
+        this.expanderRow.add_row(urlRow);
+
+        const frequencyRow = this.#getFrequencyRow(settings);
+        this.expanderRow.add_row(frequencyRow);
+
+        const timeoutRow = this.#getTimeoutRow(settings);
+        this.expanderRow.add_row(timeoutRow);
+
+        const useGetRow = this.#getUseGetRow(settings);
+        this.expanderRow.add_row(useGetRow);
+
+        const ignoreTLSErrorsRow = this.#getIgnoreTLSErrorsRow(settings);
+        this.expanderRow.add_row(ignoreTLSErrorsRow);
+
+        const ignoreRedirectsRow = this.#getIgnoreRedirectsRow(settings);
+        this.expanderRow.add_row(ignoreRedirectsRow);
+
+        const useNotificationsRow = this.#getUseNotificationsRow(settings);
+        this.expanderRow.add_row(useNotificationsRow);
+
+        return this.expanderRow;
+    }
+
+    #getSuffixBox(settings) {
+        const suffixBox = new Gtk.Box({
+            orientation: Gtk.Orientation.HORIZONTAL,
+            spacing: 4,
         });
+
+        // assemble and add indicators
+        suffixBox.append(this.#getIndicatorsBox(settings));
+
+        // assemble and add buttons
+        suffixBox.append(this.#getExpanderButtonsBox());
+
+        return suffixBox;
+    }
+
+    /**
+     * Assemble the indicators in a suffix box.
+     *
+     * @param {ServerSetting} settings may be null
+     * @returns
+     */
+    #getIndicatorsBox(settings) {
+        const indicatorsBox = new Gtk.Box({
+            orientation: Gtk.Orientation.HORIZONTAL,
+            spacing: 2,
+        });
+
+        this.ignoreTLSErrorsImage = Gtk.Image.new_from_file(`${this.preferences.path}/assets/warning-outline-symbolic.svg`);
+        this.ignoreTLSErrorsImage.set_tooltip_text('Ignore TLS certificate errors');
+
+        this.ignoreRedirectsImage = Gtk.Image.new_from_file(`${this.preferences.path}/assets/stop-sign-outline-symbolic.svg`);
+        this.ignoreRedirectsImage.set_tooltip_text('Do not follow redirects');
+
+        this.notifiesImage = Gtk.Image.new_from_file(`${this.preferences.path}/assets/bell-outline-symbolic.svg`);
+        this.notifiesImage.set_tooltip_text('Notify when down');
+
+        indicatorsBox.append(this.ignoreTLSErrorsImage);
+        indicatorsBox.append(this.ignoreRedirectsImage);
+        indicatorsBox.append(this.notifiesImage);
+
+        this.#updateIndicators(settings);
+
+        return indicatorsBox;
+    }
+
+    /**
+     * Update the visibility of icons indicating 'Ignore TLS errors', 'Do not follow redirects' and 'Notify when down'.
+     *
+     * @param {ServerSetting} settings may be null
+     */
+    #updateIndicators(settings) {
+        this.ignoreTLSErrorsImage.set_visible(settings?.ignoreTLSErrors ?? false);
+        this.ignoreRedirectsImage.set_visible(settings?.ignoreRedirects ?? false);
+        this.notifiesImage.set_visible(settings?.notifies ?? false);
+    }
+
+    /**
+     * Gets the box containing delete and visibility buttons.
+     *
+     * @returns {Gtk.Box}
+     */
+    #getExpanderButtonsBox() {
+        const buttonsBox = new Gtk.Box({
+            orientation: Gtk.Orientation.HORIZONTAL,
+            spacing: 2,
+        });
+
         const visibilityIcon = this.visible ? 'view-reveal-symbolic' : 'view-conceal-symbolic';
         this.visibilityButton = Gtk.Button.new_from_icon_name(visibilityIcon);
         this.visibilityHandlerId = this.visibilityButton.connect('clicked', () => {
@@ -39,53 +178,24 @@ export class ServerGroup {
             this.visibilityButton.set_icon_name(newIcon);
             this.update();
         });
-        visibilityRow.add_suffix(this.visibilityButton);
-        this.serverSettingGroup.add(visibilityRow);
+        this.visibilityButton.set_tooltip_text('Show in menu');
 
-        // delete button
-        const deleteRow = new Adw.ActionRow({
-            title: 'Delete this server',
-        });
         this.deleteButton = Gtk.Button.new_from_icon_name(
             'edit-delete-symbolic'
         );
         this.deleteButton.set_css_classes(['destructive-action']);
-        deleteRow.add_suffix(this.deleteButton);
-        this.serverSettingGroup.add(deleteRow);
         this.deleteHandlerId = this.deleteButton.connect('clicked', () => {
-            preferences.doDelete(this);
+            this.preferences.doDelete(this);
         });
+        this.deleteButton.set_tooltip_text('Delete this server');
 
-        this.createServerSettings();
+        buttonsBox.append(this.visibilityButton);
+        buttonsBox.append(this.deleteButton);
 
-        if (settings === null) {
-            this.expander.set_expanded(true);
-            this.nameRow.grab_focus();
-        }
+        return buttonsBox;
     }
 
-    /**
-     * Create the expander row with all the controls for this server group.
-     *
-     * @param {ServerSetting} settings
-     * @returns {Adw.ExpanderRow}
-     */
-    getExpanderRow(settings) {
-        this.expander = new Adw.ExpanderRow();
-        // disable pango as it fails on & in url query strings
-        this.expander.set_use_markup(false);
-        // title
-        const title = settings?.name ?? '';
-        this.expander.set_title(title);
-        // subtitle
-        this.expander.set_subtitle(this.initSubtitle(settings));
-        this.serverSettingGroup.add(this.expander);
-
-        this.expander.add_prefix(new Gtk.Image({
-            icon_name: 'list-drag-handle-symbolic',
-        }));
-
-        // name text field
+    #getNameRow(settings) {
         this.nameRow = new Adw.EntryRow({
             title: 'Name',
             text: settings?.name ?? '',
@@ -94,9 +204,10 @@ export class ServerGroup {
         this.nameHandlerId = this.nameRow.connect('apply', () => {
             this.update();
         });
-        this.expander.add_row(this.nameRow);
+        return this.nameRow;
+    }
 
-        // url text field
+    #getUrlRow(settings) {
         this.urlRow = new Adw.EntryRow({
             title: 'URL',
             text: settings?.url ?? '',
@@ -105,84 +216,91 @@ export class ServerGroup {
         this.urlHandlerId = this.urlRow.connect('apply', () => {
             this.update();
         });
-        this.expander.add_row(this.urlRow);
+        return this.urlRow;
+    }
 
-        // frequency spinner
+    #getFrequencyRow(settings) {
         this.frequencyRow = Adw.SpinRow.new_with_range(10, 300, 10);
         this.frequencyRow.set_value(settings?.frequency ?? 120);
         this.frequencyRow.set_title('Frequency (secs.)');
         this.frequencyHandlerId = this.frequencyRow.connect('notify::value', () => {
             this.update();
         });
-        this.expander.add_row(this.frequencyRow);
+        return this.frequencyRow;
+    }
 
-        // timeout spinner
+    #getTimeoutRow(settings) {
         this.timeoutRow = Adw.SpinRow.new_with_range(1, 300, 1);
         this.timeoutRow.set_value(settings?.timeout ?? 10);
         this.timeoutRow.set_title('Timeout (secs.)');
         this.timeoutHandlerId = this.timeoutRow.connect('notify::value', () => {
             this.update();
         });
-        this.expander.add_row(this.timeoutRow);
+        return this.timeoutRow;
+    }
 
-        // 'use GET' switch
-        this.useGetSwitchRow = new Adw.SwitchRow({
+    #getUseGetRow(settings) {
+        this.useGetRow = new Adw.SwitchRow({
             title: 'Use GET rather than HEAD',
         });
         const isGet = settings?.isGet ?? false;
-        this.useGetSwitchRow.set_active(isGet);
-        this.useGetHandlerId = this.useGetSwitchRow.connect('notify::active', () => {
+        this.useGetRow.set_active(isGet);
+        this.useGetHandlerId = this.useGetRow.connect('notify::active', () => {
             this.update();
         });
-        this.expander.add_row(this.useGetSwitchRow);
+        return this.useGetRow;
+    }
 
-        // 'ignoreTLSErrors' switch
-        this.ignoreTLSErrorsSwitchRow = new Adw.SwitchRow({
+    #getIgnoreTLSErrorsRow(settings) {
+        this.ignoreTLSErrorsRow = new Adw.SwitchRow({
             title: 'Ignore TLS certificate errors',
             subtitle: 'self-signed, etc.',
         });
         const ignoreTLSErrors = settings?.ignoreTLSErrors ?? false;
-        this.ignoreTLSErrorsSwitchRow.set_active(ignoreTLSErrors);
-        this.ignoreTLSErrorsHandlerId = this.ignoreTLSErrorsSwitchRow.connect('notify::active', () => {
+        this.ignoreTLSErrorsRow.set_active(ignoreTLSErrors);
+        this.ignoreTLSErrorsHandlerId = this.ignoreTLSErrorsRow.connect('notify::active', () => {
             this.update();
         });
-        this.expander.add_row(this.ignoreTLSErrorsSwitchRow);
+        return this.ignoreTLSErrorsRow;
+    }
 
-        // 'use notifications' switch
-        this.useNotificationsSwitchRow = new Adw.SwitchRow({
+    #getIgnoreRedirectsRow(settings) {
+        this.ignoreRedirectsRow = new Adw.SwitchRow({
+            title: 'Do not follow redirects',
+            subtitle: 'Treat 3xx status codes as success.',
+        });
+        const ignoreRedirects = settings?.ignoreRedirects ?? false;
+        this.ignoreRedirectsRow.set_active(ignoreRedirects);
+        this.ignoreRedirectsHandlerId = this.ignoreRedirectsRow.connect('notify::active', () => {
+            this.update();
+        });
+        return this.ignoreRedirectsRow;
+    }
+
+    #getUseNotificationsRow(settings) {
+        this.useNotificationsRow = new Adw.SwitchRow({
             title: 'Notify when down',
+            subtitle: 'Displays a desktop notification.',
         });
         const notifies = settings?.notifies ?? false;
-        this.useNotificationsSwitchRow.set_active(notifies);
-        this.useNotificationsHandlerId = this.useNotificationsSwitchRow.connect('notify::active', () => {
+        this.useNotificationsRow.set_active(notifies);
+        this.useNotificationsHandlerId = this.useNotificationsRow.connect('notify::active', () => {
             this.update();
         });
-        this.expander.add_row(this.useNotificationsSwitchRow);
-        return this.expander;
+        return this.useNotificationsRow;
     }
 
     /**
      * Set the initial subtitle based on provided settings.
      *
-     * @param {ServerSetting} settings
+     * @param {ServerSetting} settings may be null
      * @returns {string}
      */
-    initSubtitle(settings) {
+    #initSubtitle(settings) {
         if (!settings)
             return '';
 
-        const notifiesIndicator = settings.notifies ? '🔔' : '';
-        const ignoreTLSErrorsIndicator = settings.ignoreTLSErrors ? '⚠️' : '';
-        return `${settings.isGet ? 'GET' : 'HEAD'} ${settings.url} @ ${settings.frequency}s with ${settings.timeout}s timeout ${notifiesIndicator} ${ignoreTLSErrorsIndicator}`;
-    }
-
-    /**
-     * Renew #serverSettings, save them and update UI.
-     */
-    update() {
-        this.createServerSettings();
-        this.preferences.doSave();
-        this.updateExpander();
+        return `${settings.isGet ? 'GET' : 'HEAD'} ${settings.url} @ ${settings.frequency}s with ${settings.timeout}s timeout`;
     }
 
     /**
@@ -200,21 +318,32 @@ export class ServerGroup {
      * @returns {string}
      */
     getSubtitle() {
+        const httpMethod = this.useGetRow.active ? 'GET' : 'HEAD';
         const url = this.urlRow.text;
         const freq = this.frequencyRow.text;
         const timeout = this.timeoutRow.text;
-        const httpMethod = this.useGetSwitchRow.active ? 'GET' : 'HEAD';
-        const useNotificationsIndicator = this.useNotificationsSwitchRow.active ? '🔔' : '';
-        const ignoreTLSErrorsIndicator = this.ignoreTLSErrorsSwitchRow.active ? '⚠️' : '';
-        return `${httpMethod} ${url} @ ${freq}s with ${timeout}s timeout ${useNotificationsIndicator} ${ignoreTLSErrorsIndicator}`;
+
+        return `${httpMethod} ${url} @ ${freq}s with ${timeout}s timeout`;
+    }
+
+    /**
+     * Renew #serverSettings, save them and update UI.
+     */
+    update() {
+        this.#createServerSettings();
+        this.preferences.doSave();
+        this.updateExpander(this.settings);
     }
 
     /**
      * Update the expander title & subtitle.
+     *
+     * @param {ServerSetting} settings may be null
      */
-    updateExpander() {
-        this.expander.set_title(this.getTitle());
-        this.expander.set_subtitle(this.getSubtitle());
+    updateExpander(settings) {
+        this.expanderRow.set_title(this.getTitle());
+        this.expanderRow.set_subtitle(this.getSubtitle());
+        this.#updateIndicators(settings);
     }
 
     /**
@@ -224,7 +353,7 @@ export class ServerGroup {
      */
     getSettings() {
         if (!this.settings)
-            this.createServerSettings();
+            this.#createServerSettings();
 
         return this.settings;
     }
@@ -250,37 +379,22 @@ export class ServerGroup {
     /**
      * Create a `ServerSetting` based on control values.
      */
-    createServerSettings() {
+    #createServerSettings() {
         this.settings = new ServerSetting(
             this.nameRow.text,
             this.urlRow.text,
             this.frequencyRow.text,
             this.timeoutRow.text,
-            this.useGetSwitchRow.active,
-            this.useNotificationsSwitchRow.active,
+            this.useGetRow.active,
+            this.useNotificationsRow.active,
             this.visible,
-            this.ignoreTLSErrorsSwitchRow.active
+            this.ignoreTLSErrorsRow.active,
+            this.ignoreRedirectsRow.active
         );
     }
 
     /**
-     * Create a unique ID for this group.
-     *
-     * @returns {string}
-     */
-    createUID() {
-        const buffer = [];
-        const chars =
-            'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        const charlen = chars.length;
-        for (let i = 0; i < 32; i++)
-            buffer[i] = chars.charAt(Math.floor(Math.random() * charlen));
-
-        return buffer.join('');
-    }
-
-    /**
-     * Disconnect listeners and dispose of boxed lists.
+     * Disconnect listeners and dispose of boxed lists, icons, and instance variables.
      */
     destroy() {
         this.#unplug(this.visibilityButton, this.visibilityHandlerId);
@@ -289,9 +403,19 @@ export class ServerGroup {
         this.#unplug(this.urlRow, this.urlHandlerId);
         this.#unplug(this.frequencyRow, this.frequencyHandlerId);
         this.#unplug(this.timeoutRow, this.timeoutHandlerId);
-        this.#unplug(this.useGetSwitchRow, this.useGetHandlerId);
-        this.#unplug(this.ignoreTLSErrorsSwitchRow, this.ignoreTLSErrorsHandlerId);
-        this.#unplug(this.useNotificationsSwitchRow, this.useNotificationsHandlerId);
+        this.#unplug(this.useGetRow, this.useGetHandlerId);
+        this.#unplug(this.ignoreTLSErrorsRow, this.ignoreTLSErrorsHandlerId);
+        this.#unplug(this.ignoreRedirectsRow, this.ignoreRedirectsHandlerId);
+        this.#unplug(this.useNotificationsRow, this.useNotificationsHandlerId);
+
+        this.ignoreTLSErrorsImage = null;
+        this.ignoreRedirectsImage = null;
+        this.notifiesImage = null;
+
+        this.id = null;
+        this.preferences = null;
+        this.serverSettingGroup = null;
+        this.expanderRow = null;
     }
 
     /**
