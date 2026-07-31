@@ -50,7 +50,7 @@ export default class ServerStatusIndicatorExtension extends Extension {
         });
         this.prefsButtonId = this.prefsButton.connect('clicked', async () => {
             this.indicator.menu.close();
-            await this.openPreferences();
+            this.openPreferences();
         });
 
         this.indicator.menu.box.add_child(this.prefsButton);
@@ -130,7 +130,7 @@ export default class ServerStatusIndicatorExtension extends Extension {
         // clear servers' box and repopulate
         this.indicator.clearStatusPanels();
         this.serversBox.destroy_all_children();
-        this.savedSettings = SettingsParser.parse(this.rawSettings);
+        this.savedSettings = SettingsParser.parse(this.getSettings());
         // recreate panel items, one per server setting
         for (const savedSetting of this.savedSettings) {
             if (savedSetting.visible) {
