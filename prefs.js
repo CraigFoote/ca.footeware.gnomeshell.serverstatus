@@ -159,13 +159,11 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
         const operationsGroup = new Adw.PreferencesGroup({});
 
         // add
-        const addRow = new Adw.ActionRow({
+        const addRow = new Adw.ButtonRow({
             title: 'Add a new server',
         });
-        const addButton = Gtk.Button.new_from_icon_name('list-add-symbolic');
-        addButton.set_css_classes(['suggested-action']);
-        addRow.add_suffix(addButton);
-        addButton.connect('clicked', () => {
+        addRow.set_start_icon_name('list-add-symbolic');
+        addRow.connect('activated', () => {
             this.#doAdd();
         });
         operationsGroup.add(addRow);

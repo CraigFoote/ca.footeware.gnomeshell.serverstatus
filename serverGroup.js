@@ -170,8 +170,10 @@ export class ServerGroup {
             spacing: 2,
         });
 
+        // visibility button
         const visibilityIcon = this.visible ? 'view-reveal-symbolic' : 'view-conceal-symbolic';
         this.visibilityButton = Gtk.Button.new_from_icon_name(visibilityIcon);
+        this.visibilityButton.set_valign(Gtk.Align.CENTER);
         this.visibilityHandlerId = this.visibilityButton.connect('clicked', () => {
             this.visible = !this.visible;
             const newIcon = this.visible ? 'view-reveal-symbolic' : 'view-conceal-symbolic';
@@ -180,10 +182,12 @@ export class ServerGroup {
         });
         this.visibilityButton.set_tooltip_text('Show in menu');
 
+        // delete button
         this.deleteButton = Gtk.Button.new_from_icon_name(
             'edit-delete-symbolic'
         );
         this.deleteButton.set_css_classes(['destructive-action']);
+        this.deleteButton.set_valign(Gtk.Align.CENTER);
         this.deleteHandlerId = this.deleteButton.connect('clicked', () => {
             this.preferences.doDelete(this);
         });
