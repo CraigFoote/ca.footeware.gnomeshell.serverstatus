@@ -160,9 +160,10 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
 
         // add
         const addRow = new Adw.ButtonRow({
-            title: 'Add a new server',
+            title: 'Add a New Server',
         });
         addRow.set_start_icon_name('list-add-symbolic');
+        addRow.add_css_class('suggested-action');
         addRow.connect('activated', () => {
             this.#doAdd();
         });
