@@ -4,6 +4,7 @@ import Gtk from 'gi://Gtk';
 import Adw from 'gi://Adw';
 
 import {ServerSetting} from './serverSetting.js';
+import {HeadersDialog} from './headersDialog.js';
 
 /**
  * A new group is displayed when _Add_ is clicked in the preferences dialog.
@@ -99,6 +100,9 @@ export class ServerGroup {
 
         const useNotificationsRow = this.#getUseNotificationsRow(settings);
         this.expanderRow.add_row(useNotificationsRow);
+
+        const headersRow = this.#getHeadersRow(settings);
+        this.expanderRow.add_row(headersRow);
 
         return this.expanderRow;
     }
@@ -292,6 +296,22 @@ export class ServerGroup {
             this.update();
         });
         return this.useNotificationsRow;
+    }
+
+    #getHeadersRow(settings) {
+        const headersRow = new Adw.ButtonRow({
+            title: 'Request Headers',
+        });
+        headersRow.set_end_icon_name('go-next');
+        headersRow.connect('activated', () => {
+            this.#openHeadersDialog(settings);
+        });
+        return headersRow;
+    }
+
+    #openHeadersDialog(settings) {
+        const headersDialog = new HeadersDialog(settings);
+        headersDialog.present(this.preferences.window);
     }
 
     /**
