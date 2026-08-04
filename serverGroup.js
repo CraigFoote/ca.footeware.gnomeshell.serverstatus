@@ -310,8 +310,14 @@ export class ServerGroup {
     }
 
     #openHeadersDialog(settings) {
-        const headersDialog = new HeadersDialog(settings);
-        headersDialog.present(this.preferences.window);
+        this.headersDialog = new HeadersDialog(settings?.name);
+        this.headersDialogHandlerId = this.headersDialog.connect('closed', () => {
+            const headers = this.headersDialog.getHeaders();
+            console.log('headers', headers);
+            this.headersDialog.destroy();
+            this.headersDialog = null;
+        });
+        this.headersDialog.present(this.preferences.window);
     }
 
     /**
@@ -431,6 +437,7 @@ export class ServerGroup {
         this.#unplug(this.ignoreTLSErrorsRow, this.ignoreTLSErrorsHandlerId);
         this.#unplug(this.ignoreRedirectsRow, this.ignoreRedirectsHandlerId);
         this.#unplug(this.useNotificationsRow, this.useNotificationsHandlerId);
+        this.#unplug(this.headersDialog, this.headersDialogHandlerId);
 
         this.ignoreTLSErrorsImage = null;
         this.ignoreRedirectsImage = null;

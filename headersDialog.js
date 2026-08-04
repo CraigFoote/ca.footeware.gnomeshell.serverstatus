@@ -9,27 +9,55 @@ export const HeadersDialog = GObject.registerClass(
         GTypeName: 'HeadersDialog',
     },
     class HeadersDialog extends Adw.Dialog {
-        _init(settings) {
-            super._init();
-
+        constructor(dialogTitle) {
+            super();
             super.set_size_request(400, 200);
 
+            this.#buildUI(dialogTitle);
+        }
+
+        #buildUI(dialogTitle) {
             const toolbarView = new Adw.ToolbarView();
             super.set_child(toolbarView);
 
             const headerBar = new Adw.HeaderBar(); // has close button
-            const title = new Gtk.Label({
-                label: settings?.name,
+            let title;
+            if (dialogTitle && dialogTitle.trim().length > 0)
+                title = dialogTitle.trim();
+            else
+                title = 'Unnamed Server';
+
+            const titleLabel = new Gtk.Label({
+                label: title,
             });
-            headerBar.set_title_widget(title);
+            headerBar.set_title_widget(titleLabel);
             toolbarView.add_top_bar(headerBar);
 
+            const addButton = this.#getAddButton();
+            headerBar.pack_start(addButton);
+
+            const saveButton = this.#getSaveButton();
+            headerBar.pack_end(saveButton);
+
+            this.contentBox = new Gtk.Box({
+                orientation: Gtk.Orientation.VERTICAL,
+                margin_top: 10,
+                margin_bottom: 10,
+                margin_start: 10,
+                margin_end: 10,
+                spacing: 10,
+            });
+            toolbarView.set_content(this.contentBox);
+        }
+
+        #getAddButton() {
             this.addButton = new Gtk.Button();
             this.addButton.add_css_class('suggested-action');
             this.addButton.set_tooltip_text('Add a Request Header for this Server');
             this.addHandlerId = this.addButton.connect('clicked', () => {
-                const header = this.#addRequestHeader();
-                content.append(header);
+                const headerGroup = this.#addRequestHeader();
+                this.contentBox.append(headerGroup);
+                this.#updateSaveButtonEnablement();
             });
             const addWrapperBox = new Gtk.Box({
                 spacing: 2,
@@ -42,13 +70,17 @@ export const HeadersDialog = GObject.registerClass(
                 label: 'Add',
             }));
             this.addButton.set_child(addWrapperBox);
-            headerBar.pack_start(this.addButton);
+            return this.addButton;
+        }
 
+        #getSaveButton() {
             this.saveButton = new Gtk.Button();
             this.saveButton.add_css_class('suggested-action');
             this.saveButton.set_tooltip_text('Save the Headers');
+            this.saveButton.set_sensitive(false);
             this.saveHandlerId = this.saveButton.connect('clicked', () => {
-                // TODO
+                this.#saveHeaders();
+                this.saveButton.set_sensitive(false);
             });
             const saveWrapperBox = new Gtk.Box({
                 spacing: 2,
@@ -61,17 +93,7 @@ export const HeadersDialog = GObject.registerClass(
                 label: 'Save',
             }));
             this.saveButton.set_child(saveWrapperBox);
-            headerBar.pack_end(this.saveButton);
-
-            const content = new Gtk.Box({
-                orientation: Gtk.Orientation.VERTICAL,
-                margin_top: 12,
-                margin_bottom: 12,
-                margin_start: 12,
-                margin_end: 12,
-                spacing: 10,
-            });
-            toolbarView.set_content(content);
+            return this.saveButton;
         }
 
         #addRequestHeader() {
@@ -85,7 +107,8 @@ export const HeadersDialog = GObject.registerClass(
             this.deleteButton.set_css_classes(['destructive-action']);
             this.deleteButton.set_valign(Gtk.Align.CENTER);
             this.deleteHandlerId = this.deleteButton.connect('clicked', () => {
-                // TODO
+                this.contentBox.remove(preferencesGroup);
+                this.#updateSaveButtonEnablement();
             });
             this.deleteButton.set_tooltip_text('Delete this Header');
             preferencesGroup.set_header_suffix(this.deleteButton);
@@ -95,7 +118,7 @@ export const HeadersDialog = GObject.registerClass(
                 show_apply_button: true,
             });
             this.nameHandlerId = this.nameRow.connect('apply', () => {
-                // this.update();
+                this.#updateSaveButtonEnablement();
             });
             preferencesGroup.add(this.nameRow);
 
@@ -104,13 +127,43 @@ export const HeadersDialog = GObject.registerClass(
                 show_apply_button: true,
             });
             this.valueHandlerId = this.valueRow.connect('apply', () => {
-                // this.update();
+                this.#updateSaveButtonEnablement();
             });
             preferencesGroup.add(this.valueRow);
 
-            this.nameRow.grab_focus();
+            super.set_focus(this.nameRow);
 
             return preferencesGroup;
+        }
+
+        #updateSaveButtonEnablement() {
+            let allValidInputs = true;
+            let preferencesGroup = this.contentBox.get_first_child();
+            while (preferencesGroup) {
+                const name = preferencesGroup.get_row(0).text.trim();
+                const value = preferencesGroup.get_row(1).text.trim();
+                if (name.length === 0 || value.length === 0) {
+                    allValidInputs = false;
+                    break;
+                }
+                preferencesGroup = preferencesGroup.get_next_sibling();
+            }
+            this.saveButton.set_sensitive(allValidInputs);
+        }
+
+        #saveHeaders() {
+            this.headers = [];
+            let preferencesGroup = this.contentBox.get_first_child();
+            while (preferencesGroup) {
+                const name = preferencesGroup.get_row(0).text.trim();
+                const value = preferencesGroup.get_row(1).text.trim();
+                this.headers.push({name, value});
+                preferencesGroup = preferencesGroup.get_next_sibling();
+            }
+        }
+
+        getHeaders() {
+            return this.headers;
         }
 
         destroy() {
@@ -139,5 +192,7 @@ export const HeadersDialog = GObject.registerClass(
                 this.valueHandlerId = null;
                 this.valueRow = null;
             }
+            this.contentBox = null;
+            this.headers = null;
         }
     });
