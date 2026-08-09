@@ -11,7 +11,7 @@ export const HeadersDialog = GObject.registerClass(
     class HeadersDialog extends Adw.Dialog {
         constructor(dialogTitle) {
             super();
-            super.set_size_request(400, 200);
+            super.set_size_request(500, 300);
 
             this.#buildUI(dialogTitle);
         }
@@ -20,17 +20,7 @@ export const HeadersDialog = GObject.registerClass(
             const toolbarView = new Adw.ToolbarView();
             super.set_child(toolbarView);
 
-            const headerBar = new Adw.HeaderBar(); // has close button
-            let title;
-            if (dialogTitle && dialogTitle.trim().length > 0)
-                title = dialogTitle.trim();
-            else
-                title = 'Unnamed Server';
-
-            const titleLabel = new Gtk.Label({
-                label: title,
-            });
-            headerBar.set_title_widget(titleLabel);
+            const headerBar = this.#getHeaderBar(dialogTitle);
             toolbarView.add_top_bar(headerBar);
 
             const addButton = this.#getAddButton();
@@ -38,6 +28,13 @@ export const HeadersDialog = GObject.registerClass(
 
             const saveButton = this.#getSaveButton();
             headerBar.pack_end(saveButton);
+
+            const scroller = new Gtk.ScrolledWindow();
+
+            const clamp = new Adw.Clamp();
+            clamp.set_maximum_size(450);
+            clamp.set_tightening_threshold(400);
+            scroller.set_child(clamp);
 
             this.contentBox = new Gtk.Box({
                 orientation: Gtk.Orientation.VERTICAL,
@@ -47,7 +44,23 @@ export const HeadersDialog = GObject.registerClass(
                 margin_end: 10,
                 spacing: 10,
             });
-            toolbarView.set_content(this.contentBox);
+            clamp.set_child(this.contentBox);
+
+            toolbarView.set_content(scroller);
+        }
+
+        #getHeaderBar(dialogTitle) {
+            const headerBar = new Adw.HeaderBar(); // has close button
+            let title;
+            if (dialogTitle && dialogTitle.trim().length > 0)
+                title = dialogTitle.trim();
+            else
+                title = 'Unnamed Server';
+            const titleLabel = new Gtk.Label({
+                label: title,
+            });
+            headerBar.set_title_widget(titleLabel);
+            return headerBar;
         }
 
         #getAddButton() {
@@ -56,7 +69,7 @@ export const HeadersDialog = GObject.registerClass(
             this.addButton.set_tooltip_text('Add a Request Header for this Server');
             this.addHandlerId = this.addButton.connect('clicked', () => {
                 const headerGroup = this.#addRequestHeader();
-                this.contentBox.append(headerGroup);
+                this.contentBox.prepend(headerGroup);
                 this.#updateSaveButtonEnablement();
             });
             const addWrapperBox = new Gtk.Box({
@@ -115,18 +128,18 @@ export const HeadersDialog = GObject.registerClass(
 
             this.nameRow = new Adw.EntryRow({
                 title: 'Name',
-                show_apply_button: true,
+                show_apply_button: false,
             });
-            this.nameHandlerId = this.nameRow.connect('apply', () => {
+            this.nameHandlerId = this.nameRow.connect('changed', () => {
                 this.#updateSaveButtonEnablement();
             });
             preferencesGroup.add(this.nameRow);
 
             this.valueRow = new Adw.EntryRow({
                 title: 'Value',
-                show_apply_button: true,
+                show_apply_button: false,
             });
-            this.valueHandlerId = this.valueRow.connect('apply', () => {
+            this.valueHandlerId = this.valueRow.connect('changed', () => {
                 this.#updateSaveButtonEnablement();
             });
             preferencesGroup.add(this.valueRow);
@@ -137,18 +150,23 @@ export const HeadersDialog = GObject.registerClass(
         }
 
         #updateSaveButtonEnablement() {
-            let allValidInputs = true;
-            let preferencesGroup = this.contentBox.get_first_child();
-            while (preferencesGroup) {
-                const name = preferencesGroup.get_row(0).text.trim();
-                const value = preferencesGroup.get_row(1).text.trim();
-                if (name.length === 0 || value.length === 0) {
-                    allValidInputs = false;
-                    break;
+            // empty?
+            if (!this.contentBox.get_first_child()) {
+                this.saveButton.set_sensitive(false);
+            } else {
+                let allValidInputs = true;
+                let preferencesGroup = this.contentBox.get_first_child();
+                while (preferencesGroup) {
+                    const name = preferencesGroup.get_row(0).text.trim();
+                    const value = preferencesGroup.get_row(1).text.trim();
+                    if (name.length === 0 || value.length === 0) {
+                        allValidInputs = false;
+                        break;
+                    }
+                    preferencesGroup = preferencesGroup.get_next_sibling();
                 }
-                preferencesGroup = preferencesGroup.get_next_sibling();
+                this.saveButton.set_sensitive(allValidInputs);
             }
-            this.saveButton.set_sensitive(allValidInputs);
         }
 
         #saveHeaders() {
