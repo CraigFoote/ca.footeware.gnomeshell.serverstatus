@@ -10,16 +10,16 @@ export class SettingsParser {
      * Parse the provided `Gio.Settings` object into an array of `ServerSetting` objects.
      *
      * @param {Gio.Settings} gioSettings saved settings
-     * @returns {ServerSetting} array of `ServerSetting`s
+     * @returns `[ServerSetting]` array of `ServerSetting`s
      */
     static parse(gioSettings) {
         let settings;
-        const keys = gioSettings.list_keys();
 
-        if (keys.includes('server-settings-2')) {
-            const variant = gioSettings.get_value('server-settings-2');
-            settings = JSON.parse(variant.deep_unpack());
-        } else if (keys.includes('server-settings')) {
+        const hasV1Data = gioSettings.get_user_value('server-settings') !== null;
+        const hasV2Data = gioSettings.get_user_value('server-settings-2') !== null;
+
+        if (hasV1Data && !hasV2Data) {
+            // migrate data from v1 to v2
             const variant = gioSettings.get_value('server-settings');
             const savedSettings = variant.deep_unpack();
             settings = [];
@@ -28,7 +28,7 @@ export class SettingsParser {
                 const url = this.#getURL(savedSetting);
                 const frequency = this.#getFrequency(savedSetting);
                 const timeout = this.#getTimeout(savedSetting);
-                const verb = this.#getVerb(savedSetting);
+                const verb = this.#getVerb(savedSetting); // changed from 'isGet' boolean to 'verb' string
                 const notifies = this.#getNotifies(savedSetting);
                 const visible = this.#getVisible(savedSetting);
                 const ignoreTLSErrors = this.#getIgnoreTLSErrors(savedSetting);
@@ -38,7 +38,11 @@ export class SettingsParser {
                 const setting = new ServerSetting(name, url, frequency, timeout, verb, notifies, visible, ignoreTLSErrors, ignoreRedirects, headers);
                 settings.push(setting);
             }
+        } else {
+            const variant = gioSettings.get_value('server-settings-2');
+            settings = JSON.parse(variant.deep_unpack());
         }
+
         return settings;
     }
 
@@ -58,6 +62,12 @@ export class SettingsParser {
         return setting['timeout'] !== undefined ? Number(setting['timeout']) : 10; // defaults to 10s
     }
 
+    /**
+     * Convert old schema's `isGet` boolean property to a new `verb` string for schema v2.
+     *
+     * @param {ServerSetting} setting
+     * @returns `string` the request action verb
+     */
     static #getVerb(setting) {
         let isGet = false; // defaults to false
         // migrate old key

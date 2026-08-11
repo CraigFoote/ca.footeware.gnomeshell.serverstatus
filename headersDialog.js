@@ -6,11 +6,20 @@ import GObject from 'gi://GObject';
 
 import {Header} from './header.js';
 
+/**
+ * A dialog with controls describing existing and allowing creation of request headers.
+ */
 export const HeadersDialog = GObject.registerClass(
     {
         GTypeName: 'HeadersDialog',
     },
     class HeadersDialog extends Adw.Dialog {
+        /**
+         * Constructor.
+         *
+         * @param {string} dialogTitle
+         * @param {[Header]} headers
+         */
         constructor(dialogTitle, headers) {
             super();
             super.set_size_request(500, 400);
@@ -24,6 +33,11 @@ export const HeadersDialog = GObject.registerClass(
             }
         }
 
+        /**
+         * Create this dialog.
+         *
+         * @param {string} dialogTitle
+         */
         #buildUI(dialogTitle) {
             const toolbarView = new Adw.ToolbarView();
             super.set_child(toolbarView);
@@ -57,6 +71,12 @@ export const HeadersDialog = GObject.registerClass(
             toolbarView.set_content(scroller);
         }
 
+        /**
+         * Get the dialog header bar.
+         *
+         * @param {string} dialogTitle
+         * @returns {Adw.HeaderBar}
+         */
         #getHeaderBar(dialogTitle) {
             const headerBar = new Adw.HeaderBar(); // has close button
             let title;
@@ -71,6 +91,11 @@ export const HeadersDialog = GObject.registerClass(
             return headerBar;
         }
 
+        /**
+         * Get the Add button.
+         *
+         * @returns {Gtk.Button}
+         */
         #getAddButton() {
             this.addButton = new Gtk.Button();
             this.addButton.add_css_class('suggested-action');
@@ -94,6 +119,11 @@ export const HeadersDialog = GObject.registerClass(
             return this.addButton;
         }
 
+        /**
+         * Get the Save button.
+         *
+         * @returns {Gtk.Button}
+         */
         #getSaveButton() {
             this.saveButton = new Gtk.Button();
             this.saveButton.add_css_class('suggested-action');
@@ -117,6 +147,12 @@ export const HeadersDialog = GObject.registerClass(
             return this.saveButton;
         }
 
+        /**
+         * Create and return a preferences group for a new request header.
+         *
+         * @param {Header} header
+         * @returns {Adw.PreferencesGroup}
+         */
         #addRequestHeader(header) {
             const preferencesGroup = new Adw.PreferencesGroup({
                 title: 'Request Header',
@@ -159,6 +195,9 @@ export const HeadersDialog = GObject.registerClass(
             return preferencesGroup;
         }
 
+        /**
+         * Update the dialog's save button enablement based on input state.
+         */
         #updateSaveButtonEnablement() {
             // empty?
             if (!this.contentBox.get_first_child()) {
@@ -179,6 +218,9 @@ export const HeadersDialog = GObject.registerClass(
             }
         }
 
+        /**
+         * Saved the entered date as a new {Header} array.
+         */
         #saveHeaders() {
             this.headers.length = 0; // clear array and repopulate
             let preferencesGroup = this.contentBox.get_first_child();
@@ -191,10 +233,18 @@ export const HeadersDialog = GObject.registerClass(
             }
         }
 
+        /**
+         * Get the request headers.
+         *
+         * @returns {[Header]}
+         */
         getHeaders() {
             return this.headers;
         }
 
+        /**
+         * Dispose of resources and disonnect listeners.
+         */
         destroy() {
             if (this.addButton && this.addHandlerId) {
                 this.addButton.disconnect(this.addHandlerId);
