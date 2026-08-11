@@ -266,27 +266,16 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
      */
     doSave() {
         const serverSettings = [];
-        if (this.serverGroups !== null) {
+        if (this.serverGroups) {
             for (const serverGroup of this.serverGroups) {
                 const settings = serverGroup.settings;
-                if (settings) {
-                    const gSettings = {};
-                    gSettings.name = settings.name.trim();
-                    gSettings.url = settings.url.trim();
-                    gSettings.frequency = settings.frequency.toString();
-                    gSettings.timeout = settings.timeout.toString();
-                    gSettings.isGet = settings.isGet.toString();
-                    gSettings.notifies = settings.notifies.toString();
-                    gSettings.visible = settings.visible.toString();
-                    gSettings.ignoreTLSErrors = settings.ignoreTLSErrors.toString();
-                    gSettings.ignoreRedirects = settings.ignoreRedirects.toString();
-                    serverSettings.push(gSettings);
-                }
+                if (settings)
+                    serverSettings.push(settings);
             }
         }
         this.savedSettings.set_value(
-            'server-settings',
-            new GLib.Variant('aa{ss}', serverSettings)
+            'server-settings-2',
+            new GLib.Variant('s', JSON.stringify(serverSettings))
         );
         // persist
         Gio.Settings.sync();

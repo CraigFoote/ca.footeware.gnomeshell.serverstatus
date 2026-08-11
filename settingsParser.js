@@ -13,22 +13,31 @@ export class SettingsParser {
      * @returns {ServerSetting} array of `ServerSetting`s
      */
     static parse(gioSettings) {
-        const variant = gioSettings.get_value('server-settings');
-        const savedSettings = variant.deep_unpack();
-        const settings = [];
-        for (const savedSetting of savedSettings) {
-            const name = this.#getName(savedSetting);
-            const url = this.#getURL(savedSetting);
-            const frequency = this.#getFrequency(savedSetting);
-            const timeout = this.#getTimeout(savedSetting);
-            const isGet = this.#getIsGet(savedSetting);
-            const notifies = this.#getNotifies(savedSetting);
-            const visible = this.#getVisible(savedSetting);
-            const ignoreTLSErrors = this.#getIgnoreTLSErrors(savedSetting);
-            const ignoreRedirects = this.#getIgnoreRedirects(savedSetting);
+        let settings;
+        const keys = gioSettings.list_keys();
 
-            const setting = new ServerSetting(name, url, frequency, timeout, isGet, notifies, visible, ignoreTLSErrors, ignoreRedirects);
-            settings.push(setting);
+        if (keys.includes('server-settings-2')) {
+            const variant = gioSettings.get_value('server-settings-2');
+            settings = JSON.parse(variant.deep_unpack());
+        } else if (keys.includes('server-settings')) {
+            const variant = gioSettings.get_value('server-settings');
+            const savedSettings = variant.deep_unpack();
+            settings = [];
+            for (const savedSetting of savedSettings) {
+                const name = this.#getName(savedSetting);
+                const url = this.#getURL(savedSetting);
+                const frequency = this.#getFrequency(savedSetting);
+                const timeout = this.#getTimeout(savedSetting);
+                const verb = this.#getVerb(savedSetting);
+                const notifies = this.#getNotifies(savedSetting);
+                const visible = this.#getVisible(savedSetting);
+                const ignoreTLSErrors = this.#getIgnoreTLSErrors(savedSetting);
+                const ignoreRedirects = this.#getIgnoreRedirects(savedSetting);
+                const headers = []; // new property
+
+                const setting = new ServerSetting(name, url, frequency, timeout, verb, notifies, visible, ignoreTLSErrors, ignoreRedirects, headers);
+                settings.push(setting);
+            }
         }
         return settings;
     }
@@ -49,14 +58,14 @@ export class SettingsParser {
         return setting['timeout'] !== undefined ? Number(setting['timeout']) : 10; // defaults to 10s
     }
 
-    static #getIsGet(setting) {
+    static #getVerb(setting) {
         let isGet = false; // defaults to false
         // migrate old key
         if (setting['is_get'] !== undefined)
             isGet = setting['is_get'] === 'true';
         else if (setting['isGet'] !== undefined)
             isGet = setting['isGet'] === 'true';
-        return isGet;
+        return isGet ? 'GET' : 'HEAD'; // convert from boolean to string
     }
 
     static #getNotifies(setting) {

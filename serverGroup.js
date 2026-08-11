@@ -27,12 +27,14 @@ export class ServerGroup {
         const expanderRow = this.#getExpanderRow(settings);
         this.serverSettingGroup.add(expanderRow);
 
-        this.#createServerSettings();
-
         if (settings === null) {
+            this.headers = [];
             this.expanderRow.set_expanded(true);
             this.nameRow.grab_focus();
+        } else {
+            this.headers = settings.headers;
         }
+        this.#createServerSettings();
     }
 
     /**
@@ -89,8 +91,8 @@ export class ServerGroup {
         const timeoutRow = this.#getTimeoutRow(settings);
         this.expanderRow.add_row(timeoutRow);
 
-        const useGetRow = this.#getUseGetRow(settings);
-        this.expanderRow.add_row(useGetRow);
+        const verbRow = this.#getVerbRow(settings);
+        this.expanderRow.add_row(verbRow);
 
         const ignoreTLSErrorsRow = this.#getIgnoreTLSErrorsRow(settings);
         this.expanderRow.add_row(ignoreTLSErrorsRow);
@@ -143,9 +145,13 @@ export class ServerGroup {
         this.notifiesImage = Gtk.Image.new_from_file(`${this.preferences.path}/assets/bell-outline-symbolic.svg`);
         this.notifiesImage.set_tooltip_text('Notify when down');
 
+        this.headersImage = Gtk.Image.new_from_file(`${this.preferences.path}/assets/h-symbolic.svg`);
+        this.headersImage.set_tooltip_text('Headers are set');
+
         indicatorsBox.append(this.ignoreTLSErrorsImage);
         indicatorsBox.append(this.ignoreRedirectsImage);
         indicatorsBox.append(this.notifiesImage);
+        indicatorsBox.append(this.headersImage);
 
         this.#updateIndicators(settings);
 
@@ -161,6 +167,8 @@ export class ServerGroup {
         this.ignoreTLSErrorsImage.set_visible(settings?.ignoreTLSErrors ?? false);
         this.ignoreRedirectsImage.set_visible(settings?.ignoreRedirects ?? false);
         this.notifiesImage.set_visible(settings?.notifies ?? false);
+        const hasHeaders = settings && settings.headers && settings.headers.length > 0;
+        this.headersImage.set_visible(hasHeaders);
     }
 
     /**
@@ -247,16 +255,27 @@ export class ServerGroup {
         return this.timeoutRow;
     }
 
-    #getUseGetRow(settings) {
-        this.useGetRow = new Adw.SwitchRow({
-            title: 'Use GET rather than HEAD',
+    #getVerbRow(settings) {
+        this.verbRow = new Adw.ComboRow({
+            title: 'Request action verb',
         });
-        const isGet = settings?.isGet ?? false;
-        this.useGetRow.set_active(isGet);
-        this.useGetHandlerId = this.useGetRow.connect('notify::active', () => {
+        const verbModel = Gtk.StringList.new(['HEAD', 'GET']); // TODO ping
+        this.verbRow.set_model(verbModel);
+        // init
+        const verb = settings?.verb ?? null;
+        if (verb) {
+            const numItems = verbModel.get_n_items();
+            for (let i = 0; i < numItems; i++) {
+                if (verbModel.get_item(i) === verb) {
+                    this.verbRow.set_selected(i);
+                    break;
+                }
+            }
+        }
+        this.verbHandlerId = this.verbRow.connect('notify::selected', () => {
             this.update();
         });
-        return this.useGetRow;
+        return this.verbRow;
     }
 
     #getIgnoreTLSErrorsRow(settings) {
@@ -310,12 +329,16 @@ export class ServerGroup {
     }
 
     #openHeadersDialog(settings) {
-        this.headersDialog = new HeadersDialog(settings?.name);
+        const title = settings?.name ?? 'Unnamed';
+        const headers = settings?.headers ?? [];
+        this.headersDialog = new HeadersDialog(title, headers);
         this.headersDialogHandlerId = this.headersDialog.connect('closed', () => {
-            const headers = this.headersDialog.getHeaders();
-            console.log('headers', headers);
+            const newHeaders = this.headersDialog.getHeaders();
+            this.headers = newHeaders;
+            this.update();
             this.headersDialog.destroy();
             this.headersDialog = null;
+            this.preferences.doSave();
         });
         this.headersDialog.present(this.preferences.window);
     }
@@ -330,7 +353,7 @@ export class ServerGroup {
         if (!settings)
             return '';
 
-        return `${settings.isGet ? 'GET' : 'HEAD'} ${settings.url} @ ${settings.frequency}s with ${settings.timeout}s timeout`;
+        return `${settings.verb} ${settings.url} @ ${settings.frequency}s with ${settings.timeout}s timeout`;
     }
 
     /**
@@ -348,7 +371,7 @@ export class ServerGroup {
      * @returns {string}
      */
     getSubtitle() {
-        const httpMethod = this.useGetRow.active ? 'GET' : 'HEAD';
+        const httpMethod = this.verbRow.selected_item.get_string();
         const url = this.urlRow.text;
         const freq = this.frequencyRow.text;
         const timeout = this.timeoutRow.text;
@@ -410,16 +433,19 @@ export class ServerGroup {
      * Create a `ServerSetting` based on control values.
      */
     #createServerSettings() {
+        const index = this.verbRow.selected;
+        const verbText = index >= 0 ? this.verbRow.get_model().get_string(index) : '';
         this.settings = new ServerSetting(
             this.nameRow.text,
             this.urlRow.text,
-            this.frequencyRow.text,
-            this.timeoutRow.text,
-            this.useGetRow.active,
+            Number(this.frequencyRow.text),
+            Number(this.timeoutRow.text),
+            verbText,
             this.useNotificationsRow.active,
             this.visible,
             this.ignoreTLSErrorsRow.active,
-            this.ignoreRedirectsRow.active
+            this.ignoreRedirectsRow.active,
+            this.headers
         );
     }
 
@@ -433,7 +459,7 @@ export class ServerGroup {
         this.#unplug(this.urlRow, this.urlHandlerId);
         this.#unplug(this.frequencyRow, this.frequencyHandlerId);
         this.#unplug(this.timeoutRow, this.timeoutHandlerId);
-        this.#unplug(this.useGetRow, this.useGetHandlerId);
+        this.#unplug(this.verbRow, this.verbHandlerId);
         this.#unplug(this.ignoreTLSErrorsRow, this.ignoreTLSErrorsHandlerId);
         this.#unplug(this.ignoreRedirectsRow, this.ignoreRedirectsHandlerId);
         this.#unplug(this.useNotificationsRow, this.useNotificationsHandlerId);
@@ -442,6 +468,7 @@ export class ServerGroup {
         this.ignoreTLSErrorsImage = null;
         this.ignoreRedirectsImage = null;
         this.notifiesImage = null;
+        this.headersImage = null;
 
         this.id = null;
         this.preferences = null;

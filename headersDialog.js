@@ -4,16 +4,24 @@ import Gtk from 'gi://Gtk';
 import Adw from 'gi://Adw';
 import GObject from 'gi://GObject';
 
+import {Header} from './header.js';
+
 export const HeadersDialog = GObject.registerClass(
     {
         GTypeName: 'HeadersDialog',
     },
     class HeadersDialog extends Adw.Dialog {
-        constructor(dialogTitle) {
+        constructor(dialogTitle, headers) {
             super();
-            super.set_size_request(500, 300);
+            super.set_size_request(500, 400);
 
             this.#buildUI(dialogTitle);
+
+            this.headers = headers ? headers : [];
+            for (const header of this.headers) {
+                const headerGroup = this.#addRequestHeader(header);
+                this.contentBox.prepend(headerGroup);
+            }
         }
 
         #buildUI(dialogTitle) {
@@ -68,7 +76,7 @@ export const HeadersDialog = GObject.registerClass(
             this.addButton.add_css_class('suggested-action');
             this.addButton.set_tooltip_text('Add a Request Header for this Server');
             this.addHandlerId = this.addButton.connect('clicked', () => {
-                const headerGroup = this.#addRequestHeader();
+                const headerGroup = this.#addRequestHeader(null);
                 this.contentBox.prepend(headerGroup);
                 this.#updateSaveButtonEnablement();
             });
@@ -109,7 +117,7 @@ export const HeadersDialog = GObject.registerClass(
             return this.saveButton;
         }
 
-        #addRequestHeader() {
+        #addRequestHeader(header) {
             const preferencesGroup = new Adw.PreferencesGroup({
                 title: 'Request Header',
             });
@@ -128,6 +136,7 @@ export const HeadersDialog = GObject.registerClass(
 
             this.nameRow = new Adw.EntryRow({
                 title: 'Name',
+                text: header?.name ?? '',
                 show_apply_button: false,
             });
             this.nameHandlerId = this.nameRow.connect('changed', () => {
@@ -137,6 +146,7 @@ export const HeadersDialog = GObject.registerClass(
 
             this.valueRow = new Adw.EntryRow({
                 title: 'Value',
+                text: header?.value ?? '',
                 show_apply_button: false,
             });
             this.valueHandlerId = this.valueRow.connect('changed', () => {
@@ -152,7 +162,7 @@ export const HeadersDialog = GObject.registerClass(
         #updateSaveButtonEnablement() {
             // empty?
             if (!this.contentBox.get_first_child()) {
-                this.saveButton.set_sensitive(false);
+                this.saveButton.set_sensitive(true);
             } else {
                 let allValidInputs = true;
                 let preferencesGroup = this.contentBox.get_first_child();
@@ -170,12 +180,13 @@ export const HeadersDialog = GObject.registerClass(
         }
 
         #saveHeaders() {
-            this.headers = [];
+            this.headers.length = 0; // clear array and repopulate
             let preferencesGroup = this.contentBox.get_first_child();
             while (preferencesGroup) {
                 const name = preferencesGroup.get_row(0).text.trim();
                 const value = preferencesGroup.get_row(1).text.trim();
-                this.headers.push({name, value});
+                const header = new Header(name, value);
+                this.headers.push(header);
                 preferencesGroup = preferencesGroup.get_next_sibling();
             }
         }
