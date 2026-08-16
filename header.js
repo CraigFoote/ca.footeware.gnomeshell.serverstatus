@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Encapsulates the settings for a request header.
+ * Encapsulates the settings for a http request header.
  */
 export class Header {
     /**

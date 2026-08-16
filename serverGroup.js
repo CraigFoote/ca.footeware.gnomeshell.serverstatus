@@ -19,8 +19,8 @@ export class ServerGroup {
      *          expander is automatically opened and name field focused.
      */
     constructor(preferences, settings) {
-        this.settings = settings;
         this.preferences = preferences;
+        this.settings = settings;
 
         this.id = this.#createUID();
         this.serverSettingGroup = new Adw.PreferencesGroup();
@@ -29,7 +29,7 @@ export class ServerGroup {
         const expanderRow = this.#getExpanderRow();
         this.serverSettingGroup.add(expanderRow);
 
-        if (this.settings === null) {
+        if (!this.settings) {
             this.headers = [];
             this.expanderRow.set_expanded(true);
             this.nameRow.grab_focus();

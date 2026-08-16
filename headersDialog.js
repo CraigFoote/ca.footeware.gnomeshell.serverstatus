@@ -27,7 +27,7 @@ export const HeadersDialog = GObject.registerClass(
             this.#buildUI(dialogTitle);
 
             this.headers = headers ? headers : [];
-            for (const header of this.headers) {
+            for (const header of this.headers.reverse()) {
                 const headerGroup = this.#addRequestHeader(header);
                 this.contentBox.prepend(headerGroup);
             }
