@@ -19,20 +19,22 @@ export class ServerGroup {
      *          expander is automatically opened and name field focused.
      */
     constructor(preferences, settings) {
-        this.id = this.#createUID();
+        this.settings = settings;
         this.preferences = preferences;
-        this.serverSettingGroup = new Adw.PreferencesGroup();
-        this.visible = settings?.visible ?? true;
 
-        const expanderRow = this.#getExpanderRow(settings);
+        this.id = this.#createUID();
+        this.serverSettingGroup = new Adw.PreferencesGroup();
+        this.visible = this.settings?.visible ?? true;
+
+        const expanderRow = this.#getExpanderRow();
         this.serverSettingGroup.add(expanderRow);
 
-        if (settings === null) {
+        if (this.settings === null) {
             this.headers = [];
             this.expanderRow.set_expanded(true);
             this.nameRow.grab_focus();
         } else {
-            this.headers = settings.headers;
+            this.headers = this.settings.headers;
         }
         this.#createServerSettings();
     }
@@ -56,19 +58,17 @@ export class ServerGroup {
     /**
      * Create the expander row with all the controls for this server group.
      *
-     * @param {ServerSetting} settings may be null
      * @returns {Adw.ExpanderRow}
      */
-    #getExpanderRow(settings) {
+    #getExpanderRow() {
         this.expanderRow = new Adw.ExpanderRow();
         // disable pango as it fails on & in url query strings
         this.expanderRow.set_use_markup(false);
 
         // title
-        const title = settings?.name ?? '';
-        this.expanderRow.set_title(title);
+        this.expanderRow.set_title(this.settings?.name ?? '');
         // subtitle
-        this.expanderRow.set_subtitle(this.#initSubtitle(settings));
+        this.expanderRow.set_subtitle(this.#initSubtitle());
 
         // handle icon for drag & drop as prefix
         this.expanderRow.add_prefix(new Gtk.Image({
@@ -76,47 +76,47 @@ export class ServerGroup {
         }));
 
         // suffix: indicator icons and buttons
-        const suffixBox = this.#getSuffixBox(settings, this.preferences);
+        const suffixBox = this.#getSuffixBox();
         this.expanderRow.add_suffix(suffixBox);
 
-        const nameRow = this.#getNameRow(settings);
+        const nameRow = this.#getNameRow();
         this.expanderRow.add_row(nameRow);
 
-        const urlRow = this.#getUrlRow(settings);
+        const urlRow = this.#getUrlRow();
         this.expanderRow.add_row(urlRow);
 
-        const frequencyRow = this.#getFrequencyRow(settings);
+        const frequencyRow = this.#getFrequencyRow();
         this.expanderRow.add_row(frequencyRow);
 
-        const timeoutRow = this.#getTimeoutRow(settings);
+        const timeoutRow = this.#getTimeoutRow();
         this.expanderRow.add_row(timeoutRow);
 
-        const verbRow = this.#getVerbRow(settings);
+        const verbRow = this.#getVerbRow();
         this.expanderRow.add_row(verbRow);
 
-        const ignoreTLSErrorsRow = this.#getIgnoreTLSErrorsRow(settings);
+        const ignoreTLSErrorsRow = this.#getIgnoreTLSErrorsRow();
         this.expanderRow.add_row(ignoreTLSErrorsRow);
 
-        const ignoreRedirectsRow = this.#getIgnoreRedirectsRow(settings);
+        const ignoreRedirectsRow = this.#getIgnoreRedirectsRow();
         this.expanderRow.add_row(ignoreRedirectsRow);
 
-        const useNotificationsRow = this.#getUseNotificationsRow(settings);
+        const useNotificationsRow = this.#getUseNotificationsRow();
         this.expanderRow.add_row(useNotificationsRow);
 
-        const headersRow = this.#getHeadersRow(settings);
+        const headersRow = this.#getHeadersRow();
         this.expanderRow.add_row(headersRow);
 
         return this.expanderRow;
     }
 
-    #getSuffixBox(settings) {
+    #getSuffixBox() {
         const suffixBox = new Gtk.Box({
             orientation: Gtk.Orientation.HORIZONTAL,
             spacing: 4,
         });
 
         // assemble and add indicators
-        suffixBox.append(this.#getIndicatorsBox(settings));
+        suffixBox.append(this.#getIndicatorsBox());
 
         // assemble and add buttons
         suffixBox.append(this.#getExpanderButtonsBox());
@@ -127,10 +127,9 @@ export class ServerGroup {
     /**
      * Assemble the indicators in a suffix box.
      *
-     * @param {ServerSetting} settings may be null
-     * @returns
+     * @returns {Gtk.Box}
      */
-    #getIndicatorsBox(settings) {
+    #getIndicatorsBox() {
         const indicatorsBox = new Gtk.Box({
             orientation: Gtk.Orientation.HORIZONTAL,
             spacing: 2,
@@ -153,21 +152,19 @@ export class ServerGroup {
         indicatorsBox.append(this.notifiesImage);
         indicatorsBox.append(this.headersImage);
 
-        this.#updateIndicators(settings);
+        this.#updateIndicators();
 
         return indicatorsBox;
     }
 
     /**
      * Update the visibility of icons indicating 'Ignore TLS errors', 'Do not follow redirects' and 'Notify when down'.
-     *
-     * @param {ServerSetting} settings may be null
      */
-    #updateIndicators(settings) {
-        this.ignoreTLSErrorsImage.set_visible(settings?.ignoreTLSErrors ?? false);
-        this.ignoreRedirectsImage.set_visible(settings?.ignoreRedirects ?? false);
-        this.notifiesImage.set_visible(settings?.notifies ?? false);
-        const hasHeaders = settings && settings.headers && settings.headers.length > 0;
+    #updateIndicators() {
+        this.ignoreTLSErrorsImage.set_visible(this.settings?.ignoreTLSErrors ?? false);
+        this.ignoreRedirectsImage.set_visible(this.settings?.ignoreRedirects ?? false);
+        this.notifiesImage.set_visible(this.settings?.notifies ?? false);
+        const hasHeaders = this.settings && this.settings.headers && this.settings.headers.length > 0;
         this.headersImage.set_visible(hasHeaders);
     }
 
@@ -211,10 +208,10 @@ export class ServerGroup {
         return buttonsBox;
     }
 
-    #getNameRow(settings) {
+    #getNameRow() {
         this.nameRow = new Adw.EntryRow({
             title: 'Name',
-            text: settings?.name ?? '',
+            text: this.settings?.name ?? '',
             show_apply_button: true,
         });
         this.nameHandlerId = this.nameRow.connect('apply', () => {
@@ -223,10 +220,10 @@ export class ServerGroup {
         return this.nameRow;
     }
 
-    #getUrlRow(settings) {
+    #getUrlRow() {
         this.urlRow = new Adw.EntryRow({
             title: 'URL',
-            text: settings?.url ?? '',
+            text: this.settings?.url ?? '',
             show_apply_button: true,
         });
         this.urlHandlerId = this.urlRow.connect('apply', () => {
@@ -235,9 +232,9 @@ export class ServerGroup {
         return this.urlRow;
     }
 
-    #getFrequencyRow(settings) {
+    #getFrequencyRow() {
         this.frequencyRow = Adw.SpinRow.new_with_range(10, 300, 10);
-        this.frequencyRow.set_value(settings?.frequency ?? 120);
+        this.frequencyRow.set_value(this.settings?.frequency ?? 120);
         this.frequencyRow.set_title('Frequency (secs.)');
         this.frequencyHandlerId = this.frequencyRow.connect('notify::value', () => {
             this.update();
@@ -245,9 +242,9 @@ export class ServerGroup {
         return this.frequencyRow;
     }
 
-    #getTimeoutRow(settings) {
+    #getTimeoutRow() {
         this.timeoutRow = Adw.SpinRow.new_with_range(1, 300, 1);
-        this.timeoutRow.set_value(settings?.timeout ?? 10);
+        this.timeoutRow.set_value(this.settings?.timeout ?? 10);
         this.timeoutRow.set_title('Timeout (secs.)');
         this.timeoutHandlerId = this.timeoutRow.connect('notify::value', () => {
             this.update();
@@ -255,14 +252,14 @@ export class ServerGroup {
         return this.timeoutRow;
     }
 
-    #getVerbRow(settings) {
+    #getVerbRow() {
         this.verbRow = new Adw.ComboRow({
             title: 'Request action verb',
         });
         const verbModel = Gtk.StringList.new(['HEAD', 'GET']); // TODO ping
         this.verbRow.set_model(verbModel);
         // init
-        const verb = settings?.verb ?? null;
+        const verb = this.settings?.verb ?? null;
         if (verb) {
             const numItems = verbModel.get_n_items();
             for (let i = 0; i < numItems; i++) {
@@ -278,12 +275,12 @@ export class ServerGroup {
         return this.verbRow;
     }
 
-    #getIgnoreTLSErrorsRow(settings) {
+    #getIgnoreTLSErrorsRow() {
         this.ignoreTLSErrorsRow = new Adw.SwitchRow({
             title: 'Ignore TLS certificate errors',
             subtitle: 'self-signed, etc.',
         });
-        const ignoreTLSErrors = settings?.ignoreTLSErrors ?? false;
+        const ignoreTLSErrors = this.settings?.ignoreTLSErrors ?? false;
         this.ignoreTLSErrorsRow.set_active(ignoreTLSErrors);
         this.ignoreTLSErrorsHandlerId = this.ignoreTLSErrorsRow.connect('notify::active', () => {
             this.update();
@@ -291,12 +288,12 @@ export class ServerGroup {
         return this.ignoreTLSErrorsRow;
     }
 
-    #getIgnoreRedirectsRow(settings) {
+    #getIgnoreRedirectsRow() {
         this.ignoreRedirectsRow = new Adw.SwitchRow({
             title: 'Do not follow redirects',
             subtitle: 'Treat 3xx status codes as success.',
         });
-        const ignoreRedirects = settings?.ignoreRedirects ?? false;
+        const ignoreRedirects = this.settings?.ignoreRedirects ?? false;
         this.ignoreRedirectsRow.set_active(ignoreRedirects);
         this.ignoreRedirectsHandlerId = this.ignoreRedirectsRow.connect('notify::active', () => {
             this.update();
@@ -304,12 +301,12 @@ export class ServerGroup {
         return this.ignoreRedirectsRow;
     }
 
-    #getUseNotificationsRow(settings) {
+    #getUseNotificationsRow() {
         this.useNotificationsRow = new Adw.SwitchRow({
             title: 'Notify when down',
             subtitle: 'Displays a desktop notification.',
         });
-        const notifies = settings?.notifies ?? false;
+        const notifies = this.settings?.notifies ?? false;
         this.useNotificationsRow.set_active(notifies);
         this.useNotificationsHandlerId = this.useNotificationsRow.connect('notify::active', () => {
             this.update();
@@ -317,20 +314,22 @@ export class ServerGroup {
         return this.useNotificationsRow;
     }
 
-    #getHeadersRow(settings) {
+    #getHeadersRow() {
         const headersRow = new Adw.ButtonRow({
             title: 'Request Headers',
         });
         headersRow.set_end_icon_name('go-next');
         headersRow.connect('activated', () => {
-            this.#openHeadersDialog(settings);
+            this.#openHeadersDialog();
         });
         return headersRow;
     }
 
-    #openHeadersDialog(settings) {
-        const title = settings?.name ?? 'Unnamed';
-        const headers = settings?.headers ?? [];
+    #openHeadersDialog() {
+        console.log(`🤨🤨🤨🤨🤨🤨 openHeadersDialog, this.settings=${this.settings}`);
+        console.log(`🤨🤨🤨🤨🤨🤨 openHeadersDialog, this.settings.name=${this.settings?.name}`);
+        const title = this.settings?.name ?? 'Unnamed Server';
+        const headers = this.settings?.headers ?? [];
         this.headersDialog = new HeadersDialog(title, headers);
         this.headersDialogHandlerId = this.headersDialog.connect('closed', () => {
             const newHeaders = this.headersDialog.getHeaders();
@@ -346,14 +345,13 @@ export class ServerGroup {
     /**
      * Set the initial subtitle based on provided settings.
      *
-     * @param {ServerSetting} settings may be null
      * @returns {string}
      */
-    #initSubtitle(settings) {
-        if (!settings)
+    #initSubtitle() {
+        if (!this.settings)
             return '';
 
-        return `${settings.verb} ${settings.url} @ ${settings.frequency}s with ${settings.timeout}s timeout`;
+        return `${this.settings.verb} ${this.settings.url} @ ${this.settings.frequency}s with ${this.settings.timeout}s timeout`;
     }
 
     /**
@@ -385,18 +383,16 @@ export class ServerGroup {
     update() {
         this.#createServerSettings();
         this.preferences.doSave();
-        this.updateExpander(this.settings);
+        this.updateExpander();
     }
 
     /**
      * Update the expander title & subtitle.
-     *
-     * @param {ServerSetting} settings may be null
      */
-    updateExpander(settings) {
+    updateExpander() {
         this.expanderRow.set_title(this.getTitle());
         this.expanderRow.set_subtitle(this.getSubtitle());
-        this.#updateIndicators(settings);
+        this.#updateIndicators(this.settings);
     }
 
     /**
