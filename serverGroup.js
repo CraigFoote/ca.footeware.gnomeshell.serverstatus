@@ -326,8 +326,6 @@ export class ServerGroup {
     }
 
     #openHeadersDialog() {
-        console.log(`🤨🤨🤨🤨🤨🤨 openHeadersDialog, this.settings=${this.settings}`);
-        console.log(`🤨🤨🤨🤨🤨🤨 openHeadersDialog, this.settings.name=${this.settings?.name}`);
         const title = this.settings?.name ?? 'Unnamed Server';
         const headers = this.settings?.headers ?? [];
         this.headersDialog = new HeadersDialog(title, headers);
