@@ -7,7 +7,7 @@ import GObject from 'gi://GObject';
 import {Header} from './header.js';
 
 /**
- * A dialog with controls describing existing and allowing creation of request headers.
+ * A dialog with controls describing existing, and allowing creation of, request headers.
  */
 export const HeadersDialog = GObject.registerClass(
     {
@@ -22,7 +22,7 @@ export const HeadersDialog = GObject.registerClass(
          */
         constructor(dialogTitle, headers) {
             super();
-            super.set_size_request(500, 400);
+            this.set_size_request(500, 400);
 
             this.#buildUI(dialogTitle);
 
@@ -40,7 +40,7 @@ export const HeadersDialog = GObject.registerClass(
          */
         #buildUI(dialogTitle) {
             const toolbarView = new Adw.ToolbarView();
-            super.set_child(toolbarView);
+            this.set_child(toolbarView);
 
             const headerBar = this.#getHeaderBar(dialogTitle);
             toolbarView.add_top_bar(headerBar);
@@ -190,7 +190,7 @@ export const HeadersDialog = GObject.registerClass(
             });
             preferencesGroup.add(this.valueRow);
 
-            super.set_focus(this.nameRow);
+            this.set_focus(this.nameRow);
 
             return preferencesGroup;
         }
