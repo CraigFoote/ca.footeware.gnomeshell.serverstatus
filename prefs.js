@@ -41,7 +41,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
         // one per server and each itself a list of Adw.PreferencesRows
         const yourServersGroup = new Adw.PreferencesGroup({
             title: 'Your Servers',
-            description: 'Drag and drop to reorder.',
+            description: 'Expand to edit. Drag and drop to reorder.',
         });
         this.page.add(yourServersGroup);
 
