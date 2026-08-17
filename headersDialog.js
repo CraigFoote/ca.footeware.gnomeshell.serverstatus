@@ -208,6 +208,13 @@ export const HeadersDialog = GObject.registerClass(
                 this.saveHandlerId = null;
                 this.saveButton = null;
             }
+
+            let headerGroup = this.contentBox.get_first_child();
+            while (headerGroup) {
+                headerGroup.destroy();
+                headerGroup = headerGroup.get_next_sibling();
+            }
+
             this.contentBox = null;
             this.headers = null;
         }

@@ -88,6 +88,5 @@ export const HeaderGroup = GObject.registerClass(
                 this.valueHandlerId = null;
                 this.valueRow = null;
             }
-            super.destroy();
         }
     });
