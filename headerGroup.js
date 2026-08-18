@@ -15,14 +15,14 @@ export const HeaderGroup = GObject.registerClass(
         GTypeName: 'HeaderGroup',
     },
     class HeaderGroup extends Adw.PreferencesGroup {
-    /**
-     * Constructor.
-     *
-     * @param {Header} header will be null for new headers in which case the
-     *          fields remain empty and the name field is focused.
-     * @param {Gtk.Box} parent
-     * @param {Function} updateCallback
-     */
+        /**
+         * Constructor.
+         *
+         * @param {Header} header will be null for new headers in which case the
+         *          fields remain empty and the name field is focused.
+         * @param {Gtk.Box} parent used to delete this
+         * @param {Function} updateCallback called when the delete button is clicked or the name/value fields' values get changed
+         */
         constructor(header, parent, updateCallback) {
             super();
             this.set_title('Request Header');
@@ -35,6 +35,7 @@ export const HeaderGroup = GObject.registerClass(
             this.deleteHandlerId = this.deleteButton.connect('clicked', () => {
                 parent.remove(this);
                 updateCallback();
+                this.destroy();
             });
             this.deleteButton.set_tooltip_text('Delete this Header');
             this.set_header_suffix(this.deleteButton);
