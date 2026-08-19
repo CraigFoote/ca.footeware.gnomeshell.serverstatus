@@ -6,11 +6,42 @@
 			<default>[{"name": "Footeware", "url": "https://footeware.ca", "frequency": "120", "timeout": "10", "isGet": "false", "notifies": "false", "visible": "true", "ignoreTLSErrors": "false", "ignoreRedirects": "false"}]</default>
 			<summary>A list of server setting maps</summary>
 			<description>A list of {name, url, frequency, timeout, isGet, notifies, visible, ignoreTLSErrors, ignoreRedirects} keys mapped to string values, one list entry per server panel.</description>
-		</key>
+        </key>
         <key type="s" name="server-settings-2">
-			<default>'[{"name": "Footeware", "url": "https://footeware.ca", "frequency": 120, "timeout": 10, "verb": "HEAD", "notifies": false, "visible": true, "ignoreTLSErrors": false, "ignoreRedirects": false, "headers": []}]'</default>
+			<default>'[
+                {
+                    "name": "Footeware",
+                    "url": "https://footeware.ca",
+                    "frequency": 120,
+                    "timeout": 10,
+                    "verb": "HEAD",
+                    "notifies": false,
+                    "visible": true,
+                    "ignoreTLSErrors": false,
+                    "ignoreRedirects": false,
+                    "headers": []
+                }
+            ]'</default>
 			<summary>A list of server setting maps - version 2</summary>
 			<description>A list of {name, url, frequency, timeout, isGet, notifies, visible, ignoreTLSErrors, ignoreRedirects, headers} keys mapped to JSON values, one list entry per server panel.</description>
 		</key>
+        <key type="aa{sv}" name="server-settings-3">
+            <default>[
+                {
+                    "name": &lt;"Footeware"&gt;,
+                    "url": &lt;"https://footeware.ca"&gt;,
+                    "frequency": &lt;120&gt;,
+                    "timeout": &lt;10&gt;,
+                    "verb": &lt;"HEAD"&gt;,
+                    "notifies": &lt;false&gt;,
+                    "visible": &lt;true&gt;,
+                    "ignoreTLSErrors": &lt;false&gt;,
+                    "ignoreRedirects": &lt;false&gt;,
+                    "headers": &lt;[{"From": "example@example.com"}]&gt;
+                }
+            ]</default>
+            <summary>A list of server setting maps - version 3</summary>
+			<description>A list of {name, url, frequency, timeout, isGet, notifies, visible, ignoreTLSErrors, ignoreRedirects, headers} keys mapped to GVariant values, one list entry per server panel.</description>
+        </key>
 	</schema>
 </schemalist>
