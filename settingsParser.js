@@ -40,7 +40,7 @@ export class SettingsParser {
             }
         } else {
             const variant = gioSettings.get_value('server-settings-2');
-            settings = JSON.parse(variant.deep_unpack());
+            settings = JSON.parse(variant.recursiveUnpack());
         }
 
         return settings;
