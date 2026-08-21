@@ -2,7 +2,6 @@
 
 import Adw from 'gi://Adw';
 import Gio from 'gi://Gio';
-import GLib from 'gi://GLib';
 import Gtk from 'gi://Gtk';
 
 import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
@@ -53,7 +52,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
         yourServersGroup.add(this.gtkListBox);
 
         // create one server group per discovered settings
-        const parsedSettings = SettingsParser.parse(this.savedSettings);
+        const parsedSettings = SettingsParser.parseGioSettings(this.savedSettings);
         this.#createServerGroups(parsedSettings);
 
         // add drag & drop to the listBox
@@ -265,20 +264,12 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
      * Save current server settings to gsettings.
      */
     doSave() {
-        const serverSettings = [];
-        if (this.serverGroups) {
-            for (const serverGroup of this.serverGroups) {
-                const settings = serverGroup.settings;
-                if (settings)
-                    serverSettings.push(settings);
-            }
-        }
+        const newVariant = SettingsParser.parseServerSettings(this.serverGroups);
         this.savedSettings.set_value(
             'server-settings-2',
-            new GLib.Variant('s', JSON.stringify(serverSettings))
+            newVariant
         );
-        // persist
-        Gio.Settings.sync();
+        Gio.Settings.sync(); // persist
     }
 
     /**

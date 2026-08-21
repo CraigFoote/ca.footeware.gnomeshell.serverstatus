@@ -1,65 +1,99 @@
 'use strict';
 
+import GLib from 'gi://GLib';
+
 import {ServerSetting} from './serverSetting.js';
 
 /**
- * Convert `Gio.Settings` into `ServerSetting`s.
+ * Convert `Gio.Settings` into an array of `ServerSetting`s.
  */
 export class SettingsParser {
     /**
-     * Parse the provided `Gio.Settings` object into an array of `ServerSetting` objects.
+     * Parse the provided GLib.Variant `Gio.Settings` object into an array of `ServerSetting` objects.
      *
-     * @param {Gio.Settings} gioSettings saved settings
-     * @returns `[ServerSetting]` array of `ServerSetting`s
+     * @param {Gio.Settings} gioSettings
+     * @returns `[ServerSetting]`
      */
-    static parse(gioSettings) {
+    static parseGioSettings(gioSettings) {
         let settings;
 
-        const hasV1Data = gioSettings.get_user_value('server-settings') !== null;
-        const hasV2Data = gioSettings.get_user_value('server-settings-2') !== null;
+        const hasV1UserData = gioSettings.get_user_value('server-settings') !== null;
+        const hasV2UserData = gioSettings.get_user_value('server-settings-2') !== null;
 
-        if (hasV1Data && !hasV2Data) {
+        if (hasV1UserData && !hasV2UserData) {
             // migrate data from v1 to v2
             const variant = gioSettings.get_value('server-settings');
             const savedSettings = variant.deep_unpack();
             settings = [];
-            for (const savedSetting of savedSettings) {
-                const name = this.#getName(savedSetting);
-                const url = this.#getURL(savedSetting);
-                const frequency = this.#getFrequency(savedSetting);
-                const timeout = this.#getTimeout(savedSetting);
-                const verb = this.#getVerb(savedSetting); // changed from 'isGet' boolean to 'verb' string
-                const notifies = this.#getNotifies(savedSetting);
-                const visible = this.#getVisible(savedSetting);
-                const ignoreTLSErrors = this.#getIgnoreTLSErrors(savedSetting);
-                const ignoreRedirects = this.#getIgnoreRedirects(savedSetting);
+            for (const setting of savedSettings) {
+                const name = setting['name'] !== undefined ? setting['name'] : '';
+                const url = setting['url'] !== undefined ? setting['url'] : '';
+                const frequency = setting['frequency'] !== undefined ? Number(setting['frequency']) : 120;
+                const timeout = setting['timeout'] !== undefined ? Number(setting['timeout']) : 10;
+                const verb = this.#getVerb(setting); // changed from 'isGet' boolean to 'verb' string
+                const notifies = setting['notifies'] !== undefined ? setting['notifies'] === 'true' : false;
+                const visible = setting['visible'] !== undefined ? setting['visible'] === 'true' : true;
+                const ignoreTLSErrors = setting['ignoreTLSErrors'] !== undefined ? setting['ignoreTLSErrors'] === 'true' : false;
+                const ignoreRedirects = setting['ignoreRedirects'] !== undefined ? setting['ignoreRedirects'] === 'true' : false;
                 const headers = []; // new property
 
-                const setting = new ServerSetting(name, url, frequency, timeout, verb, notifies, visible, ignoreTLSErrors, ignoreRedirects, headers);
-                settings.push(setting);
+                const serverSetting = new ServerSetting(name, url, frequency, timeout, verb, notifies, visible, ignoreTLSErrors, ignoreRedirects, headers);
+                settings.push(serverSetting);
             }
         } else {
             const variant = gioSettings.get_value('server-settings-2');
-            settings = JSON.parse(variant.recursiveUnpack());
+            settings = variant.recursiveUnpack();
         }
-
         return settings;
     }
 
-    static #getName(setting) {
-        return setting['name'] !== undefined ? setting['name'] : ''; // defaults to ''
-    }
-
-    static #getURL(setting) {
-        return setting['url'] !== undefined ? setting['url'] : ''; // defaults to ''
-    }
-
-    static #getFrequency(setting) {
-        return setting['frequency'] !== undefined ? Number(setting['frequency']) : 120; // defaults to 120s
-    }
-
-    static #getTimeout(setting) {
-        return setting['timeout'] !== undefined ? Number(setting['timeout']) : 10; // defaults to 10s
+    /**
+     * Parse the provided `ServerGroups` array into an GLib.Variant of `Gio.Settings` objects.
+     *
+     * Add a map for each group to a `serverSettings` array. All map keys are string but the values can be strings,
+     * ints, boolean or complex. Hence each value must be wrapped in a variant. This uses the 'aa{sv}' GVariant type string.
+     *
+     * One map key, 'headers' has values that are themselves a map with string keys and string values - so the
+     * whole `headers` value must be wrapped in a variant.
+     *
+     * Add them all to an array, wrap it in a variant and return that variant. Suitable for saving.
+     *
+     * @param {ServerGroup} serverGroups array of ServerGroups
+     * @returns `GLib.Variant`
+     */
+    static parseServerSettings(serverGroups) {
+        const serverSettings = [];
+        for (const serverGroup of serverGroups) {
+            const settings = serverGroup.settings;
+            const settingsMap = {};
+            for (const [key, value] of Object.entries(settings)) {
+                if (key === 'headers') {
+                    // headers array of maps with map keys as string and values as variants
+                    const headersArray = [];
+                    for (const header of value) {
+                        const headerMap = {};
+                        for (const [headerKey, headerValue] of Object.entries(header)) {
+                            // wrapping - the value has to be a Variant, it's the v in aa{sv}
+                            headerMap[headerKey] = new GLib.Variant('s', headerValue);
+                        }
+                        headersArray.push(headerMap);
+                    }
+                    // wrap the array in a variant and set as value in the settingsMap, it's also the v in aa{sv}
+                    settingsMap[key] = GLib.Variant.new_variant(new GLib.Variant('aa{sv}', headersArray));
+                } else if (key === 'frequency' || key === 'timeout') {
+                    // numeric values
+                    settingsMap[key] = new GLib.Variant('i', value);
+                } else if (key === 'notifies' || key === 'visible' || key === 'ignoreTLSErrors' || key === 'ignoreRedirects') {
+                    // boolean values
+                    settingsMap[key] = new GLib.Variant('b', value);
+                } else {
+                    // string values
+                    settingsMap[key] = GLib.Variant.new_string(value);
+                }
+            }
+            serverSettings.push(settingsMap);
+        }
+        return new GLib.Variant('aa{sv}', serverSettings);
     }
 
     /**
@@ -76,21 +110,5 @@ export class SettingsParser {
         else if (setting['isGet'] !== undefined)
             isGet = setting['isGet'] === 'true';
         return isGet ? 'GET' : 'HEAD'; // convert from boolean to string
-    }
-
-    static #getNotifies(setting) {
-        return setting['notifies'] !== undefined ? setting['notifies'] === 'true' : false; // defaults to false
-    }
-
-    static #getVisible(setting) {
-        return setting['visible'] !== undefined ? setting['visible'] === 'true' : true; // defaults to true
-    }
-
-    static #getIgnoreTLSErrors(setting) {
-        return setting['ignoreTLSErrors'] !== undefined ? setting['ignoreTLSErrors'] === 'true' : false; // defaults to false
-    }
-
-    static #getIgnoreRedirects(setting) {
-        return setting['ignoreRedirects'] !== undefined ? setting['ignoreRedirects'] === 'true' : false; // defaults to false
     }
 }
