@@ -27,10 +27,11 @@
                 }
             ]]]></default>
             <summary>A list of server setting maps - version 2</summary>
-            <description>A list of {name, url, frequency, timeout, verb, notifies, visible,
-                ignoreTLSErrors, ignoreRedirects, headers} keys mapped to GVariant values, one list
-                entry per server panel. The 'headers' value is itself 'aa{sv}', a list of header
-                maps each with name and value keys.</description>
+            <description>An 'aa{sv}' list of {name, url, frequency, timeout, verb, notifies,
+                visible, ignoreTLSErrors, ignoreRedirects, headers} keys mapped to GVariant values.
+                One list entry per server panel. The 'headers' value is itself 'aa{sv}', a list of
+                header maps each with name and value keys. This version adds the 'headers' key, and
+                replaces the 'isGet' boolean with a 'verb' string.</description>
         </key>
     </schema>
 </schemalist>
