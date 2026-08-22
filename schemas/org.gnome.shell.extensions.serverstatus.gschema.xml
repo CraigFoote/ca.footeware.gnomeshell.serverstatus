@@ -30,8 +30,7 @@
             <description>A list of {name, url, frequency, timeout, verb, notifies, visible,
                 ignoreTLSErrors, ignoreRedirects, headers} keys mapped to GVariant values, one list
                 entry per server panel. The 'headers' value is itself 'aa{sv}', a list of header
-                maps
-                each with name and value keys.</description>
+                maps each with name and value keys.</description>
         </key>
     </schema>
 </schemalist>
