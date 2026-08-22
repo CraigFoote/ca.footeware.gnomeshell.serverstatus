@@ -23,7 +23,7 @@
                     "visible": <true>,
                     "ignoreTLSErrors": <false>,
                     "ignoreRedirects": <false>,
-                    "headers": <@a(a{sv}) []>
+                    "headers": <@aa{sv} []>
                 }
             ]]]></default>
             <summary>A list of server setting maps - version 3</summary>
