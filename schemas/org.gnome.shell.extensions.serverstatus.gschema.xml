@@ -26,7 +26,7 @@
                     "headers": <@aa{sv} []>
                 }
             ]]]></default>
-            <summary>A list of server setting maps - version 3</summary>
+            <summary>A list of server setting maps - version 2</summary>
             <description>A list of {name, url, frequency, timeout, verb, notifies, visible,
                 ignoreTLSErrors, ignoreRedirects, headers} keys mapped to GVariant values, one list
                 entry per server panel. The 'headers' value is itself 'aa{sv}', a list of header
