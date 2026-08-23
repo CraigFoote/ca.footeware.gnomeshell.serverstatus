@@ -9,7 +9,7 @@ import {ServerSetting} from './serverSetting.js';
  */
 export class SettingsParser {
     /**
-     * Parse the provided GLib.Variant `Gio.Settings` object into an array of `ServerSetting` objects.
+     * Parse the provided `Gio.Settings` object into an array of `ServerSetting` objects.
      *
      * @param {Gio.Settings} gioSettings
      * @returns `[ServerSetting]`
@@ -83,7 +83,7 @@ export class SettingsParser {
                     // Wrap the headers array in a variant and set as value in the settingsMap.
                     // It's also the v in 'aa{sv}' so it also must be wrapped.
                     const headersVariant = new GLib.Variant('aa{sv}', headersArray); // variant type 'aa{sv}'
-                    const wrappedHeaders = GLib.Variant.new_variant(headersVariant); // variant type 'v' as required
+                    const wrappedHeaders = GLib.Variant.new_variant(headersVariant); // variant type 'v'
                     settingsMap[key] = wrappedHeaders;
                 } else if (key === 'frequency' || key === 'timeout') {
                     // numeric values
