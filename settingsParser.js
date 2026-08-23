@@ -17,6 +17,7 @@ export class SettingsParser {
     static parseGioSettings(gioSettings) {
         let settings;
 
+        // gioSettings.get_user_value() will be true if the user has modified the default settings
         const hasV1UserData = gioSettings.get_user_value('server-settings') !== null;
         const hasV2UserData = gioSettings.get_user_value('server-settings-2') !== null;
 
@@ -48,12 +49,12 @@ export class SettingsParser {
     }
 
     /**
-     * Parse the provided `ServerGroups` array into an GLib.Variant of `Gio.Settings` objects.
+     * Parse the provided `ServerGroups` array into a `GLib.Variant` of `Gio.Settings` objects.
      *
      * Add a map for each group to a `serverSettings` array. All map keys are string but the values can be strings,
      * ints, boolean or complex. Hence each value must be wrapped in a variant. This uses the 'aa{sv}' GVariant type string.
      *
-     * One map key, 'headers' has values that are themselves a map with string keys and string values - so the
+     * One map key, 'headers' has values that are themselves a map with string keys and string values, so 'aa{sv}' - so the
      * whole `headers` value must be wrapped in a variant.
      *
      * Add them all to an array, wrap it in a variant and return that variant. Suitable for saving.
@@ -68,18 +69,22 @@ export class SettingsParser {
             const settingsMap = {};
             for (const [key, value] of Object.entries(settings)) {
                 if (key === 'headers') {
-                    // headers array of maps with map keys as string and values as variants
+                    // headers: value is 'aa{sv}', an array of maps with 'name' and 'value' string keys and string values
                     const headersArray = [];
                     for (const header of value) {
                         const headerMap = {};
-                        for (const [headerKey, headerValue] of Object.entries(header)) {
+                        for (const headerKey in header) {
+                            const headerValue = header[headerKey];
                             // wrapping - the value has to be a Variant, it's the v in aa{sv}
                             headerMap[headerKey] = new GLib.Variant('s', headerValue);
                         }
                         headersArray.push(headerMap);
                     }
-                    // wrap the array in a variant and set as value in the settingsMap, it's also the v in aa{sv}
-                    settingsMap[key] = GLib.Variant.new_variant(new GLib.Variant('aa{sv}', headersArray));
+                    // Wrap the headers array in a variant and set as value in the settingsMap.
+                    // It's also the v in 'aa{sv}' so it also must be wrapped.
+                    const headersVariant = new GLib.Variant('aa{sv}', headersArray); // variant type 'aa{sv}'
+                    const wrappedHeaders = GLib.Variant.new_variant(headersVariant); // variant type 'v' as required
+                    settingsMap[key] = wrappedHeaders;
                 } else if (key === 'frequency' || key === 'timeout') {
                     // numeric values
                     settingsMap[key] = new GLib.Variant('i', value);
@@ -88,7 +93,7 @@ export class SettingsParser {
                     settingsMap[key] = new GLib.Variant('b', value);
                 } else {
                     // string values
-                    settingsMap[key] = GLib.Variant.new_string(value);
+                    settingsMap[key] = new GLib.Variant('s', value);
                 }
             }
             serverSettings.push(settingsMap);
@@ -97,7 +102,7 @@ export class SettingsParser {
     }
 
     /**
-     * Convert old schema's `isGet` boolean property to a new `verb` string for schema v2.
+     * Convert old schema's `isGet` boolean property to a new `verb` string.
      *
      * @param {ServerSetting} setting
      * @returns `string` the request action verb
