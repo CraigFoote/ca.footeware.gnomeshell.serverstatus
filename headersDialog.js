@@ -52,12 +52,6 @@ export const HeadersDialog = GObject.registerClass(
             headerBar.pack_end(saveButton);
 
             const scroller = new Gtk.ScrolledWindow();
-
-            const clamp = new Adw.Clamp();
-            clamp.set_maximum_size(450);
-            clamp.set_tightening_threshold(400);
-            scroller.set_child(clamp);
-
             this.contentBox = new Gtk.Box({
                 orientation: Gtk.Orientation.VERTICAL,
                 margin_top: 10,
@@ -66,7 +60,7 @@ export const HeadersDialog = GObject.registerClass(
                 margin_end: 10,
                 spacing: 10,
             });
-            clamp.set_child(this.contentBox);
+            scroller.set_child(this.contentBox);
 
             toolbarView.set_content(scroller);
         }

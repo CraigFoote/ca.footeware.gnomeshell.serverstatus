@@ -390,7 +390,7 @@ export class ServerGroup {
     updateExpander() {
         this.expanderRow.set_title(this.getTitle());
         this.expanderRow.set_subtitle(this.getSubtitle());
-        this.#updateIndicators(this.settings);
+        this.#updateIndicators();
     }
 
     /**
