@@ -233,7 +233,7 @@ export class ServerGroup {
     }
 
     #getFrequencyRow() {
-        this.frequencyRow = Adw.SpinRow.new_with_range(10, 300, 10);
+        this.frequencyRow = Adw.SpinRow.new_with_range(10, 600, 10);
         this.frequencyRow.set_value(this.settings?.frequency ?? 120);
         this.frequencyRow.set_title('Frequency (secs.)');
         this.frequencyHandlerId = this.frequencyRow.connect('notify::value', () => {
