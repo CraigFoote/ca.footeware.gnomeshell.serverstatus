@@ -34,7 +34,7 @@ export class ServerGroup {
             this.expanderRow.set_expanded(true);
             this.nameRow.grab_focus();
         } else {
-            this.headers = this.settings.headers;
+            this.headers = this.settings.headers ?? [];
         }
         this.#createServerSettings();
     }
