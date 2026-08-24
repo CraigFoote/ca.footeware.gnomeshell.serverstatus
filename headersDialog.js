@@ -98,7 +98,7 @@ export const HeadersDialog = GObject.registerClass(
                 const headerGroup = new HeaderGroup(null, this.contentBox, () => this.#updateSaveButtonEnablement());
                 this.contentBox.prepend(headerGroup);
                 this.#updateSaveButtonEnablement();
-                headerGroup.grab_focus();
+                headerGroup.nameRow.grab_focus();
             });
             const addWrapperBox = new Gtk.Box({
                 spacing: 2,
@@ -166,7 +166,7 @@ export const HeadersDialog = GObject.registerClass(
         }
 
         /**
-         * Saved the entered date as a new {Header} array.
+         * Saved the entered date as a new `Header` array.
          */
         #saveHeaders() {
             const temp = [];

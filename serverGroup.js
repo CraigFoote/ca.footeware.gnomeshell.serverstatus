@@ -233,7 +233,7 @@ export class ServerGroup {
     }
 
     #getFrequencyRow() {
-        this.frequencyRow = Adw.SpinRow.new_with_range(10, 600, 10);
+        this.frequencyRow = Adw.SpinRow.new_with_range(10, 600, 10); // 10m freq limit
         this.frequencyRow.set_value(this.settings?.frequency ?? 120);
         this.frequencyRow.set_title('Frequency (secs.)');
         this.frequencyHandlerId = this.frequencyRow.connect('notify::value', () => {
@@ -243,7 +243,7 @@ export class ServerGroup {
     }
 
     #getTimeoutRow() {
-        this.timeoutRow = Adw.SpinRow.new_with_range(1, 300, 1);
+        this.timeoutRow = Adw.SpinRow.new_with_range(1, 300, 1); // 5m timeout limit
         this.timeoutRow.set_value(this.settings?.timeout ?? 10);
         this.timeoutRow.set_title('Timeout (secs.)');
         this.timeoutHandlerId = this.timeoutRow.connect('notify::value', () => {
