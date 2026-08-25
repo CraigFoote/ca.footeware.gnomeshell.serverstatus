@@ -2,7 +2,6 @@
 
 import Adw from 'gi://Adw';
 import Gio from 'gi://Gio';
-import GLib from 'gi://GLib';
 import Gtk from 'gi://Gtk';
 
 import {ExtensionPreferences} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
@@ -41,7 +40,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
         // one per server and each itself a list of Adw.PreferencesRows
         const yourServersGroup = new Adw.PreferencesGroup({
             title: 'Your Servers',
-            description: 'Drag and drop to reorder.',
+            description: 'Expand to edit. Drag and drop to reorder.',
         });
         this.page.add(yourServersGroup);
 
@@ -53,7 +52,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
         yourServersGroup.add(this.gtkListBox);
 
         // create one server group per discovered settings
-        const parsedSettings = SettingsParser.parse(this.savedSettings);
+        const parsedSettings = SettingsParser.parseGioSettings(this.savedSettings);
         this.#createServerGroups(parsedSettings);
 
         // add drag & drop to the listBox
@@ -265,31 +264,12 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
      * Save current server settings to gsettings.
      */
     doSave() {
-        const serverSettings = [];
-        if (this.serverGroups !== null) {
-            for (const serverGroup of this.serverGroups) {
-                const settings = serverGroup.settings;
-                if (settings) {
-                    const gSettings = {};
-                    gSettings.name = settings.name.trim();
-                    gSettings.url = settings.url.trim();
-                    gSettings.frequency = settings.frequency.toString();
-                    gSettings.timeout = settings.timeout.toString();
-                    gSettings.isGet = settings.isGet.toString();
-                    gSettings.notifies = settings.notifies.toString();
-                    gSettings.visible = settings.visible.toString();
-                    gSettings.ignoreTLSErrors = settings.ignoreTLSErrors.toString();
-                    gSettings.ignoreRedirects = settings.ignoreRedirects.toString();
-                    serverSettings.push(gSettings);
-                }
-            }
-        }
+        const newVariant = SettingsParser.parseServerSettings(this.serverGroups);
         this.savedSettings.set_value(
-            'server-settings',
-            new GLib.Variant('aa{ss}', serverSettings)
+            'server-settings-2',
+            newVariant
         );
-        // persist
-        Gio.Settings.sync();
+        Gio.Settings.sync(); // persist
     }
 
     /**

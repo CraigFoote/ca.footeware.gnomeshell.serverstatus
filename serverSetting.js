@@ -11,21 +11,23 @@ export class ServerSetting {
      * @param {string} url
      * @param {number} frequency
      * @param {number} timeout
-     * @param {boolean} isGet
+     * @param {string} verb
      * @param {boolean} notifies
      * @param {boolean} visible
      * @param {boolean} ignoreTLSErrors
      * @param {boolean} ignoreRedirects http status 3xx
+     * @param {[Header]} headers array of request header objects
      */
-    constructor(name, url, frequency, timeout, isGet, notifies, visible, ignoreTLSErrors, ignoreRedirects) {
+    constructor(name, url, frequency, timeout, verb, notifies, visible, ignoreTLSErrors, ignoreRedirects, headers) {
         this.name = name;
         this.url = url;
         this.frequency = frequency;
         this.timeout = timeout;
-        this.isGet = isGet;
+        this.verb = verb;
         this.notifies = notifies;
         this.visible = visible;
         this.ignoreTLSErrors = ignoreTLSErrors;
         this.ignoreRedirects = ignoreRedirects;
+        this.headers = headers;
     }
 }

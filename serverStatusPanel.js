@@ -250,6 +250,12 @@ export const ServerStatusPanel = GObject.registerClass(
                 if (this.serverSetting.ignoreRedirects)
                     message.set_flags(Soup.MessageFlags.NO_REDIRECT);
 
+                // do we have custom headers to send
+                if (this.serverSetting.headers) {
+                    for (const header of this.serverSetting.headers)
+                        message.request_headers.append(header.name, header.value);
+                }
+
                 // create a cancellable for this request
                 const cancellable = new Gio.Cancellable();
                 this.pendingCancellables.add(cancellable);

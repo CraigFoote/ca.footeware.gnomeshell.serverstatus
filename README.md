@@ -20,7 +20,9 @@ A GNOME Shell extension with an indicator in the panel displaying status of ente
 
 - There's a per server option to show a notification when it's down. It defaults to false but can easily be switched on.
 
-- There's another per server option to ignore TLS errors. Useful if using a self-signed certificate or for accessing a server whose certificate subject is a domain name but using its IP. Thanks to [FilipLaurentiu](https://github.com/FilipLaurentiu) for that enhancement request.
+- There's another per server option to ignore TLS errors. Useful if using a self-signed certificate or for accessing a server whose certificate subject is a domain name but using its IP, etc. Thanks to [FilipLaurentiu](https://github.com/FilipLaurentiu) for that enhancement request.
+
+- [FilipLaurentiu](https://github.com/FilipLaurentiu) also requested custom request headers, now available per server.
 
 - Servers can be made visible (default) or hidden, where the server is not displayed in the menu and no requests are made to it. Many thanks to [xingwangzhe](https://github.com/xingwangzhe) for that enhancement's pull request.
 
@@ -34,10 +36,11 @@ A GNOME Shell extension with an indicator in the panel displaying status of ente
 
 ![screenshot](assets/screenshot.png)
 
+![screenshot](assets/screenshot-headers.png)
 
 ## Backups
 
-Always a good idea. I thought about adding a backup/restore function but I realized [DConf Editor](https://apps.gnome.org/DconfEditor/) already works well. Just copy the JSON text to a backup file and paste to restore from the file.
+Always a good idea. I thought about adding a backup/restore function but I realized [DConf Editor](https://apps.gnome.org/DconfEditor/) already works well. Just copy the text to a backup file and paste to restore from the file. Just make sure you deal with the newer `server-settings-2` key's value.
 
 ![dconf](assets/dconf.png)
 
