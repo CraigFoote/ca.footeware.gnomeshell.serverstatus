@@ -213,7 +213,7 @@ export const ServerStatusPanel = GObject.registerClass(
             durationIndicator,
             durationIndicatorDisposed
         ) {
-            const httpMethod = this.serverSetting.isGet ? 'GET' : 'HEAD';
+            const httpMethod = this.serverSetting.verb ?? 'HEAD';
             this.#makeRequest(
                 httpMethod,
                 url,
