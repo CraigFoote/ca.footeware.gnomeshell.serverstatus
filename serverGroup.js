@@ -263,7 +263,7 @@ export class ServerGroup {
         if (verb) {
             const numItems = verbModel.get_n_items();
             for (let i = 0; i < numItems; i++) {
-                if (verbModel.get_item(i) === verb) {
+                if (verbModel.get_item(i).get_string() === verb) {
                     this.verbRow.set_selected(i);
                     break;
                 }
