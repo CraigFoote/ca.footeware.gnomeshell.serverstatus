@@ -102,7 +102,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
             pixel_size: 36,
         });
         const serverDownDesc = new Gtk.Label({
-            label: 'If you get a server-down indicator, try switching to GET.\nHTTP HEAD is faster but not always supported.',
+            label: 'If you get a server-down indicator with HEAD, try switching to GET.\nHTTP HEAD is faster but not always supported.',
         });
         serverDownBox.append(serverDownImage);
         serverDownBox.append(serverDownDesc);
@@ -118,7 +118,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
             pixel_size: 36,
         });
         const serverBadDesc = new Gtk.Label({
-            label: "If you get a server-bad indicator, there's something wrong with\nthe URL. It should be of format http[s]://host[:port][/path].",
+            label: "If you get a server-bad indicator, there's something wrong with the URL.\nIt should be of format 'http[s]://host|ip[:port][/path]' for HTTP\nrequests and 'host|ip' for pings.",
         });
         serverBadBox.append(serverBadImage);
         serverBadBox.append(serverBadDesc);

@@ -254,9 +254,9 @@ export class ServerGroup {
 
     #getVerbRow() {
         this.verbRow = new Adw.ComboRow({
-            title: 'Request action verb',
+            title: 'Request verb',
         });
-        const verbModel = Gtk.StringList.new(['HEAD', 'GET']); // TODO ping
+        const verbModel = Gtk.StringList.new(['HEAD', 'GET', 'PING']);
         this.verbRow.set_model(verbModel);
         // init
         const verb = this.settings?.verb ?? null;
