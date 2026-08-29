@@ -1,6 +1,6 @@
 # serverstatus@footeware.ca
 
-A GNOME Shell extension with an indicator in the panel displaying status of entered web server URLs using emojis:
+A GNOME Shell extension with an indicator in the panel displaying status of entered web server URLs, IP's, or host names using emojis:
 
 ![server-init.svg](assets/server-init.svg) initializing...
 
@@ -23,6 +23,8 @@ A GNOME Shell extension with an indicator in the panel displaying status of ente
 - There's another per server option to ignore TLS errors. Useful if using a self-signed certificate or for accessing a server whose certificate subject is a domain name but using its IP, etc. Thanks to [FilipLaurentiu](https://github.com/FilipLaurentiu) for that enhancement request.
 
 - [FilipLaurentiu](https://github.com/FilipLaurentiu) also requested custom request headers, now available per server.
+
+- [alegroleo](https://github.com/alegroleo) requested a `ping` option, now available per server.
 
 - Servers can be made visible (default) or hidden, where the server is not displayed in the menu and no requests are made to it. Many thanks to [xingwangzhe](https://github.com/xingwangzhe) for that enhancement's pull request.
 
