@@ -68,10 +68,12 @@ export class PingOperation {
 
                     if (error) {
                         if (error.includes('Name or service not known') ||
-                            error.includes('Temporary failure in name resolution') ||
-                            error.includes('Network is unreachable')) {
+                            error.includes('Temporary failure in name resolution')) {
                             newIcon = this.iconProvider.getIcon(Status.Bad);
                             reason = error;
+                        } else if (error.includes('Network is unreachable')) {
+                            // networking/sleep/suspend should not notify user
+                            newIcon = this.iconProvider.getIcon(Status.Init);
                         } else {
                             newIcon = this.iconProvider.getIcon(Status.Down);
                             reason = error;

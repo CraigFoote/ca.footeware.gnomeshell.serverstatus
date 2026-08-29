@@ -93,13 +93,13 @@ export class HttpOperation {
                             // make this call to get exception if exists
                             session.send_and_read_finish(result);
                         } catch (e) {
-                            [reason, newIcon] = this.#handleReadFinishErrors(e, this.panelIcon);
+                            [reason, newIcon] = this.#handleReadFinishErrors(e);
                         }
                     }
 
                     if (!newIcon) {
                         // process response to get the icon and possibly a reason
-                        [reason, newIcon, timedOut] = this.#processResponse(duration, message, this.panelIcon);
+                        [reason, newIcon, timedOut] = this.#processResponse(duration, message);
                     }
 
                     // update UI
@@ -118,12 +118,11 @@ export class HttpOperation {
      * Create a reason and appropriate icon from the provided error.
      *
      * @param {Gio.*} error
-     * @param {St.Icon} panelIcon
      * @returns [{String}, {St.Icon}]
      */
-    #handleReadFinishErrors(error, panelIcon) {
+    #handleReadFinishErrors(error) {
         let reason, newIcon;
-        if (panelIcon && this.panel.iconProvider) {
+        if (this.iconProvider) {
             // do not check for Gio.TlsError as it's handled later
             if (error instanceof Gio.IOErrorEnum) {
                 if (error.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED) ||
@@ -131,17 +130,17 @@ export class HttpOperation {
                     // Cancelled due to OS suspend & unreachable due to network outage.
                     // Neither should notify user when it returns - use init status.
                     // No reason & no notification.
-                    newIcon = this.panel.iconProvider.getIcon(Status.Init);
+                    newIcon = this.iconProvider.getIcon(Status.Init);
                 } else if (error.matches(Gio.IOErrorEnum, Gio.IOErrorEnum.TIMED_OUT)) {
                     // Let upcoming duration calc handle time outs; no icon or reason here.
                     // This allows for duration display as well as notification.
                 } else {
                     // unknown error
                     reason = `An error occurred: ${error.message}`;
-                    newIcon = this.panel.iconProvider.getIcon(Status.Down);
+                    newIcon = this.iconProvider.getIcon(Status.Down);
                 }
             } else if (error instanceof Gio.ResolverError) {
-                newIcon = this.panel.iconProvider.getIcon(Status.Init);
+                newIcon = this.iconProvider.getIcon(Status.Init);
             }
         }
         return [reason, newIcon];
@@ -153,15 +152,14 @@ export class HttpOperation {
      *
      * @param {number} duration
      * @param {Soup.Message} message
-     * @param {Gio.icon} panelIcon
      * @returns [reason, newIcon, timedOut] [{String}, {Gio.Icon}, {boolean}]
      */
-    #processResponse(duration, message, panelIcon) {
+    #processResponse(duration, message) {
         let reason, newIcon;
         let timedOut = false;
 
         // parse result if emoji widget hasn't been destroyed
-        if (panelIcon && this.iconProvider) {
+        if (this.iconProvider) {
             // 429 Too Many Requests causes a 'bad Soup enum' error 🤨; use try-catch
             try {
                 const soupStatus = message.status_code;
