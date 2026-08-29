@@ -29,7 +29,6 @@ export class HttpOperation {
         panel.connect('destroy', () => {
             this.cancellable.cancel();
             this.cancellable = null;
-
             this.settings = null;
             this.session = null;
             this.panelIcon = null;
@@ -76,15 +75,13 @@ export class HttpOperation {
                     let timedOut = false;
 
                     timedOut = duration > (this.session?.get_timeout() * 1000);
-                    if (timedOut) {
+                    if (timedOut && this.iconProvider) {
                         newIcon = this.iconProvider.getIcon(Status.Down);
                         reason = `Timed out at ${duration / 1000}s`;
-                    } else if (error) {
+                    } else if (error && this.iconProvider) {
                         // extension unable to send request
-                        if (this.iconProvider) {
-                            reason = error.toString();
-                            newIcon = this.iconProvider.getIcon(Status.Bad);
-                        }
+                        reason = error.toString();
+                        newIcon = this.iconProvider.getIcon(Status.Bad);
                     }
 
                     if (!newIcon) {
@@ -110,7 +107,7 @@ export class HttpOperation {
         } else if (this.panelIcon && this.iconProvider) {
             // message was null because of malformed url
             this.panelIcon.gicon = this.iconProvider.getIcon(Status.Bad);
-            this.updateTaskbarCallback?.();
+            this.completeCallback();
         }
     }
 
@@ -229,14 +226,14 @@ export class HttpOperation {
                 const locationHeader = responseHeaders.get_one('Location');
                 if (!locationHeader || locationHeader.length === 0) {
                     reason = `Server returned ${soupStatus} ${soupStatusText} but there was no 'Location' response header to follow.`;
-                    newIcon = this.panel.iconProvider.getIcon(Status.Down); // failure
+                    newIcon = this.iconProvider.getIcon(Status.Down); // failure
                 } else {
-                    newIcon = this.panel.iconProvider.getIcon(Status.Up); // success
+                    newIcon = this.iconProvider.getIcon(Status.Up); // success
                     // no error, no reason, no notification
                 }
             } else {
                 // one of the other 3xx statuses that don't require a 'Location' response header
-                newIcon = this.panel.iconProvider.getIcon(Status.Up); // success
+                newIcon = this.iconProvider.getIcon(Status.Up); // success
                 // no error, no reason, no notification
             }
         }
