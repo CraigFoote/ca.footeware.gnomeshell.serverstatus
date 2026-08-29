@@ -67,7 +67,9 @@ export class PingOperation {
                     const [_, __, error] = proc.communicate_utf8_finish(res);
 
                     if (error) {
-                        if (error.includes('Name or service not known') || error.includes('Temporary failure in name resolution')) {
+                        if (error.includes('Name or service not known') ||
+                            error.includes('Temporary failure in name resolution') ||
+                            error.includes('Network is unreachable')) {
                             newIcon = this.iconProvider.getIcon(Status.Bad);
                             reason = error;
                         } else {
