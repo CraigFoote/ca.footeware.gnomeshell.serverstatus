@@ -76,23 +76,26 @@ export class ServerGroup {
         }));
 
         // suffix: indicator icons and buttons
-        const suffixBox = this.#getSuffixBox();
+        const suffixBox = this.#createSuffixBox();
         this.expanderRow.add_suffix(suffixBox);
 
-        const nameRow = this.#getNameRow();
+        const nameRow = this.getNameRow();
         this.expanderRow.add_row(nameRow);
 
-        const urlRow = this.#getUrlRow();
+        const urlRow = this.#createUrlRow();
         this.expanderRow.add_row(urlRow);
 
-        const frequencyRow = this.#getFrequencyRow();
+        const verbRow = this.#createVerbRow();
+        this.expanderRow.add_row(verbRow);
+
+        const frequencyRow = this.#createFrequencyRow();
         this.expanderRow.add_row(frequencyRow);
 
-        const timeoutRow = this.#getTimeoutRow();
+        const timeoutRow = this.#createTimeoutRow();
         this.expanderRow.add_row(timeoutRow);
 
-        const verbRow = this.#getVerbRow();
-        this.expanderRow.add_row(verbRow);
+        const useNotificationsRow = this.#getUseNotificationsRow();
+        this.expanderRow.add_row(useNotificationsRow);
 
         const ignoreTLSErrorsRow = this.#getIgnoreTLSErrorsRow();
         this.expanderRow.add_row(ignoreTLSErrorsRow);
@@ -100,26 +103,23 @@ export class ServerGroup {
         const ignoreRedirectsRow = this.#getIgnoreRedirectsRow();
         this.expanderRow.add_row(ignoreRedirectsRow);
 
-        const useNotificationsRow = this.#getUseNotificationsRow();
-        this.expanderRow.add_row(useNotificationsRow);
-
         const headersRow = this.#getHeadersRow();
         this.expanderRow.add_row(headersRow);
 
         return this.expanderRow;
     }
 
-    #getSuffixBox() {
+    #createSuffixBox() {
         const suffixBox = new Gtk.Box({
             orientation: Gtk.Orientation.HORIZONTAL,
             spacing: 4,
         });
 
         // assemble and add indicators
-        suffixBox.append(this.#getIndicatorsBox());
+        suffixBox.append(this.#createIndicatorsBox());
 
         // assemble and add buttons
-        suffixBox.append(this.#getExpanderButtonsBox());
+        suffixBox.append(this.#createExpanderButtonsBox());
 
         return suffixBox;
     }
@@ -129,7 +129,7 @@ export class ServerGroup {
      *
      * @returns {Gtk.Box}
      */
-    #getIndicatorsBox() {
+    #createIndicatorsBox() {
         const indicatorsBox = new Gtk.Box({
             orientation: Gtk.Orientation.HORIZONTAL,
             spacing: 2,
@@ -173,7 +173,7 @@ export class ServerGroup {
      *
      * @returns {Gtk.Box}
      */
-    #getExpanderButtonsBox() {
+    #createExpanderButtonsBox() {
         const buttonsBox = new Gtk.Box({
             orientation: Gtk.Orientation.HORIZONTAL,
             spacing: 2,
@@ -208,19 +208,21 @@ export class ServerGroup {
         return buttonsBox;
     }
 
-    #getNameRow() {
-        this.nameRow = new Adw.EntryRow({
-            title: 'Name',
-            text: this.settings?.name ?? '',
-            show_apply_button: true,
-        });
-        this.nameHandlerId = this.nameRow.connect('apply', () => {
-            this.update();
-        });
+    getNameRow() {
+        if (!this.nameRow) {
+            this.nameRow = new Adw.EntryRow({
+                title: 'Name',
+                text: this.settings?.name ?? '',
+                show_apply_button: true,
+            });
+            this.nameHandlerId = this.nameRow.connect('apply', () => {
+                this.update();
+            });
+        }
         return this.nameRow;
     }
 
-    #getUrlRow() {
+    #createUrlRow() {
         this.urlRow = new Adw.EntryRow({
             title: 'URL',
             text: this.settings?.url ?? '',
@@ -232,7 +234,7 @@ export class ServerGroup {
         return this.urlRow;
     }
 
-    #getFrequencyRow() {
+    #createFrequencyRow() {
         this.frequencyRow = Adw.SpinRow.new_with_range(10, 600, 10); // 10m freq limit
         this.frequencyRow.set_value(this.settings?.frequency ?? 120);
         this.frequencyRow.set_title('Frequency (secs.)');
@@ -242,7 +244,7 @@ export class ServerGroup {
         return this.frequencyRow;
     }
 
-    #getTimeoutRow() {
+    #createTimeoutRow() {
         this.timeoutRow = Adw.SpinRow.new_with_range(1, 300, 1); // 5m timeout limit
         this.timeoutRow.set_value(this.settings?.timeout ?? 10);
         this.timeoutRow.set_title('Timeout (secs.)');
@@ -252,7 +254,7 @@ export class ServerGroup {
         return this.timeoutRow;
     }
 
-    #getVerbRow() {
+    #createVerbRow() {
         this.verbRow = new Adw.ComboRow({
             title: 'Request verb',
         });
@@ -276,53 +278,72 @@ export class ServerGroup {
     }
 
     #getIgnoreTLSErrorsRow() {
-        this.ignoreTLSErrorsRow = new Adw.SwitchRow({
-            title: 'Ignore TLS certificate errors',
-            subtitle: 'self-signed, etc.',
-        });
-        const ignoreTLSErrors = this.settings?.ignoreTLSErrors ?? false;
-        this.ignoreTLSErrorsRow.set_active(ignoreTLSErrors);
-        this.ignoreTLSErrorsHandlerId = this.ignoreTLSErrorsRow.connect('notify::active', () => {
-            this.update();
-        });
+        if (!this.ignoreTLSErrorsRow) {
+            this.ignoreTLSErrorsRow = new Adw.SwitchRow({
+                title: 'Ignore TLS certificate errors',
+                subtitle: 'self-signed, etc.',
+            });
+
+            const havePing = this.verbRow.selected_item.get_string() === 'PING';
+            this.ignoreTLSErrorsRow.set_sensitive(!havePing);
+
+            const ignoreTLSErrors = this.settings?.ignoreTLSErrors ?? false;
+            this.ignoreTLSErrorsRow.set_active(ignoreTLSErrors);
+            this.ignoreTLSErrorsHandlerId = this.ignoreTLSErrorsRow.connect('notify::active', () => {
+                this.update();
+            });
+        }
         return this.ignoreTLSErrorsRow;
     }
 
     #getIgnoreRedirectsRow() {
-        this.ignoreRedirectsRow = new Adw.SwitchRow({
-            title: 'Do not follow redirects',
-            subtitle: 'Treat 3xx status codes as success.',
-        });
-        const ignoreRedirects = this.settings?.ignoreRedirects ?? false;
-        this.ignoreRedirectsRow.set_active(ignoreRedirects);
-        this.ignoreRedirectsHandlerId = this.ignoreRedirectsRow.connect('notify::active', () => {
-            this.update();
-        });
+        if (!this.ignoreRedirectsRow) {
+            this.ignoreRedirectsRow = new Adw.SwitchRow({
+                title: 'Do not follow redirects',
+                subtitle: 'Treat 3xx status codes as success.',
+            });
+            const ignoreRedirects = this.settings?.ignoreRedirects ?? false;
+
+            const havePing = this.verbRow.selected_item.get_string() === 'PING';
+            this.ignoreRedirectsRow.set_sensitive(!havePing);
+
+            this.ignoreRedirectsRow.set_active(ignoreRedirects);
+            this.ignoreRedirectsHandlerId = this.ignoreRedirectsRow.connect('notify::active', () => {
+                this.update();
+            });
+        }
         return this.ignoreRedirectsRow;
     }
 
     #getUseNotificationsRow() {
-        this.useNotificationsRow = new Adw.SwitchRow({
-            title: 'Notify when down',
-            subtitle: 'Displays a desktop notification.',
-        });
-        const notifies = this.settings?.notifies ?? false;
-        this.useNotificationsRow.set_active(notifies);
-        this.useNotificationsHandlerId = this.useNotificationsRow.connect('notify::active', () => {
-            this.update();
-        });
+        if (!this.useNotificationsRow) {
+            this.useNotificationsRow = new Adw.SwitchRow({
+                title: 'Notify when down',
+                subtitle: 'Displays a desktop notification.',
+            });
+            const notifies = this.settings?.notifies ?? false;
+            this.useNotificationsRow.set_active(notifies);
+            this.useNotificationsHandlerId = this.useNotificationsRow.connect('notify::active', () => {
+                this.update();
+            });
+        }
         return this.useNotificationsRow;
     }
 
     #getHeadersRow() {
-        const headersRow = new Adw.ButtonRow({
-            title: 'Request Headers',
-        });
-        headersRow.set_end_icon_name('go-next');
-        headersRow.connect('activated', () => {
-            this.#openHeadersDialog();
-        });
-        return headersRow;
+        if (!this.headersRow) {
+            this.headersRow = new Adw.ButtonRow({
+                title: 'Request Headers',
+            });
+            this.headersRow.set_end_icon_name('go-next');
+            this.headersRow.connect('activated', () => {
+                this.#openHeadersDialog();
+            });
+
+            const havePing = this.verbRow.selected_item.get_string() === 'PING';
+            this.headersRow.set_sensitive(!havePing);
+        }
+        return this.headersRow;
     }
 
     #openHeadersDialog() {
@@ -382,6 +403,10 @@ export class ServerGroup {
         this.#createServerSettings();
         this.preferences.doSave();
         this.updateExpander();
+        const havePing = this.verbRow.selected_item.get_string() === 'PING';
+        this.ignoreRedirectsRow.set_sensitive(!havePing);
+        this.ignoreTLSErrorsRow.set_sensitive(!havePing);
+        this.headersRow.set_sensitive(!havePing);
     }
 
     /**
@@ -412,15 +437,6 @@ export class ServerGroup {
      */
     getGroup() {
         return this.serverSettingGroup;
-    }
-
-    /**
-     * Returns the _Name_ `EntryRow`.
-     *
-     * @returns {Adw.EntryRow}
-     */
-    getNameInput() {
-        return this.nameRow;
     }
 
     /**

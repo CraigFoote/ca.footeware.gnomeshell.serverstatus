@@ -75,11 +75,15 @@ export class HttpOperation {
                     let newIcon;
                     let timedOut = false;
 
-                    if (error) {
+                    timedOut = duration > (this.session?.get_timeout() * 1000);
+                    if (timedOut) {
+                        newIcon = this.iconProvider.getIcon(Status.Down);
+                        reason = `Timed out at ${duration / 1000}s`;
+                    } else if (error) {
                         // extension unable to send request
                         if (this.iconProvider) {
                             reason = error.toString();
-                            newIcon = this.iconProvider.getIcon(Status.Init);
+                            newIcon = this.iconProvider.getIcon(Status.Bad);
                         }
                     }
 
@@ -176,7 +180,7 @@ export class HttpOperation {
                 ) {
                     // request timed out
                     timedOut = true;
-                    reason = `This server timed out after ${duration / 1000} seconds.`;
+                    reason = `Timed out at ${duration / 1000}s`;
                     newIcon = this.iconProvider.getIcon(Status.Down);
                 } else if (soupStatus >= 200 && soupStatus < 300) {
                     // consider 200 through 299 success result

@@ -211,7 +211,7 @@ export const ServerStatusPanel = GObject.registerClass(
                 // update response time label if it hasn't been destroyed
                 let durationText = '';
                 if (timedOut)
-                    durationText = `timed out @ ${this.session.get_timeout()}s`;
+                    durationText = `Timed out at ${duration}ms`;
                 else if (duration)
                     durationText = `${duration}ms`;
 
@@ -270,15 +270,17 @@ export const ServerStatusPanel = GObject.registerClass(
          *
          * @param {string} url
          */
-        #openBrowser(url) {
-            Gio.AppInfo.launch_default_for_uri_async(
-                url,
-                null,
-                null,
-                (appInfo, result) => {
-                    Gio.AppInfo.launch_default_for_uri_finish(result);
-                }
-            );
+        async #openBrowser(url) {
+            if (url.startsWith('http')) {
+                await Gio.AppInfo.launch_default_for_uri_async(
+                    url,
+                    null,
+                    null,
+                    (appInfo, result) => {
+                        Gio.AppInfo.launch_default_for_uri_finish(result);
+                    }
+                );
+            }
         }
     }
 );

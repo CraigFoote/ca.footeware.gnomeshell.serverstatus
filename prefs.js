@@ -206,7 +206,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
         this.#addDragDropSupportToRow(gtkListBoxRow);
 
         // make name field focused
-        newGroup.getNameInput().grab_focus();
+        newGroup.getNameRow().grab_focus();
     }
 
     /**

@@ -62,37 +62,36 @@ export class PingOperation {
                 timedOut = duration > (this.session?.get_timeout() * 1000);
                 if (timedOut) {
                     newIcon = this.iconProvider.getIcon(Status.Down);
-                    reason = 'Timed out';
+                    reason = `Timed out at ${duration / 1000}s`;
                 } else {
-                    try {
-                        const [_, __, error] = proc.communicate_utf8_finish(res);
+                    const [_, __, error] = proc.communicate_utf8_finish(res);
 
-                        if (error) {
-                            // @TODO 'Temporary failure in name resolution' should be `Status.Bad` but `error` is a simple string.
-                            newIcon = this.iconProvider.getIcon(Status.Down);
+                    if (error) {
+                        if (error.includes('Name or service not known') || error.includes('Temporary failure in name resolution')) {
+                            newIcon = this.iconProvider.getIcon(Status.Bad);
                             reason = error;
                         } else {
-                            const success = proc.get_successful();
-                            if (success) {
-                                newIcon = this.iconProvider.getIcon(Status.Up); // no need for reason
-                            } else {
-                                newIcon = this.iconProvider.getIcon(Status.Down);
-                                reason = 'Unknown error';
-                            }
+                            newIcon = this.iconProvider.getIcon(Status.Down);
+                            reason = error;
                         }
-                    } catch (e) {
-                        newIcon = this.iconProvider.getIcon(Status.Down);
-                        reason = e.toString();
+                    } else {
+                        const success = proc.get_successful();
+                        if (success) {
+                            newIcon = this.iconProvider.getIcon(Status.Up); // no need for reason
+                        } else {
+                            newIcon = this.iconProvider.getIcon(Status.Down);
+                            reason = 'Ping failed';
+                        }
                     }
                 }
                 this.panel.updateGUI(reason, newIcon, timedOut, duration);
-
                 this.completeCallback();
             });
         } catch (e) {
             newIcon = this.iconProvider.getIcon(Status.Down);
             reason = e.toString();
             this.panel.updateGUI(reason, newIcon, timedOut, duration);
+            this.completeCallback();
         }
     }
 
