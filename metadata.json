@@ -3,7 +3,8 @@
     "name": "Server Status Indicator",
     "shell-version": [
         "49",
-        "50"
+        "50",
+        "51"
     ],
     "url": "https://github.com/CraigFoote/ca.footeware.gnomeshell.serverstatus.git",
     "uuid": "serverstatus@footeware.ca",
