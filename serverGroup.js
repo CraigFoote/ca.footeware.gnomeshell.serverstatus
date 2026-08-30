@@ -443,8 +443,7 @@ export class ServerGroup {
      * Create a `ServerSetting` based on control values.
      */
     #createServerSettings() {
-        const index = this.verbRow.selected;
-        const verbText = index >= 0 ? this.verbRow.get_model().get_string(index) : '';
+        const verbText = this.verbRow.selected_item.get_string();
         this.settings = new ServerSetting(
             this.nameRow.text,
             this.urlRow.text,

@@ -71,8 +71,10 @@ export class SettingsParser {
                 if (key === 'headers') {
                     // headers: value is 'aa{sv}', an array of maps with 'name' and 'value' string keys and string values
                     const headersArray = [];
+                    // value is an array of headers
                     for (const header of value) {
                         const headerMap = {};
+                        // each header has a name and value, add to headerMap and wrap the value
                         for (const headerKey in header) {
                             const headerValue = header[headerKey];
                             // wrapping - the value has to be a Variant, it's the v in aa{sv}
@@ -105,7 +107,7 @@ export class SettingsParser {
      * Convert old schema's `isGet` boolean property to a new `verb` string.
      *
      * @param {ServerSetting} setting
-     * @returns `string` the request action verb
+     * @returns `string` the request verb
      */
     static #getVerb(setting) {
         let isGet = false; // defaults to false

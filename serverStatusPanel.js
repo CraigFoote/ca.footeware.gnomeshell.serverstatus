@@ -18,7 +18,8 @@ let notificationSource;
 
 /**
  * A series of these panels are shown when the indicator icon is clicked.
- * Each shows a server status and name, and opens a browser to its URL when clicked.
+ * Each shows a server status and name, and, when it's an HTTP or HTTPS url,
+ * opens a browser to it when clicked. If it's a PING, no action occurs on click.
  */
 export const ServerStatusPanel = GObject.registerClass(
     {
@@ -86,7 +87,7 @@ export const ServerStatusPanel = GObject.registerClass(
             // call once then schedule
             this.#update();
 
-            // schedule recurring http requests
+            // schedule recurring requests
             this.intervalID = GLib.timeout_add(
                 GLib.PRIORITY_DEFAULT,
                 serverSetting.frequency * 1000,
@@ -209,14 +210,14 @@ export const ServerStatusPanel = GObject.registerClass(
                 // update row icon
                 this.panelIcon.gicon = newIcon;
                 // update response time label if it hasn't been destroyed
-                let durationText = '';
-                if (timedOut)
-                    durationText = `Timed out at ${duration}ms`;
-                else if (duration)
-                    durationText = `${duration}ms`;
-
-                if (this.durationIndicator)
+                if (this.durationIndicator) {
+                    let durationText = '';
+                    if (timedOut)
+                        durationText = `Timed out at ${duration}ms`;
+                    else if (duration)
+                        durationText = `${duration}ms`;
                     this.durationIndicator.text = durationText;
+                }
 
                 // notify user if we are notifying and status is down
                 if (this.serverSetting.notifies && (this.iconProvider.getStatus(newIcon) === Status.Down))

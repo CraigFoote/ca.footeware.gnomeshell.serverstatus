@@ -278,12 +278,14 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
      * @param {ServerGroup} serverGroup
      */
     doDelete(serverGroup) {
+        const serverName = serverGroup.getNameRow().text.trim();
+        const validName = serverName.length > 0;
         const messageDialog = new Adw.MessageDialog({
             transient_for: this.window,
             destroy_with_parent: true,
             modal: true,
             heading: 'Confirm Delete',
-            body: 'Are you sure you want to delete this server?',
+            body: `Are you sure you want to delete ${validName ? serverName : 'this server'}?`,
         });
         messageDialog.add_response('cancel', '_Cancel');
         messageDialog.add_response('delete', '_Delete');
