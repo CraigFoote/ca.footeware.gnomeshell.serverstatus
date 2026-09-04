@@ -118,7 +118,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
             pixel_size: 36,
         });
         const serverBadDesc = new Gtk.Label({
-            label: "If you get a server-bad indicator, there's something wrong with the URL.\nIt should be of format 'http[s]://host|ip[:port][/path]' for HTTP\nrequests and 'host|ip' for pings.",
+            label: "If you get a server-bad indicator, there's something wrong with the URL.\nIt should be of format 'http[s]://host|ip[:port][/path]' for HEAD or GET\nrequests and 'host|ip' for pings.",
         });
         serverBadBox.append(serverBadImage);
         serverBadBox.append(serverBadDesc);
