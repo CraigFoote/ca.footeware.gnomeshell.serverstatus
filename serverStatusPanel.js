@@ -30,12 +30,14 @@ export const ServerStatusPanel = GObject.registerClass(
             serverSetting,
             updateTaskbarCallback,
             iconProvider,
+            isNotifyingCallback,
             ...otherProps
         ) {
             super(otherProps);
             this.serverSetting = serverSetting;
             this.updateTaskbarCallback = updateTaskbarCallback;
             this.iconProvider = iconProvider;
+            this.isNotifyingCallback = isNotifyingCallback;
 
             // mouse rollover
             this.track_hover = true;
@@ -77,7 +79,7 @@ export const ServerStatusPanel = GObject.registerClass(
                 style_class: 'duration',
             });
             const durationIndicatorContainer = new St.Bin({
-                style_class: 'bin',
+                style_class: 'right-align',
                 x_expand: true,
                 x_align: Clutter.ActorAlign.END,
                 child: this.durationIndicator,
@@ -125,6 +127,7 @@ export const ServerStatusPanel = GObject.registerClass(
                 this.serverSetting = null;
                 this.updateTaskbarCallback = null;
                 this.iconProvider = null;
+                this.isNotifyingCallback = null;
                 this.durationIndicator = null;
             });
         }
@@ -235,6 +238,9 @@ export const ServerStatusPanel = GObject.registerClass(
          * @param {string} reason
          */
         #fireNotification(icon, reason) {
+            if (!this.isNotifyingCallback?.())
+                return;
+
             const source = this.#getNotificationSource();
             const notification = new MessageTray.Notification({
                 source,

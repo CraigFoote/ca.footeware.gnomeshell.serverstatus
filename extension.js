@@ -40,20 +40,63 @@ export default class ServerStatusIndicatorExtension extends Extension {
         // ServerStatusPanels, one per server setting
         this.createStatusPanels();
 
+        // button box for the prefs and notifs buttons
+        const buttonBox = new St.BoxLayout({
+            orientation: Clutter.Orientation.HORIZONTAL,
+            x_expand: true,
+        });
+
+        this.indicator.menu.box.add_child(buttonBox);
+
         // Open Prefs button
         this.prefsButton = new St.Button({
             icon_name: 'preferences-system-symbolic',
-            style_class: 'prefs-button padded',
+            style_class: 'panel-button padded',
             track_hover: true,
             reactive: true,
+            x_expand: true,
+            x_align: Clutter.ActorAlign.FILL,
+            can_focus: true,
             accessible_name: 'Preferences',
         });
         this.prefsButtonId = this.prefsButton.connect('clicked', async () => {
             this.indicator.menu.close();
             await this.openPreferences();
         });
+        // aligning container
+        const prefsBin = new St.Bin({
+            x_expand: true,
+            x_align: Clutter.ActorAlign.FILL,
+        });
+        prefsBin.child = this.prefsButton;
 
-        this.indicator.menu.box.add_child(this.prefsButton);
+        buttonBox.add_child(prefsBin);
+
+        // Toggle Notifications button
+        this.notifsButton = new St.Button({
+            icon_name: 'org.gnome.Settings-notifications-symbolic',
+            style_class: 'panel-button padded',
+            track_hover: true,
+            reactive: true,
+            x_expand: true,
+            x_align: Clutter.ActorAlign.FILL,
+            can_focus: true,
+            accessible_name: 'Toggle Notifications',
+        });
+        this.notifsButtonId = this.notifsButton.connect('clicked', () => {
+            if (this.notifsButton.icon_name === 'org.gnome.Settings-notifications-symbolic')
+                this.notifsButton.icon_name = 'notifications-disabled-symbolic';
+            else
+                this.notifsButton.icon_name = 'org.gnome.Settings-notifications-symbolic';
+        });
+        // aligning container
+        const notifsBin = new St.Bin({
+            x_expand: true,
+            x_align: Clutter.ActorAlign.FILL,
+        });
+        notifsBin.child = this.notifsButton;
+
+        buttonBox.add_child(notifsBin);
 
         // listen for changes to server settings in gsettings and update display
         this.extensionListenerId = this.rawSettings.connect('changed', () => {
@@ -84,6 +127,12 @@ export default class ServerStatusIndicatorExtension extends Extension {
             this.prefsButton.destroy();
             this.prefsButton = null;
             this.prefsButtonId = null;
+        }
+        if (this.notifsButton && this.notifsButtonId) {
+            this.notifsButton.disconnect(this.notifsButtonId);
+            this.notifsButton.destroy();
+            this.notifsButton = null;
+            this.notifsButtonId = null;
         }
         // disconnect listener for pref changes
         if (this.rawSettings && this.extensionListenerId) {
@@ -137,7 +186,8 @@ export default class ServerStatusIndicatorExtension extends Extension {
                 const panel = new ServerStatusPanel(
                     savedSetting,
                     () => this.updateIcon(),
-                    this.iconProvider
+                    this.iconProvider,
+                    () => this.isNotifying() // callback
                 );
                 this.serversBox.add_child(panel);
                 this.indicator.addStatusPanel(panel);
@@ -183,11 +233,21 @@ export default class ServerStatusIndicatorExtension extends Extension {
                 const panel = new ServerStatusPanel(
                     savedSetting,
                     () => this.updateIcon(), // callback
-                    this.iconProvider
+                    this.iconProvider,
+                    () => this.isNotifying() // callback
                 );
                 this.serversBox.add_child(panel);
                 this.indicator.addStatusPanel(panel);
             }
         }
+    }
+
+    /**
+     * Determines if this extension is currently notifying user when a server is down.
+     *
+     * @returns boolean true if this extension should notify user
+     */
+    isNotifying() {
+        return this.notifsButton?.icon_name === 'org.gnome.Settings-notifications-symbolic';
     }
 }
