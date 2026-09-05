@@ -32,7 +32,7 @@ A GNOME Shell extension with an indicator in the panel displaying status of ente
 
 - Install at [extensions.gnome.org](https://extensions.gnome.org/extension/4687/server-status-indicator/) or use [Extension Manager](https://flathub.org/en/apps/com.mattjakeman.ExtensionManager).
 
-- To customize, the four **.svg** files in the **assets** folder can be swapped out with your own icons. Just keep the same filenames.
+- To customize, the four **server-*.svg** files in the **assets** folder can be swapped out with your own icons. Just keep the same filenames.
 
 ---
 
