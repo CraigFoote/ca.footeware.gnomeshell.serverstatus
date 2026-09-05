@@ -49,8 +49,11 @@ export default class ServerStatusIndicatorExtension extends Extension {
         this.indicator.menu.box.add_child(buttonBox);
 
         // Open Prefs button
+        this.prefsIcon = new St.Icon({
+            gicon: this.iconProvider.getPreferencesIcon(),
+            style_class: 'panel-button',
+        });
         this.prefsButton = new St.Button({
-            icon_name: 'preferences-system-symbolic',
             style_class: 'panel-button padded',
             track_hover: true,
             reactive: true,
@@ -58,6 +61,7 @@ export default class ServerStatusIndicatorExtension extends Extension {
             x_align: Clutter.ActorAlign.FILL,
             can_focus: true,
             accessible_name: 'Preferences',
+            child: this.prefsIcon,
         });
         this.prefsButtonId = this.prefsButton.connect('clicked', async () => {
             this.indicator.menu.close();
@@ -73,8 +77,11 @@ export default class ServerStatusIndicatorExtension extends Extension {
         buttonBox.add_child(prefsBin);
 
         // Toggle Notifications button
+        this.notifsIcon = new St.Icon({
+            gicon: this.iconProvider.getNotificationsIcon(true),
+            style_class: 'panel-button',
+        });
         this.notifsButton = new St.Button({
-            icon_name: 'org.gnome.Settings-notifications-symbolic',
             style_class: 'panel-button padded',
             track_hover: true,
             reactive: true,
@@ -82,12 +89,14 @@ export default class ServerStatusIndicatorExtension extends Extension {
             x_align: Clutter.ActorAlign.FILL,
             can_focus: true,
             accessible_name: 'Toggle Notifications',
+            child:  this.notifsIcon,
         });
         this.notifsButtonId = this.notifsButton.connect('clicked', () => {
-            if (this.notifsButton.icon_name === 'org.gnome.Settings-notifications-symbolic')
-                this.notifsButton.icon_name = 'notifications-disabled-symbolic';
+            // swap icons
+            if (this.notifsIcon.gicon === this.iconProvider.getNotificationsIcon(true))
+                this.notifsIcon.gicon = this.iconProvider.getNotificationsIcon(false); // false for -no icon
             else
-                this.notifsButton.icon_name = 'org.gnome.Settings-notifications-symbolic';
+                this.notifsIcon.gicon = this.iconProvider.getNotificationsIcon(true);
         });
         // aligning container
         const notifsBin = new St.Bin({
@@ -164,6 +173,8 @@ export default class ServerStatusIndicatorExtension extends Extension {
             this.iconProvider = null;
         }
         // clean up other stuff
+        this.notifsIcon = null;
+        this.prefsIcon = null;
         this.savedSettings.length = 0; // dereference elements
         this.savedSettings = null;
         this.rawSettings.length = 0; // dereference elements
@@ -248,6 +259,6 @@ export default class ServerStatusIndicatorExtension extends Extension {
      * @returns boolean true if this extension should notify user
      */
     isNotifying() {
-        return this.notifsButton?.icon_name === 'org.gnome.Settings-notifications-symbolic';
+        return this.notifsIcon.gicon === this.iconProvider.getNotificationsIcon(true);
     }
 }
