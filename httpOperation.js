@@ -252,7 +252,7 @@ export class HttpOperation {
             // cert failure?
             const certificateErrors = message.get_tls_peer_certificate_errors();
             if (certificateErrors) {
-                if (this.serverSetting.ignoreTLSErrors) {
+                if (this.settings.ignoreTLSErrors) {
                     // consider this server up
                     newIcon = this.panel.iconProvider.getIcon(Status.Up);
                 } else {
