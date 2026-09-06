@@ -1,6 +1,6 @@
 # serverstatus@footeware.ca
 
-A GNOME Shell extension with an indicator in the panel displaying status of entered web server URLs using emojis:
+A GNOME Shell extension with an indicator in the panel displaying status of entered web server URLs, IP's, or host names using emojis:
 
 ![server-init.svg](assets/server-init.svg) initializing...
 
@@ -24,13 +24,15 @@ A GNOME Shell extension with an indicator in the panel displaying status of ente
 
 - [FilipLaurentiu](https://github.com/FilipLaurentiu) also requested custom request headers, now available per server.
 
+- [alegroleo](https://github.com/alegroleo) requested a `ping` option, now available per server.
+
 - Servers can be made visible (default) or hidden, where the server is not displayed in the menu and no requests are made to it. Many thanks to [xingwangzhe](https://github.com/xingwangzhe) for that enhancement's pull request.
 
 - If the host OS goes into suspend mode, the http requests are paused until network connectivity is back. Thanks to [neophiliac](https://github.com/neophiliac) for the design discussions and testing.
 
 - Install at [extensions.gnome.org](https://extensions.gnome.org/extension/4687/server-status-indicator/) or use [Extension Manager](https://flathub.org/en/apps/com.mattjakeman.ExtensionManager).
 
-- To customize, the four **.svg** files in the **assets** folder can be swapped out with your own icons. Just keep the same filenames.
+- To customize, the four **server-*.svg** files in the **assets** folder can be swapped out with your own icons. Just keep the same filenames.
 
 ---
 

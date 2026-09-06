@@ -16,7 +16,7 @@ export class ServerSetting {
      * @param {boolean} visible
      * @param {boolean} ignoreTLSErrors
      * @param {boolean} ignoreRedirects http status 3xx
-     * @param {[Header]} headers array of request header objects
+     * @param {[Header]} headers array of http request header objects
      */
     constructor(name, url, frequency, timeout, verb, notifies, visible, ignoreTLSErrors, ignoreRedirects, headers) {
         this.name = name;

@@ -40,20 +40,72 @@ export default class ServerStatusIndicatorExtension extends Extension {
         // ServerStatusPanels, one per server setting
         this.createStatusPanels();
 
-        // Open Prefs button
-        this.prefsButton = new St.Button({
-            icon_name: 'preferences-system-symbolic',
-            style_class: 'prefs-button padded',
-            track_hover: true,
-            reactive: true,
-            accessible_name: 'Preferences',
-        });
-        this.prefsButtonId = this.prefsButton.connect('clicked', () => {
-            this.indicator.menu.close();
-            this.openPreferences();
+        // button box for the prefs and notifs buttons
+        const buttonBox = new St.BoxLayout({
+            orientation: Clutter.Orientation.HORIZONTAL,
+            x_expand: true,
         });
 
-        this.indicator.menu.box.add_child(this.prefsButton);
+        this.indicator.menu.box.add_child(buttonBox);
+
+        // Open Prefs button
+        this.prefsIcon = new St.Icon({
+            gicon: this.iconProvider.getPreferencesIcon(),
+            style_class: 'panel-button',
+        });
+        this.prefsButton = new St.Button({
+            style_class: 'panel-button padded',
+            track_hover: true,
+            reactive: true,
+            x_expand: true,
+            x_align: Clutter.ActorAlign.FILL,
+            can_focus: true,
+            accessible_name: 'Preferences',
+            child: this.prefsIcon,
+        });
+        this.prefsButtonId = this.prefsButton.connect('clicked', async () => {
+            this.indicator.menu.close();
+            await this.openPreferences();
+        });
+        // aligning container
+        const prefsBin = new St.Bin({
+            x_expand: true,
+            x_align: Clutter.ActorAlign.FILL,
+        });
+        prefsBin.child = this.prefsButton;
+
+        buttonBox.add_child(prefsBin);
+
+        // Toggle Notifications button
+        this.notifsIcon = new St.Icon({
+            gicon: this.iconProvider.getNotificationsIcon(true),
+            style_class: 'panel-button',
+        });
+        this.notifsButton = new St.Button({
+            style_class: 'panel-button padded',
+            track_hover: true,
+            reactive: true,
+            x_expand: true,
+            x_align: Clutter.ActorAlign.FILL,
+            can_focus: true,
+            accessible_name: 'Toggle Notifications',
+            child:  this.notifsIcon,
+        });
+        this.notifsButtonId = this.notifsButton.connect('clicked', () => {
+            // swap icons
+            if (this.notifsIcon.gicon === this.iconProvider.getNotificationsIcon(true))
+                this.notifsIcon.gicon = this.iconProvider.getNotificationsIcon(false); // false for disabled icon
+            else
+                this.notifsIcon.gicon = this.iconProvider.getNotificationsIcon(true);
+        });
+        // aligning container
+        const notifsBin = new St.Bin({
+            x_expand: true,
+            x_align: Clutter.ActorAlign.FILL,
+        });
+        notifsBin.child = this.notifsButton;
+
+        buttonBox.add_child(notifsBin);
 
         // listen for changes to server settings in gsettings and update display
         this.extensionListenerId = this.rawSettings.connect('changed', () => {
@@ -85,6 +137,12 @@ export default class ServerStatusIndicatorExtension extends Extension {
             this.prefsButton = null;
             this.prefsButtonId = null;
         }
+        if (this.notifsButton && this.notifsButtonId) {
+            this.notifsButton.disconnect(this.notifsButtonId);
+            this.notifsButton.destroy();
+            this.notifsButton = null;
+            this.notifsButtonId = null;
+        }
         // disconnect listener for pref changes
         if (this.rawSettings && this.extensionListenerId) {
             this.rawSettings.disconnect(this.extensionListenerId);
@@ -115,6 +173,8 @@ export default class ServerStatusIndicatorExtension extends Extension {
             this.iconProvider = null;
         }
         // clean up other stuff
+        this.notifsIcon = null;
+        this.prefsIcon = null;
         this.savedSettings.length = 0; // dereference elements
         this.savedSettings = null;
         this.rawSettings.length = 0; // dereference elements
@@ -137,7 +197,8 @@ export default class ServerStatusIndicatorExtension extends Extension {
                 const panel = new ServerStatusPanel(
                     savedSetting,
                     () => this.updateIcon(),
-                    this.iconProvider
+                    this.iconProvider,
+                    () => this.isNotifying() // callback
                 );
                 this.serversBox.add_child(panel);
                 this.indicator.addStatusPanel(panel);
@@ -183,11 +244,21 @@ export default class ServerStatusIndicatorExtension extends Extension {
                 const panel = new ServerStatusPanel(
                     savedSetting,
                     () => this.updateIcon(), // callback
-                    this.iconProvider
+                    this.iconProvider,
+                    () => this.isNotifying() // callback
                 );
                 this.serversBox.add_child(panel);
                 this.indicator.addStatusPanel(panel);
             }
         }
+    }
+
+    /**
+     * Determines if this extension is currently notifying user when a server is down.
+     *
+     * @returns boolean true if this extension is notifying user
+     */
+    isNotifying() {
+        return this.notifsIcon.gicon === this.iconProvider.getNotificationsIcon(true);
     }
 }

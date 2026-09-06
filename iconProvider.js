@@ -26,6 +26,15 @@ export class IconProvider {
         this.serverBadIcon = Gio.icon_new_for_string(
             `${assetPath}/server-bad.svg`
         );
+        this.notificationsOnIcon = Gio.icon_new_for_string(
+            `${assetPath}/notifications-symbolic.svg`
+        );
+        this.notificationsOffIcon = Gio.icon_new_for_string(
+            `${assetPath}/notifications-disabled-symbolic.svg`
+        );
+        this.preferencesIcon = Gio.icon_new_for_string(
+            `${assetPath}/preferences-symbolic.svg`
+        );
     }
 
     /**
@@ -76,6 +85,25 @@ export class IconProvider {
     }
 
     /**
+     * Gets the appropriate icon for notifications given their on/off state.
+     *
+     * @param {boolean} enabled
+     * @returns {Gio.icon} icon
+     */
+    getNotificationsIcon(enabled) {
+        return enabled ? this.notificationsOnIcon : this.notificationsOffIcon;
+    }
+
+    /**
+     * GEts the icon for preferences.
+     *
+     * @returns {Gio.Icon} icon
+     */
+    getPreferencesIcon() {
+        return this.preferencesIcon;
+    }
+
+    /**
      * Sets all status-related gicons to null for garbage collection.
      */
     destroy() {
@@ -83,5 +111,8 @@ export class IconProvider {
         this.serverUpIcon = null;
         this.serverDownIcon = null;
         this.serverBadIcon = null;
+        this.notificationsOnIcon = null;
+        this.notificationsOffIcon = null;
+        this.preferencesIcon = null;
     }
 }

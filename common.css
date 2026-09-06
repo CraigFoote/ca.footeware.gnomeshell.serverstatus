@@ -10,7 +10,7 @@
     height: 30px;
 }
 
-.prefs-button {
+.panel-button {
     width: 17px;
     height: 17px;
     border-radius: 10px;
@@ -20,12 +20,12 @@
     padding: 5px;
 }
 
-.bin {
+.right-align {
     margin: 10px;
     text-align: right;
 }
 
 .duration {
     font-size: 75%;
-    width: 100px;
+    width: 120px;
 }

@@ -102,7 +102,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
             pixel_size: 36,
         });
         const serverDownDesc = new Gtk.Label({
-            label: 'If you get a server-down indicator, try switching to GET.\nHTTP HEAD is faster but not always supported.',
+            label: 'If you get a server-down indicator with HEAD, try switching to GET.\nHTTP HEAD is faster but not always supported.',
         });
         serverDownBox.append(serverDownImage);
         serverDownBox.append(serverDownDesc);
@@ -118,7 +118,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
             pixel_size: 36,
         });
         const serverBadDesc = new Gtk.Label({
-            label: "If you get a server-bad indicator, there's something wrong with\nthe URL. It should be of format http[s]://host[:port][/path].",
+            label: "If you get a server-bad indicator, there's something wrong with the URL.\nIt should be of format 'http[s]://host|ip[:port][/path]' for HEAD or GET\nrequests and 'host|ip' for pings.",
         });
         serverBadBox.append(serverBadImage);
         serverBadBox.append(serverBadDesc);
@@ -206,7 +206,7 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
         this.#addDragDropSupportToRow(gtkListBoxRow);
 
         // make name field focused
-        newGroup.getNameInput().grab_focus();
+        newGroup.getNameRow().grab_focus();
     }
 
     /**
@@ -278,12 +278,14 @@ export default class ServerStatusPreferences extends ExtensionPreferences {
      * @param {ServerGroup} serverGroup
      */
     doDelete(serverGroup) {
+        const serverName = serverGroup.getNameRow().text.trim();
+        const validName = serverName.length > 0;
         const messageDialog = new Adw.MessageDialog({
             transient_for: this.window,
             destroy_with_parent: true,
             modal: true,
             heading: 'Confirm Delete',
-            body: 'Are you sure you want to delete this server?',
+            body: `Are you sure you want to delete ${validName ? serverName : 'this server'}?`,
         });
         messageDialog.add_response('cancel', '_Cancel');
         messageDialog.add_response('delete', '_Delete');
