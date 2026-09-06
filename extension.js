@@ -94,7 +94,7 @@ export default class ServerStatusIndicatorExtension extends Extension {
         this.notifsButtonId = this.notifsButton.connect('clicked', () => {
             // swap icons
             if (this.notifsIcon.gicon === this.iconProvider.getNotificationsIcon(true))
-                this.notifsIcon.gicon = this.iconProvider.getNotificationsIcon(false); // false for -no icon
+                this.notifsIcon.gicon = this.iconProvider.getNotificationsIcon(false); // false for disabled icon
             else
                 this.notifsIcon.gicon = this.iconProvider.getNotificationsIcon(true);
         });
@@ -256,7 +256,7 @@ export default class ServerStatusIndicatorExtension extends Extension {
     /**
      * Determines if this extension is currently notifying user when a server is down.
      *
-     * @returns boolean true if this extension should notify user
+     * @returns boolean true if this extension is notifying user
      */
     isNotifying() {
         return this.notifsIcon.gicon === this.iconProvider.getNotificationsIcon(true);
