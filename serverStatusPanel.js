@@ -249,6 +249,17 @@ export const ServerStatusPanel = GObject.registerClass(
                 gicon: icon,
                 urgency: MessageTray.Urgency.NORMAL,
             });
+
+            // add 'Open in' button
+            if (this.serverSetting.verb === 'HEAD' || this.serverSetting.verb === 'GET') {
+                notification.addAction('Open in Browser', () => {
+                    this.#openBrowser(this.serverSetting.url);
+                });
+            } else if (this.serverSetting.verb === 'PING') {
+                notification.addAction('Open in Terminal', () => {
+                    this.#openTerminal(this.serverSetting.url);
+                });
+            }
             source.addNotification(notification);
         }
 
@@ -288,6 +299,19 @@ export const ServerStatusPanel = GObject.registerClass(
                     }
                 );
             }
+        }
+
+        /**
+         * Open the provided address in a new terminal window.
+         *
+         * @param {string} url
+         */
+        #openTerminal(url) {
+            const process = new Gio.Subprocess({
+                argv: ['x-terminal-emulator', '-e', 'ping', url],
+                flags: Gio.SubprocessFlags.NONE,
+            });
+            process.init(null);
         }
     }
 );
