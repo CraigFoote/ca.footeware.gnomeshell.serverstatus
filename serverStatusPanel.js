@@ -49,7 +49,10 @@ export const ServerStatusPanel = GObject.registerClass(
 
             // click to open browser
             this.connect('button-press-event', () => {
-                this.#openBrowser(serverSetting.url);
+                if (serverSetting.verb === 'GET' || serverSetting.verb === 'HEAD')
+                    this.#openBrowser(serverSetting.url);
+                else if (serverSetting.verb === 'PING')
+                    this.#openTerminal(serverSetting.url);
                 return Clutter.EVENT_PROPAGATE;
             });
 
@@ -306,12 +309,23 @@ export const ServerStatusPanel = GObject.registerClass(
          *
          * @param {string} url
          */
-        #openTerminal(url) {
+        async #openTerminal(url) {
+            // find a terminal program
+            let terminal = GLib.find_program_in_path('x-terminal-emulator');
+            if (!terminal)
+                terminal = GLib.find_program_in_path('ptyxis');
+            if (!terminal)
+                terminal = GLib.find_program_in_path('gnome-terminal');
+            if (!terminal)
+                terminal = GLib.find_program_in_path('kgx');
+            if (!terminal)
+                return;
+
             const process = new Gio.Subprocess({
-                argv: ['x-terminal-emulator', '-e', 'ping', url],
+                argv: [terminal, '--', 'ping', url],
                 flags: Gio.SubprocessFlags.NONE,
             });
-            process.init(null);
+            await process.init(null);
         }
     }
 );
