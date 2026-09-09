@@ -106,7 +106,8 @@ export class HttpOperation {
                 });
         } else if (this.panelIcon && this.iconProvider) {
             // message was null because of malformed url
-            this.panelIcon.gicon = this.iconProvider.getIcon(Status.Bad);
+            const newIcon = this.iconProvider.getIcon(Status.Bad);
+            this.panel.updateGUI(null, newIcon, false, null);
             this.completeCallback();
         }
     }
@@ -137,7 +138,7 @@ export class HttpOperation {
                     newIcon = this.iconProvider.getIcon(Status.Down);
                 }
             } else if (error instanceof Gio.ResolverError) {
-                newIcon = this.iconProvider.getIcon(Status.Init);
+                newIcon = this.iconProvider.getIcon(Status.Bad);
             }
         }
         return [reason, newIcon];
